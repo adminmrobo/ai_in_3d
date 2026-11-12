@@ -125,6 +125,8 @@ const FLOORS=[
 const BANDS=[['저층부 · 쉬움',1,9],['중층부 · 보통',10,18],['고층부 · 어려움',19,27]];
 const band=n=>BANDS.find(b=>n>=b[1]&&n<=b[2])[0];
 const FISH='https://adminmrobo.github.io/fish_market_learning_epoch_etc/';
+const FLY='https://adminmrobo.github.io/AI_Model_Review_Fruit_fly_special/', BRAIN='https://adminmrobo.github.io/neuralink_animal_brain_ai/4_neuralink_animal_brain_ai.html';
+const REL={P:[['초파리 도약 회로로 보는 퍼셉트론',BRAIN+'#lv1']],FF:[['초파리 뇌 탐사: 신경망이 단계적으로 커지는 과정',FLY+'1_fruitfly_brain_deep_learning.html']],DFF:[['초파리 뇌 탐사: 신경망이 단계적으로 커지는 과정',FLY+'1_fruitfly_brain_deep_learning.html']],DCN:[['까마귀의 "봤다"와 CNN·YOLO',BRAIN+'#lv2']]};
 const $=s=>document.querySelector(s);
 const ATLAS='https://adminmrobo.github.io/neural_network_atlas/';
 let sel=0; // 0 = 로비, 1~27 = 층
@@ -146,7 +148,8 @@ function renderCard(){
       '<p class="en">'+f[1]+'</p><p>'+f[4]+'</p>'+
       '<p style="font-size:13px;color:var(--muted)">이 묶음: '+g.d+'</p>'+
       (f[6]?'<span class="chip">열림</span>':'<span class="chip">준비 중</span>')+(f[5]?'<span class="chip">엄밀히는 신경망이 아님</span>':'')+'<br>'+
-      (f[6]?'<a class="go" href="'+f[6]+'">'+sel+'층으로 들어가기</a>':'<a class="go ghost" href="'+ATLAS+'1_neural_network_atlas_chart.html">도감에서 그림 먼저 보기</a>');
+      (f[6]?'<a class="go" href="'+f[6]+'">'+sel+'층으로 들어가기</a>':'<a class="go ghost" href="'+ATLAS+'1_neural_network_atlas_chart.html">도감에서 그림 먼저 보기</a>')+
+      (REL[f[0]]||[]).map(r=>'<br><a class="go ghost" href="'+r[1]+'">진짜 뇌와 견주기 · '+r[0]+'</a>').join('');
   }
   document.querySelectorAll('#lift button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.f===sel));
 }
@@ -159,6 +162,9 @@ function renderCard(){
      '<a class="go ghost" style="margin:0 0 6px;display:block" href="math_behind_ai/#loss">공 굴리기로 보는 경사하강법 (로비 ①)</a>'+
      '<a class="go ghost" style="margin:0 0 6px;display:block" href="'+FISH+'02_loss_and_gradient.html">손실 함수와 경사하강법 (Fish Market 연구실 2장)</a>'+
      '<a class="go ghost" style="margin:0;display:block" href="'+FISH+'03_rate_batch_epoch.html">학습률·배치·에포크 (Fish Market 연구실 3장)</a>';
+  h+='<h3>진짜 뇌와 견주어 보기</h3><p style="font-size:13.5px">인공 신경망이 흉내 낸 원본, 곧 초파리와 동물의 뇌는 아래에서 봅니다.</p>'+
+     '<a class="go ghost" style="margin:0 0 6px;display:block" href="'+FLY+'">초파리 연구실 (초파리 뇌와 딥러닝 세 편)</a>'+
+     '<a class="go ghost" style="margin:0;display:block" href="https://adminmrobo.github.io/neuralink_animal_brain_ai/">뉴럴링크와 동물의 뇌</a>';
   $('#lift').innerHTML=h;
   $('#lift').addEventListener('click',e=>{ const b=e.target.closest('button'); if(b) select(+b.dataset.f); });
 })();
