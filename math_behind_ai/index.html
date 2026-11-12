@@ -293,12 +293,12 @@ select{width:100%;background:var(--panel2);border:1px solid var(--line);border-r
       <h3>비교할 함수 고르기 (16종)</h3>
       <div class="row"><label for="acSel0">왼쪽</label><select id="acSel0" data-slot="0"></select><span></span></div>
       <div class="row"><label for="acSel1">오른쪽</label><select id="acSel1" data-slot="1"></select><span></span></div>
-      <div class="btns"><button class="btn" id="acGrad" aria-pressed="true">빨간 띠: 기울기(미분) 함께 보기</button></div>
+      <div class="btns"><button class="btn" id="acGrad" aria-pressed="true">빨간 선: 기울기(미분) 함께 보기</button></div>
       <div class="kv">
         <div><span id="acN0"></span><b id="acR">0</b><span id="acG0"></span></div>
         <div><span id="acN1"></span><b id="acS">0</b><span id="acG1"></span></div>
       </div>
-      <p style="font-size:13.5px;margin-top:10px"><b style="color:#ff6b5e">빨간 띠</b>는 그 자리의 기울기입니다. ⑤의 역전파는 가중치를 고칠 때 이 값을 곱해 씁니다. 기울기가 0에 가까운 구간에서는 고치라는 신호가 거의 전달되지 않습니다.</p>
+      <p style="font-size:13.5px;margin-top:10px"><b style="color:#6fb1ff">파란 선</b>이 함수, <b style="color:#ff6b5e">빨간 선</b>이 그 자리의 기울기입니다. 노란 선은 넣은 값 x에서 위로 올라가 곡선에 닿고, 왼쪽으로 꺾여 나오는 값 f(x)를 가리킵니다. ⑤의 역전파는 가중치를 고칠 때 이 값을 곱해 씁니다. 기울기가 0에 가까운 구간에서는 고치라는 신호가 거의 전달되지 않습니다.</p>
       <h3>고른 함수의 성격</h3>
       <p id="acD0"></p>
       <p id="acD1"></p>
@@ -650,7 +650,7 @@ nRender();
 
 /* ================= ④ 활성화 함수 ================= */
 beginStation();
-const S4={cx:-9,cz:13,y0:0.9,sx:0.63,d:1.6,H:3.6,R:4};
+const S4={cx:-9,cz:13,y0:1.5,sx:0.63,d:1.6,H:3.6,R:4};
 slab(4,S4.cx,S4.cz,12,11,COL.green);
 label('④ 활성화 함수',V(S4.cx,0.5,S4.cz+5.5),'title',4);
 function erf(x){ const t=1/(1+0.3275911*Math.abs(x)), y=1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-x*x); return x>=0?y:-y; }
@@ -674,22 +674,34 @@ const AF={
   none:{n:'none',fm:'x',f:x=>x,d:'활성화 함수를 쓰지 않는 경우로, linear와 같습니다. 이것만 쌓으면 신경망 전체가 직선 하나와 같아집니다.'}
 };
 const dF=(f,x)=>(f(x+1e-3)-f(x-1e-3))/2e-3;
-const NR=120, zf=S4.cz+S4.d/2; let acGrad=true;
-const shortN=v=>Math.abs(v)>=10?v.toFixed(0):(Math.abs(v)>=1?v.toFixed(1):v.toFixed(2)).replace(/\.?0+$/,'');
+const NR=160, zp=S4.cz+0.4, PW=S4.R*S4.sx; let acGrad=true;
+const shortN=v=>{ const a=Math.abs(v); if(a<1e-9)return '0'; return (a>=10?v.toFixed(0):a>=1?v.toFixed(1):a>=0.1?v.toFixed(2):v.toFixed(3)).replace(/\.?0+$/,''); };
+const niceStep=r=>{ const p=Math.pow(10,Math.floor(Math.log10(r))), m=r/p; return (m<1.5?1:m<3.5?2:m<7.5?5:10)*p; };
 function strip(){ const g=new T.BufferGeometry(), ix=[]; g.setAttribute('position',new T.BufferAttribute(new Float32Array((NR+1)*6),3));
   for(let i=0;i<NR;i++){ const k=i*2; ix.push(k,k+1,k+2,k+1,k+3,k+2); } g.setIndex(ix); return g; }
+function setStrip(g,pts,w,z){ const p=g.attributes.position;
+  for(let i=0;i<pts.length;i++){ const a=pts[Math.max(0,i-1)], b=pts[Math.min(pts.length-1,i+1)];
+    let dx=b[0]-a[0], dy=b[1]-a[1]; const l=Math.hypot(dx,dy)||1; dx/=l; dy/=l;
+    p.setXYZ(i*2,pts[i][0]-dy*w/2,pts[i][1]+dx*w/2,z); p.setXYZ(i*2+1,pts[i][0]+dy*w/2,pts[i][1]-dx*w/2,z); }
+  p.needsUpdate=true; g.computeBoundingSphere(); }
 function mkSlot(cx,key,idx){
-  const s={cx,key,idx,g:strip(),gg:strip()};
-  G.add(new T.Mesh(s.g,new T.MeshStandardMaterial({color:0x2563eb,emissive:0x2563eb,emissiveIntensity:0.15,side:T.DoubleSide,roughness:0.4})));
+  const s={cx,key,idx,g:strip(),gg:strip(),ticks:[]};
+  const pg=new T.PlaneGeometry(PW*2+0.5,S4.H+0.7);
+  const pm=new T.Mesh(pg,new T.MeshStandardMaterial({color:0x0e1836,side:T.DoubleSide,roughness:0.9})); pm.position.set(cx,S4.y0+S4.H/2,zp); G.add(pm);
+  const pe=new T.LineSegments(new T.EdgesGeometry(pg),new T.LineBasicMaterial({color:0x7fe0a8})); pe.position.copy(pm.position); G.add(pe);
+  const vg=[]; for(let k=-S4.R;k<=S4.R;k++) vg.push(V(cx+k*S4.sx,S4.y0,zp+0.01),V(cx+k*S4.sx,S4.y0+S4.H,zp+0.01));
+  G.add(new T.LineSegments(new T.BufferGeometry().setFromPoints(vg),new T.LineBasicMaterial({color:0xffffff,transparent:true,opacity:0.14})));
+  s.hg=new T.LineSegments(new T.BufferGeometry().setFromPoints(new Array(20).fill(0).map(()=>V(0,0,0))),new T.LineBasicMaterial({color:0xffffff,transparent:true,opacity:0.14})); G.add(s.hg);
+  line([V(cx,S4.y0,zp+0.02),V(cx,S4.y0+S4.H,zp+0.02)],0xffffff,0.7);
+  s.hax=line([V(0,0,0),V(0,0,0)],0xffffff,0.7);
+  G.add(new T.Mesh(s.g,new T.MeshBasicMaterial({color:0x4f9dff,side:T.DoubleSide})));
   s.gm=new T.Mesh(s.gg,new T.MeshBasicMaterial({color:0xff4b3e,side:T.DoubleSide})); G.add(s.gm);
-  s.front=line(new Array(NR+1).fill(0).map(()=>V(0,0,0)),0xffffff,1);
-  s.hax=line([V(0,0,0),V(0,0,0)],0xffffff,0.5);
-  line([V(cx,S4.y0-0.2,zf),V(cx,S4.y0+S4.H+0.4,zf)],0xffffff,0.5);
-  line([V(cx-2.6,S4.y0+S4.H,zf),V(cx+2.6,S4.y0+S4.H,zf)],0xffffff,0.25); line([V(cx-2.6,S4.y0,zf),V(cx+2.6,S4.y0,zf)],0xffffff,0.25);
-  s.hi=label('',V(cx-2.85,S4.y0+S4.H,zf),'note',4,'r'); s.lo=label('',V(cx-2.85,S4.y0,zf),'note',4,'r');
-  s.head=label('',V(cx,5.7,S4.cz),'stage',4);
-  s.dot=ball(V(0,0,0),0.17,0xffd76a,0.9); s.gdot=ball(V(0,0,0),0.12,0xff4b3e,0.9);
-  s.lab=label('',V(0,0,0),'big',4); s.drop=line([V(0,0,0),V(0,0,0)],0xffd76a,0.8);
+  for(let k=0;k<10;k++) s.ticks.push(label('',V(cx-PW-0.35,0,zp),'note',4,'r'));
+  [-4,-2,0,2,4].forEach(k=>label(String(k).replace('-','−'),V(cx+k*S4.sx,S4.y0-0.3,zp),'note',4));
+  s.head=label('',V(cx,S4.y0+S4.H+0.85,zp),'stage',4);
+  s.dot=ball(V(0,0,0),0.13,0xffd76a,0.9); s.edot=ball(V(0,0,0),0.1,0xffd76a,0.9); s.gdot=ball(V(0,0,0),0.1,0xff4b3e,0.9);
+  s.path=line([V(0,0,0),V(0,0,0),V(0,0,0)],0xffd76a,1);
+  s.lab=label('',V(0,0,0),'big',4,'l'); s.xlab=label('',V(0,0,0),'num',4);
   return s;
 }
 function fillSlot(s){
@@ -698,34 +710,36 @@ function fillSlot(s){
     lo=Math.min(lo,a); hi=Math.max(hi,a); if(acGrad){ lo=Math.min(lo,b); hi=Math.max(hi,b); } }
   if(hi-lo<1e-9) hi=lo+1;
   s.sy=S4.H/(hi-lo); s.base=S4.y0-lo*s.sy;
-  const p=s.g.attributes.position, q=s.gg.attributes.position, pts=[];
-  for(let i=0;i<=NR;i++){ const X0=s.cx+(-S4.R+2*S4.R*i/NR)*S4.sx, y=s.base+fv[i]*s.sy, yg=s.base+gv[i]*s.sy;
-    p.setXYZ(i*2,X0,y,S4.cz-S4.d/2); p.setXYZ(i*2+1,X0,y,zf); pts.push(V(X0,y,zf+0.01));
-    q.setXYZ(i*2,X0,yg,zf+0.06); q.setXYZ(i*2+1,X0,yg,zf+0.36); }
-  p.needsUpdate=true; q.needsUpdate=true; s.g.computeVertexNormals(); s.g.computeBoundingSphere(); s.gg.computeBoundingSphere();
+  const X=i=>s.cx+(-S4.R+2*S4.R*i/NR)*S4.sx;
+  setStrip(s.g,fv.map((v,i)=>[X(i),s.base+v*s.sy]),0.09,zp+0.05);
+  setStrip(s.gg,gv.map((v,i)=>[X(i),s.base+v*s.sy]),0.06,zp+0.04);
   s.gm.visible=acGrad; s.gdot.visible=acGrad;
-  s.front.geometry.setFromPoints(pts);
-  s.hax.geometry.setFromPoints([V(s.cx-2.7,s.base,zf),V(s.cx+2.7,s.base,zf)]);
-  s.hi.el.textContent=shortN(hi); s.lo.el.textContent=shortN(lo);
+  s.hax.geometry.setFromPoints([V(s.cx-PW,s.base,zp+0.02),V(s.cx+PW,s.base,zp+0.02)]);
+  const st=niceStep((hi-lo)/4), hp=s.hg.geometry.attributes.position; let n=0;
+  for(let t=Math.ceil(lo/st-1e-9)*st; t<=hi+1e-9&&n<10; t+=st, n++){ const y=s.base+t*s.sy;
+    hp.setXYZ(n*2,s.cx-PW,y,zp+0.01); hp.setXYZ(n*2+1,s.cx+PW,y,zp+0.01); s.ticks[n].pos.y=y; s.ticks[n].el.textContent=shortN(t).replace('-','−'); }
+  for(let k=n;k<10;k++){ hp.setXYZ(k*2,0,-50,0); hp.setXYZ(k*2+1,0,-50,0); s.ticks[k].el.textContent=''; }
+  hp.needsUpdate=true; s.hg.geometry.computeBoundingSphere();
   s.head.el.innerHTML=d.n+' · '+d.fm;
   $('#acN'+s.idx).innerHTML=d.n+' · '+d.fm; $('#acD'+s.idx).innerHTML='<b>'+d.n+'</b> — '+d.d;
   $('#acSel'+s.idx).value=s.key;
 }
-const slots=[mkSlot(S4.cx-2.9,'relu',0),mkSlot(S4.cx+2.9,'sigmoid',1)];
+const slots=[mkSlot(S4.cx-2.95,'relu',0),mkSlot(S4.cx+2.95,'sigmoid',1)];
 [0,1].forEach(k=>{ const sel=$('#acSel'+k); sel.innerHTML=Object.keys(AF).map(key=>'<option value="'+key+'">'+AF[key].n+'</option>').join('');
   sel.onchange=()=>{ slots[k].key=sel.value; fillSlot(slots[k]); acRender(); }; });
 let acZ=0.439;
-putChar('fly','fruitfly',4,V(S4.cx,0,S4.cz+4.6),0,'think','');
+putChar('fly','fruitfly',4,V(S4.cx+5.3,0,S4.cz+4.9),-0.55,'think','');
 function acRender(){
   $('#acZ').value=acZ; $('#acZO').textContent=fmt(acZ,2);
-  const v=slots.map(s=>{ const d=AF[s.key], val=d.f(acZ), gr=dF(d.f,acZ), x=s.cx+acZ*S4.sx, y=s.base+val*s.sy;
-    s.dot.position.set(x,y,zf+0.05); s.gdot.position.set(x,s.base+gr*s.sy,zf+0.4);
-    s.lab.pos.set(x,Math.max(y,s.base)+0.75,zf); s.lab.el.textContent='f('+fmt(acZ,2)+') = '+fmt(val);
-    s.drop.geometry.setFromPoints([V(x,s.base,zf+0.05),V(x,y,zf+0.05)]);
+  const v=slots.map(s=>{ const d=AF[s.key], val=d.f(acZ), gr=dF(d.f,acZ), x=s.cx+acZ*S4.sx, y=s.base+val*s.sy, z=zp+0.08;
+    s.dot.position.set(x,y,z); s.edot.position.set(s.cx-PW,y,z); s.gdot.position.set(x,s.base+gr*s.sy,z);
+    s.path.geometry.setFromPoints([V(x,s.base,z),V(x,y,z),V(s.cx-PW,y,z)]);
+    s.lab.pos.set(s.cx-PW+(acZ>-2?0.12:2.0),y+0.38,z); s.lab.el.textContent='f(x) = '+fmt(val);
+    s.xlab.pos.set(x,s.base+(val>=0?-0.3:0.3),z); s.xlab.el.textContent='x = '+fmt(acZ,2);
     $('#acG'+s.idx).textContent='기울기 '+fmt(gr); return [val,gr]; });
   $('#acR').textContent=fmt(v[0][0]); $('#acS').textContent=fmt(v[1][0]);
   const n0=AF[slots[0].key].n, n1=AF[slots[1].key].n;
-  const t='x = '+fmt(acZ,2)+'일 때 '+n0+'는 <b>'+fmt(v[0][0],2)+'</b>, '+n1+'는 <b>'+fmt(v[1][0],2)+'</b>입니다.';
+  const t='x = '+fmt(acZ,2)+'를 넣으면 '+n0+'는 <b>'+fmt(v[0][0],2)+'</b>, '+n1+'는 <b>'+fmt(v[1][0],2)+'</b>가 나옵니다.';
   const flat=acGrad&&(Math.abs(v[0][1])<0.02||Math.abs(v[1][1])<0.02);
   if(flat){ act('fly','think','E04'); say('fly',t+' 기울기가 <b>0에 가까운</b> 쪽은 고치라는 신호가 거의 안 지나갑니다.'); }
   else { act('fly','think'); say('fly',t); }
@@ -884,7 +898,7 @@ const VIEW=[
   {t:[S1.cx+0.6,1.8,S1.cz+0.6],r:22,th:-0.5,ph:1.02},
   {t:[S2.cx-0.6,3.0,S2.cz+1.2],r:20.5,th:0.25,ph:1.26},
   {t:[0.6,3.3,S3.cz],r:25,th:0,ph:1.32},
-  {t:[S4.cx,2.5,S4.cz+1.4],r:18.5,th:-0.2,ph:1.22},
+  {t:[S4.cx+0.4,3.0,S4.cz+1.2],r:19.5,th:-0.12,ph:1.3},
   {t:[S5.cx,2.9,S5.cz+1.4],r:21,th:0.2,ph:1.26},
   {t:[0,12.5,-5],r:40,th:0,ph:1.2}
 ];
