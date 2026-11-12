@@ -72,6 +72,8 @@ aside p{margin:0 0 10px}
 .row label{font-size:13px;color:var(--muted)}
 .row output{font-size:13px;font-weight:500;text-align:right}
 input[type=range]{width:100%;accent-color:var(--acc);height:22px}
+select{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 10px}
+.row:has(select){grid-template-columns:74px 1fr 0}
 .btns{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
 .btn{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:13.5px}
 .btn:hover{border-color:var(--acc)}
@@ -283,19 +285,20 @@ input[type=range]{width:100%;accent-color:var(--acc);height:22px}
       <div class="three">
         <p>더한 값을 그대로 넘기면 층을 아무리 쌓아도 <b>직선</b>밖에 못 그립니다.</p>
         <p>활성화 함수가 값을 <b>구부려</b> 곡선 패턴을 배울 수 있게 합니다.</p>
-        <p>자주 쓰는 다섯 가지를 골라 비교할 수 있습니다.</p>
+        <p>열여섯 가지를 골라 모양과 기울기를 비교할 수 있습니다.</p>
       </div>
       <div class="talk"><div><img src="../assets/fruitfly_E13.webp" alt=""><p><b>초파리 연구원</b>굳이 구부려야 합니까? 더하기만 해도 되지 않습니까?</p></div><div><img src="../assets/doctor_E13.webp" alt=""><p><b>박사</b>직선은 아무리 겹쳐도 직선입니다. 구부려야 곡선 모양의 패턴을 배웁니다.</p></div></div>
-      <div class="row"><label for="acZ">넣는 값 x</label><input id="acZ" type="range" min="-6" max="6" step="0.01" value="0.439"><output id="acZO"></output></div>
+      <div class="row"><label for="acZ">넣는 값 x</label><input id="acZ" type="range" min="-4" max="4" step="0.01" value="0.439"><output id="acZO"></output></div>
       <div class="btns"><button class="btn" id="acFromN">③번 뉴런의 합계 넣기</button></div>
-      <h3>왼쪽 함수</h3>
-      <div class="btns"><button class="btn" data-af="relu" data-slot="0">ReLU</button><button class="btn" data-af="lrelu" data-slot="0">Leaky ReLU</button><button class="btn" data-af="elu" data-slot="0">ELU</button></div>
-      <h3>오른쪽 함수</h3>
-      <div class="btns"><button class="btn" data-af="sig" data-slot="1">시그모이드</button><button class="btn" data-af="tanh" data-slot="1">tanh</button></div>
+      <h3>비교할 함수 고르기 (16종)</h3>
+      <div class="row"><label for="acSel0">왼쪽</label><select id="acSel0" data-slot="0"></select><span></span></div>
+      <div class="row"><label for="acSel1">오른쪽</label><select id="acSel1" data-slot="1"></select><span></span></div>
+      <div class="btns"><button class="btn" id="acGrad" aria-pressed="true">빨간 띠: 기울기(미분) 함께 보기</button></div>
       <div class="kv">
-        <div><span id="acN0"></span><b id="acR">0</b></div>
-        <div><span id="acN1"></span><b id="acS">0</b></div>
+        <div><span id="acN0"></span><b id="acR">0</b><span id="acG0"></span></div>
+        <div><span id="acN1"></span><b id="acS">0</b><span id="acG1"></span></div>
       </div>
+      <p style="font-size:13.5px;margin-top:10px"><b style="color:#ff6b5e">빨간 띠</b>는 그 자리의 기울기입니다. ⑤의 역전파는 가중치를 고칠 때 이 값을 곱해 씁니다. 기울기가 0에 가까운 구간에서는 고치라는 신호가 거의 전달되지 않습니다.</p>
       <h3>고른 함수의 성격</h3>
       <p id="acD0"></p>
       <p id="acD1"></p>
@@ -647,64 +650,89 @@ nRender();
 
 /* ================= ④ 활성화 함수 ================= */
 beginStation();
-const S4={cx:-9,cz:13,y0:0.9,sx:0.42,d:1.6};
+const S4={cx:-9,cz:13,y0:0.9,sx:0.63,d:1.6,H:3.6,R:4};
 slab(4,S4.cx,S4.cz,12,11,COL.green);
 label('④ 활성화 함수',V(S4.cx,0.5,S4.cz+5.5),'title',4);
+function erf(x){ const t=1/(1+0.3275911*Math.abs(x)), y=1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-x*x); return x>=0?y:-y; }
+const SMZ=(()=>{ let z=0; for(let i=0;i<=80;i++)z+=Math.exp(-4+i*0.1); return z; })();
 const AF={
-  relu:{n:'ReLU',fm:'max(0, x)',f:x=>Math.max(0,x),sy:0.62,off:0,color:0x2563eb,d:'<b>ReLU</b>는 음수를 0으로 막고 양수는 그대로 통과시킵니다. 계산이 가벼워 은닉층에 가장 많이 씁니다.'},
-  lrelu:{n:'Leaky ReLU',fm:'max(0.1x, x)',f:x=>x>0?x:0.1*x,sy:0.62,off:0,color:0x2563eb,d:'<b>Leaky ReLU</b>는 음수도 완전히 막지 않고 조금(0.1배) 흘려보냅니다. 음수 쪽 뉴런이 아예 꺼져 버리는 일을 줄입니다.'},
-  elu:{n:'ELU',fm:'x (x≥0) · eˣ−1 (x&lt;0)',f:x=>x>=0?x:Math.exp(x)-1,sy:0.62,off:0,color:0x2563eb,d:'<b>ELU</b>는 음수 쪽을 부드러운 곡선으로 −1까지 내립니다. 꺾이는 곳이 매끄럽습니다.'},
-  sig:{n:'시그모이드',fm:'1/(1+e<sup>−x</sup>)',f:sigmoid,sy:3.6,off:0,lo:'0',color:0xe0457b,d:'<b>시그모이드</b>는 어떤 값이든 0과 1 사이로 눌러 줍니다. "맞다/아니다"의 확률처럼 읽을 때 출력층에 씁니다.'},
-  tanh:{n:'tanh',fm:'tanh(x)',f:Math.tanh,sy:1.8,off:1.8,lo:'−1',color:0xe0457b,d:'<b>tanh</b>는 −1과 1 사이로 눌러 줍니다. 0을 중심으로 대칭이라 시그모이드보다 은닉층에 쓰기 좋습니다.'}
+  relu:{n:'ReLU',fm:'max(0, x)',f:x=>Math.max(0,x),d:'음수를 0으로 막고 양수는 그대로 통과시킵니다. 계산이 가벼워 은닉층에 가장 많이 씁니다. 음수 쪽 기울기는 0입니다.'},
+  sigmoid:{n:'시그모이드',fm:'1/(1+e<sup>−x</sup>)',f:sigmoid,d:'어떤 값이든 0과 1 사이로 눌러 줍니다. 확률처럼 읽을 때 출력층에 씁니다. 양 끝에서 기울기가 0에 가까워집니다.'},
+  tanh:{n:'tanh',fm:'tanh(x)',f:Math.tanh,d:'−1과 1 사이로 눌러 줍니다. 0을 중심으로 대칭이고, 가운데 기울기가 시그모이드보다 큽니다(최대 1).'},
+  lrelu:{n:'Leaky ReLU (lrelu)',fm:'x (x&gt;0) · 0.3x (x≤0)',f:x=>x>0?x:0.3*x,d:'음수도 완전히 막지 않고 조금(여기서는 0.3배) 흘려보냅니다. 음수 쪽 뉴런이 아예 꺼지는 일을 줄입니다.'},
+  elu:{n:'ELU',fm:'x (x&gt;0) · eˣ−1 (x≤0)',f:x=>x>0?x:Math.exp(x)-1,d:'음수 쪽을 부드러운 곡선으로 −1까지 내립니다. 꺾이는 곳이 매끄럽습니다.'},
+  selu:{n:'SELU',fm:'λ·x (x&gt;0) · λα(eˣ−1) (x≤0)',f:x=>1.0507*(x>0?x:1.67326*(Math.exp(x)-1)),d:'ELU에 정해진 배율(λ≈1.05, α≈1.67)을 곱한 모양입니다. 층을 지나도 값의 크기가 고르게 유지되도록 고른 숫자입니다.'},
+  gelu:{n:'GELU',fm:'x · Φ(x)',f:x=>x*0.5*(1+erf(x/Math.SQRT2)),d:'ReLU를 부드럽게 만든 모양으로, 0 근처에서 살짝 아래로 내려갔다 올라옵니다. 트랜스포머 계열 언어 모델에서 많이 씁니다.'},
+  swish:{n:'Swish',fm:'x · 시그모이드(x)',f:x=>x*sigmoid(x),d:'GELU와 비슷하게 0 아래로 살짝 내려갔다 올라오는 부드러운 곡선입니다.'},
+  softplus:{n:'Softplus',fm:'ln(1+eˣ)',f:x=>Math.log(1+Math.exp(x)),d:'ReLU의 꺾인 곳을 둥글게 만든 모양입니다. 기울기가 바로 시그모이드입니다.'},
+  softsign:{n:'Softsign',fm:'x / (1+|x|)',f:x=>x/(1+Math.abs(x)),d:'tanh처럼 −1과 1 사이로 누르지만, 양 끝으로 더 천천히 다가갑니다.'},
+  hard_sigmoid:{n:'Hard sigmoid',fm:'0.2x+0.5 를 0~1로 자르기',f:x=>Math.max(0,Math.min(1,0.2*x+0.5)),d:'시그모이드를 직선 세 토막으로 흉내 낸 것입니다. 계산이 싸서 작은 기기에서 씁니다.'},
+  trelu:{n:'Thresholded ReLU (trelu)',fm:'x (x&gt;1) · 0 (x≤1)',f:x=>x>1?x:0,d:'문턱(여기서는 1)을 넘어야만 통과시키는 ReLU입니다.'},
+  exp:{n:'exp',fm:'eˣ',f:Math.exp,d:'지수 함수입니다. 값이 빠르게 커지고, 기울기가 자기 자신과 같습니다.'},
+  softmax:{n:'Softmax',fm:'eˣ / (모든 eˣ의 합)',f:x=>Math.exp(x)/SMZ,d:'값 하나가 아니라 <b>여러 값을 한꺼번에</b> 받아 합이 1이 되게 나눕니다. 여기서는 −4~4 사이 81개 점을 한 묶음으로 넣은 결과라 값이 아주 작습니다. 여러 항목 중 하나를 고르는 출력층에 씁니다.'},
+  linear:{n:'linear',fm:'x',f:x=>x,d:'아무것도 구부리지 않습니다. 기울기는 어디서나 1입니다. 숫자를 그대로 예측하는 출력층에 씁니다.'},
+  none:{n:'none',fm:'x',f:x=>x,d:'활성화 함수를 쓰지 않는 경우로, linear와 같습니다. 이것만 쌓으면 신경망 전체가 직선 하나와 같아집니다.'}
 };
-const NR=80, zf=S4.cz+S4.d/2;
+const dF=(f,x)=>(f(x+1e-3)-f(x-1e-3))/2e-3;
+const NR=120, zf=S4.cz+S4.d/2; let acGrad=true;
+const shortN=v=>Math.abs(v)>=10?v.toFixed(0):(Math.abs(v)>=1?v.toFixed(1):v.toFixed(2)).replace(/\.?0+$/,'');
+function strip(){ const g=new T.BufferGeometry(), ix=[]; g.setAttribute('position',new T.BufferAttribute(new Float32Array((NR+1)*6),3));
+  for(let i=0;i<NR;i++){ const k=i*2; ix.push(k,k+1,k+2,k+1,k+3,k+2); } g.setIndex(ix); return g; }
 function mkSlot(cx,key,idx){
-  const g=new T.BufferGeometry(), ix=[];
-  g.setAttribute('position',new T.BufferAttribute(new Float32Array((NR+1)*6),3));
-  for(let i=0;i<NR;i++){ const k=i*2; ix.push(k,k+1,k+2,k+1,k+3,k+2); } g.setIndex(ix);
-  const mat=new T.MeshStandardMaterial({color:0xffffff,side:T.DoubleSide,roughness:0.4,emissiveIntensity:0.15});
-  G.add(new T.Mesh(g,mat));
-  const s={cx,key,idx,g,mat};
+  const s={cx,key,idx,g:strip(),gg:strip()};
+  G.add(new T.Mesh(s.g,new T.MeshStandardMaterial({color:0x2563eb,emissive:0x2563eb,emissiveIntensity:0.15,side:T.DoubleSide,roughness:0.4})));
+  s.gm=new T.Mesh(s.gg,new T.MeshBasicMaterial({color:0xff4b3e,side:T.DoubleSide})); G.add(s.gm);
   s.front=line(new Array(NR+1).fill(0).map(()=>V(0,0,0)),0xffffff,1);
   s.hax=line([V(0,0,0),V(0,0,0)],0xffffff,0.5);
-  line([V(cx,S4.y0-0.5,zf),V(cx,S4.y0+4.2,zf)],0xffffff,0.5);
-  s.head=label('',V(cx,5.6,S4.cz),'stage',4);
-  s.dot=ball(V(0,0,0),0.17,0xffd76a,0.9); s.lab=label('',V(0,0,0),'big',4); s.drop=line([V(0,0,0),V(0,0,0)],0xffd76a,0.8);
+  line([V(cx,S4.y0-0.2,zf),V(cx,S4.y0+S4.H+0.4,zf)],0xffffff,0.5);
+  line([V(cx-2.6,S4.y0+S4.H,zf),V(cx+2.6,S4.y0+S4.H,zf)],0xffffff,0.25); line([V(cx-2.6,S4.y0,zf),V(cx+2.6,S4.y0,zf)],0xffffff,0.25);
+  s.hi=label('',V(cx-2.85,S4.y0+S4.H,zf),'note',4,'r'); s.lo=label('',V(cx-2.85,S4.y0,zf),'note',4,'r');
+  s.head=label('',V(cx,5.7,S4.cz),'stage',4);
+  s.dot=ball(V(0,0,0),0.17,0xffd76a,0.9); s.gdot=ball(V(0,0,0),0.12,0xff4b3e,0.9);
+  s.lab=label('',V(0,0,0),'big',4); s.drop=line([V(0,0,0),V(0,0,0)],0xffd76a,0.8);
   return s;
 }
 function fillSlot(s){
-  const d=AF[s.key], p=s.g.attributes.position, pts=[];
-  for(let i=0;i<=NR;i++){ const x=-6+12*i/NR, y=S4.y0+d.off+d.f(x)*d.sy, X0=s.cx+x*S4.sx;
-    p.setXYZ(i*2,X0,y,S4.cz-S4.d/2); p.setXYZ(i*2+1,X0,y,zf); pts.push(V(X0,y,zf+0.01)); }
-  p.needsUpdate=true; s.g.computeVertexNormals(); s.g.computeBoundingSphere();
+  const d=AF[s.key]; let lo=0, hi=0; const fv=[], gv=[];
+  for(let i=0;i<=NR;i++){ const x=-S4.R+2*S4.R*i/NR, a=d.f(x), b=dF(d.f,x); fv.push(a); gv.push(b);
+    lo=Math.min(lo,a); hi=Math.max(hi,a); if(acGrad){ lo=Math.min(lo,b); hi=Math.max(hi,b); } }
+  if(hi-lo<1e-9) hi=lo+1;
+  s.sy=S4.H/(hi-lo); s.base=S4.y0-lo*s.sy;
+  const p=s.g.attributes.position, q=s.gg.attributes.position, pts=[];
+  for(let i=0;i<=NR;i++){ const X0=s.cx+(-S4.R+2*S4.R*i/NR)*S4.sx, y=s.base+fv[i]*s.sy, yg=s.base+gv[i]*s.sy;
+    p.setXYZ(i*2,X0,y,S4.cz-S4.d/2); p.setXYZ(i*2+1,X0,y,zf); pts.push(V(X0,y,zf+0.01));
+    q.setXYZ(i*2,X0,yg,zf+0.06); q.setXYZ(i*2+1,X0,yg,zf+0.36); }
+  p.needsUpdate=true; q.needsUpdate=true; s.g.computeVertexNormals(); s.g.computeBoundingSphere(); s.gg.computeBoundingSphere();
+  s.gm.visible=acGrad; s.gdot.visible=acGrad;
   s.front.geometry.setFromPoints(pts);
-  s.hax.geometry.setFromPoints([V(s.cx-6*S4.sx-0.3,S4.y0+d.off,zf),V(s.cx+6*S4.sx+0.3,S4.y0+d.off,zf)]);
-  s.mat.color.setHex(d.color); s.mat.emissive.setHex(d.color);
+  s.hax.geometry.setFromPoints([V(s.cx-2.7,s.base,zf),V(s.cx+2.7,s.base,zf)]);
+  s.hi.el.textContent=shortN(hi); s.lo.el.textContent=shortN(lo);
   s.head.el.innerHTML=d.n+' · '+d.fm;
-  $('#acN'+s.idx).innerHTML=d.n+' · '+d.fm; $('#acD'+s.idx).innerHTML=d.d;
-  $$('[data-slot="'+s.idx+'"]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.af===s.key));
+  $('#acN'+s.idx).innerHTML=d.n+' · '+d.fm; $('#acD'+s.idx).innerHTML='<b>'+d.n+'</b> — '+d.d;
+  $('#acSel'+s.idx).value=s.key;
 }
-const slots=[mkSlot(S4.cx-2.75,'relu',0),mkSlot(S4.cx+2.75,'sig',1)];
-line([V(slots[1].cx-2.6,S4.y0+3.6,zf),V(slots[1].cx+2.6,S4.y0+3.6,zf)],0xffffff,0.3);
-label('1',V(slots[1].cx-2.9,S4.y0+3.6,zf),'note',4); const loLab=label('0',V(slots[1].cx-2.9,S4.y0,zf),'note',4);
+const slots=[mkSlot(S4.cx-2.9,'relu',0),mkSlot(S4.cx+2.9,'sigmoid',1)];
+[0,1].forEach(k=>{ const sel=$('#acSel'+k); sel.innerHTML=Object.keys(AF).map(key=>'<option value="'+key+'">'+AF[key].n+'</option>').join('');
+  sel.onchange=()=>{ slots[k].key=sel.value; fillSlot(slots[k]); acRender(); }; });
 let acZ=0.439;
-putChar('fly','fruitfly',4,V(S4.cx,0,S4.cz+4.2),0,'think','');
+putChar('fly','fruitfly',4,V(S4.cx,0,S4.cz+4.6),0,'think','');
 function acRender(){
   $('#acZ').value=acZ; $('#acZO').textContent=fmt(acZ,2);
-  const v=slots.map(s=>{ const d=AF[s.key], val=d.f(acZ), x=s.cx+acZ*S4.sx, y=S4.y0+d.off+val*d.sy;
-    s.dot.position.set(x,y,zf+0.05); s.lab.pos.set(x,y+0.75,zf); s.lab.el.textContent='f('+fmt(acZ,2)+') = '+fmt(val);
-    s.drop.geometry.setFromPoints([V(x,S4.y0+d.off,zf+0.05),V(x,y,zf+0.05)]); return val; });
-  $('#acR').textContent=fmt(v[0]); $('#acS').textContent=fmt(v[1]);
-  loLab.el.textContent=AF[slots[1].key].lo;
+  const v=slots.map(s=>{ const d=AF[s.key], val=d.f(acZ), gr=dF(d.f,acZ), x=s.cx+acZ*S4.sx, y=s.base+val*s.sy;
+    s.dot.position.set(x,y,zf+0.05); s.gdot.position.set(x,s.base+gr*s.sy,zf+0.4);
+    s.lab.pos.set(x,Math.max(y,s.base)+0.75,zf); s.lab.el.textContent='f('+fmt(acZ,2)+') = '+fmt(val);
+    s.drop.geometry.setFromPoints([V(x,s.base,zf+0.05),V(x,y,zf+0.05)]);
+    $('#acG'+s.idx).textContent='기울기 '+fmt(gr); return [val,gr]; });
+  $('#acR').textContent=fmt(v[0][0]); $('#acS').textContent=fmt(v[1][0]);
   const n0=AF[slots[0].key].n, n1=AF[slots[1].key].n;
-  const t='x = '+fmt(acZ,2)+'일 때 '+n0+'는 <b>'+fmt(v[0],2)+'</b>, '+n1+'는 <b>'+fmt(v[1],2)+'</b>입니다.';
-  if(acZ<0){ act('fly','think','E04'); say('fly','음수를 넣었습니다. '+t); }
-  else if(acZ>4){ act('fly','explain'); say('fly','큰 값을 넣었습니다. '+t); }
+  const t='x = '+fmt(acZ,2)+'일 때 '+n0+'는 <b>'+fmt(v[0][0],2)+'</b>, '+n1+'는 <b>'+fmt(v[1][0],2)+'</b>입니다.';
+  const flat=acGrad&&(Math.abs(v[0][1])<0.02||Math.abs(v[1][1])<0.02);
+  if(flat){ act('fly','think','E04'); say('fly',t+' 기울기가 <b>0에 가까운</b> 쪽은 고치라는 신호가 거의 안 지나갑니다.'); }
   else { act('fly','think'); say('fly',t); }
 }
-$$('[data-af]').forEach(b=>b.onclick=()=>{ const s=slots[+b.dataset.slot]; s.key=b.dataset.af; fillSlot(s); acRender(); });
+$('#acGrad').onclick=e=>{ acGrad=!acGrad; e.target.setAttribute('aria-pressed',acGrad); slots.forEach(fillSlot); acRender(); };
 $('#acZ').oninput=e=>{ acZ=+e.target.value; acRender(); };
-$('#acFromN').onclick=()=>{ acZ=Math.max(-6,Math.min(6,nCalc().z)); acRender(); };
+$('#acFromN').onclick=()=>{ acZ=Math.max(-S4.R,Math.min(S4.R,nCalc().z)); acRender(); };
 slots.forEach(fillSlot); acRender();
 
 /* ================= ⑤ 학습 한 바퀴 ================= */
