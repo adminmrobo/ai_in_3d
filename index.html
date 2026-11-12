@@ -3,80 +3,268 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>3D로 설명하는 AI</title>
-<meta name="description" content="AI의 원리를 직접 돌려 보고 만져 보는 3D 해설 시리즈">
+<title>신경망 연구소 — 3D로 설명하는 AI</title>
+<meta name="description" content="신경망 27종을 한 층씩 3D로 살펴보는 27층 건물, 신경망 연구소">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#0a0f1e;--panel:#111a30;--panel2:#18233f;--line:#27345a;--text:#e9edf9;--muted:#9aa7c7;--pink:#ff8fc7;--blue:#6fb1ff;--yellow:#ffd76a;--green:#7fe0a8;--purple:#b79cff}
+:root{--bg:#0a0f1e;--panel:#111a30;--panel2:#18233f;--line:#27345a;--text:#e9edf9;--muted:#9aa7c7;--acc:#6fb1ff}
 *{box-sizing:border-box}
-body{margin:0;background:radial-gradient(120% 60% at 50% 0%,#17224a 0%,var(--bg) 60%) no-repeat var(--bg);color:var(--text);font-family:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;font-size:16px;line-height:1.7;-webkit-font-smoothing:antialiased}
-.wrap{max-width:1040px;margin:0 auto;padding:56px 22px 60px}
-.tag{color:var(--yellow);font-weight:700;font-size:13px}
-h1{font-size:clamp(30px,5vw,44px);font-weight:900;letter-spacing:-.03em;line-height:1.25;margin:6px 0 14px}
-.lead{color:var(--muted);max-width:640px;margin:0 0 6px}
-.by{color:var(--muted);font-size:14px;margin:0 0 40px}
-h2{font-size:14px;color:var(--muted);font-weight:700;margin:0 0 14px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:18px}
-.card{display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden;color:inherit;text-decoration:none;transition:transform .15s,border-color .15s}
-a.card:hover{transform:translateY(-3px);border-color:var(--c)}
-a.card:focus-visible{outline:2px solid #fff;outline-offset:3px}
-.thumb{aspect-ratio:3/2;background:#0d1530;display:grid;place-items:center;border-bottom:1px solid var(--line)}
-.thumb img{width:100%;height:100%;object-fit:cover;display:block}
-.thumb span{color:var(--line);font-size:54px;font-weight:900}
-.body{padding:16px 18px 18px;display:flex;flex-direction:column;gap:6px;flex:1}
-.no{font-size:12.5px;font-weight:700;color:var(--c)}
-.card h3{margin:0;font-size:19px;font-weight:700;letter-spacing:-.01em}
-.card p{margin:0;color:var(--muted);font-size:14px}
-.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-.chips span{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:1px 9px;color:var(--muted)}
-.soon{opacity:.62}
-.soon .no::after{content:" · 준비 중"}
-footer{margin-top:48px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
-footer p{margin:0 0 4px}
-@media (prefers-reduced-motion:reduce){.card{transition:none}}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--text);font-family:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;font-size:15px;line-height:1.65;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;display:flex;flex-direction:column;overflow:hidden}
+button{font:inherit;color:inherit}
+header{display:flex;align-items:baseline;gap:14px;padding:11px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+header small{font-size:12px;font-weight:700;color:#ffd76a}
+header h1{font-size:22px;margin:0;font-weight:900;letter-spacing:-.02em}
+header span{color:var(--muted);font-size:13px;margin-left:auto}
+main{flex:1;display:grid;grid-template-columns:minmax(0,1fr) 410px;min-height:0}
+#stage{position:relative;min-height:0;overflow:hidden;background:radial-gradient(120% 90% at 50% 0%,#17224a 0%,#0a0f1e 62%)}
+#stage canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+#labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.lb{position:absolute;left:0;top:0;white-space:nowrap;font-size:11.5px;font-weight:700;color:var(--text);text-shadow:0 1px 3px #000,0 0 8px #0a0f1e;will-change:transform}
+.lb b{display:inline-block;min-width:22px;color:var(--c)}
+.lb.sel{font-size:14px;background:var(--c);color:#0a0f1e;text-shadow:none;border-radius:999px;padding:1px 11px}
+.lb.sel b{color:#0a0f1e}
+.lb.sign{font-size:17px;font-weight:900;background:#fff;color:#0a0f1e;text-shadow:none;border-radius:8px;padding:3px 14px}
+#hint{position:absolute;left:14px;bottom:12px;font-size:12px;color:var(--muted);background:#0a0f1ecc;border:1px solid var(--line);border-radius:8px;padding:4px 10px}
+#fail{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:30px;color:var(--muted)}
+aside{border-left:1px solid var(--line);background:var(--panel);overflow-y:auto;padding:18px 18px 26px}
+aside h2{font-size:21px;font-weight:900;letter-spacing:-.02em;margin:0 0 4px;color:var(--c,var(--acc));line-height:1.3}
+aside h3{font-size:13px;margin:20px 0 8px;color:var(--muted);font-weight:700}
+aside p{margin:0 0 10px}
+#card{background:var(--panel2);border:1px solid var(--line);border-left:4px solid var(--c,var(--acc));border-radius:0 12px 12px 0;padding:14px 16px}
+#card .grp{font-size:12.5px;font-weight:700;color:var(--c)}
+#card .en{color:var(--muted);font-size:13px;margin:0 0 8px}
+.chip{display:inline-block;font-size:12px;border:1px solid var(--line);border-radius:999px;padding:1px 9px;color:var(--muted);margin-right:4px}
+.go{display:inline-block;margin-top:10px;background:var(--c,var(--acc));color:#0a0f1e;font-weight:700;border-radius:8px;padding:7px 14px;text-decoration:none}
+.go.ghost{background:transparent;color:var(--text);border:1px solid var(--line);font-weight:500}
+.grpname{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);margin:12px 0 6px}
+.grpname i{width:10px;height:10px;border-radius:3px;background:var(--c)}
+.el{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.el button{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:5px 4px;cursor:pointer;font-size:12.5px;text-align:center;line-height:1.3}
+.el button b{display:block;font-size:11px;color:var(--c);font-weight:700}
+.el button:hover{border-color:var(--c)}
+.el button[aria-pressed="true"]{background:var(--c);border-color:var(--c);color:#0a0f1e;font-weight:700}
+.el button[aria-pressed="true"] b{color:#0a0f1e}
+.el button:focus-visible,.go:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.foot{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+.foot p{margin:0 0 4px}.foot a{color:inherit}
+@media (max-width:860px){
+  body{overflow:auto;height:auto} main{display:block}
+  #stage{height:58vh;min-height:340px}
+  aside{border-left:0;border-top:1px solid var(--line);overflow:visible}
+  header span{display:none}
+  .lb{font-size:10px}
+}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="tag">ahnboat lab · 3D 해설 시리즈</div>
-  <h1>3D로 설명하는 AI</h1>
-  <p class="lead">그림으로만 보던 AI의 원리를 3D 판 위에 올렸습니다. 돌려 보고, 값을 바꿔 보고, 연구실 식구들의 안내를 따라가면 됩니다.</p>
-  <p class="by">글 · 안상선 ((주)M-Robo 대표)</p>
-
-  <h2>편 고르기</h2>
-  <div class="grid">
-    <a class="card" href="math_behind_ai/" style="--c:var(--pink)">
-      <div class="thumb"><img src="assets/cover_01.webp" alt="손실 지형, 신경망, 뉴런, 활성화 함수, 학습 구역이 놓인 3D 판"></div>
-      <div class="body">
-        <div class="no">01</div>
-        <h3>AI 뒤에 있는 수학</h3>
-        <p>손실을 줄이는 공 굴리기부터 뉴런 하나의 계산, 작은 신경망이 실제로 배우는 한 바퀴까지.</p>
-        <div class="chips"><span>손실 지형</span><span>뉴런</span><span>활성화 함수</span><span>학습</span></div>
-      </div>
-    </a>
-    <div class="card soon" style="--c:var(--blue)">
-      <div class="thumb"><span>02</span></div>
-      <div class="body">
-        <div class="no">02</div>
-        <h3>미니배치 경사하강</h3>
-        <p>데이터를 조금씩만 보고 내려가면 왜 싸고, 왜 흔들리고, 그래도 왜 도착하는지.</p>
-      </div>
-    </div>
-    <div class="card soon" style="--c:var(--green)">
-      <div class="thumb"><span>03</span></div>
-      <div class="body">
-        <div class="no">03</div>
-        <h3>곡면의 기울기</h3>
-        <p>접선 두 개와 법선 하나로, 공이 그 방향으로 가는 이유를 봅니다.</p>
-      </div>
-    </div>
+<header>
+  <small>3D로 설명하는 AI</small>
+  <h1>신경망 연구소</h1>
+  <span>글 · 안상선 ((주)M-Robo 대표)</span>
+</header>
+<main>
+  <div id="stage">
+    <canvas id="gl"></canvas>
+    <div id="labels"></div>
+    <div id="hint">끌기: 돌려 보기 · 휠/두 손가락: 확대 · 층 누르기: 그 층으로</div>
+    <div id="fail">3D 화면을 불러오지 못했습니다.<br>인터넷 연결과 WebGL 지원을 확인해 주세요. 오른쪽 엘리베이터 단추는 그대로 쓸 수 있습니다.</div>
   </div>
+  <aside>
+    <div id="card"></div>
+    <h3>엘리베이터</h3>
+    <div id="lift"></div>
+    <div class="foot">
+      <p>층 구성은 <a href="https://adminmrobo.github.io/neural_network_atlas/0_neural_network_essence.html">신경망 구조 도감</a>의 27종과 순서를 따릅니다. 원본 차트: Stefan Leijnen &amp; Fjodor van Veen, "The Neural Network Zoo" (CC BY).</p>
+      <p>캐릭터 이름·설정 © 안상선. 그림·모델은 저작권자의 허락 없이 쓸 수 없습니다.</p>
+    </div>
+  </aside>
+</main>
 
-  <footer>
-    <p>화면의 수치는 개념 설명용 예시입니다.</p>
-    <p>캐릭터 이름·설정 © 안상선. 그림·모델은 저작권자의 허락 없이 쓸 수 없습니다.</p>
-  </footer>
-</div>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js"}}</script>
+<script type="module">
+const GROUPS=[
+  {n:'기본 순방향 신경망',c:'#7fe0a8',d:'신호가 입력에서 출력으로 한 방향으로만 흐릅니다.'},
+  {n:'순환 신경망과 기억',c:'#6fb1ff',d:'출력이 다시 자신에게 돌아와 순서와 시간을 다룹니다.'},
+  {n:'오토인코더 계열',c:'#ffd76a',d:'입력을 좁은 통로로 압축했다가 복원하도록 배웁니다.'},
+  {n:'에너지·확률 기반 모델',c:'#ff9f6b',d:'층 구분 없이 연결되거나 확률적으로 켜지고 꺼집니다.'},
+  {n:'합성곱 신경망',c:'#ff8fc7',d:'작은 창을 이미지 전체에 같은 가중치로 반복 적용합니다.'},
+  {n:'생성·특수 구조',c:'#b79cff',d:'학습 방식이나 연결 방식이 독특한 구조들입니다.'}
+];
+// [약어, 영문, 한글, 묶음, 한 줄 소개, 신경망 아님 표시, 열린 층의 주소]
+const FLOORS=[
+  ['P','Perceptron','퍼셉트론',0,'입력에 가중치를 곱해 더하고, 문턱을 넘으면 켜지는 가장 단순한 뉴런 하나입니다.'],
+  ['FF','Feed Forward','순방향 신경망',0,'뉴런을 층으로 쌓아 신호를 앞으로만 보냅니다.'],
+  ['RBF','Radial Basis Function Network','방사 기저 함수 신경망',0,'기준점에서 얼마나 가까운지로 반응하는 뉴런을 씁니다.'],
+  ['DFF','Deep Feed Forward','심층 순방향 신경망',0,'은닉층을 여러 겹 쌓은 순방향 신경망입니다. 다층 퍼셉트론(MLP)이라고도 합니다.'],
+  ['RNN','Recurrent Neural Network','순환 신경망',1,'방금 낸 출력을 다시 받아, 순서가 있는 데이터를 다룹니다.'],
+  ['LSTM','Long Short-Term Memory','장단기 기억',1,'문(게이트) 세 개로 기억할 것과 잊을 것을 고릅니다.'],
+  ['GRU','Gated Recurrent Unit','게이트 순환 유닛',1,'LSTM을 문 두 개로 줄인 가벼운 구조입니다.'],
+  ['AE','Auto Encoder','오토인코더',2,'입력을 좁게 압축했다가 다시 복원하며 핵심만 남깁니다.'],
+  ['VAE','Variational Auto Encoder','변분 오토인코더',2,'압축한 자리를 확률 분포로 두어 새 데이터를 만들 수 있습니다.'],
+  ['DAE','Denoising Auto Encoder','잡음 제거 오토인코더',2,'일부러 망가뜨린 입력에서 원본을 되살리도록 배웁니다.'],
+  ['SAE','Sparse Auto Encoder','희소 오토인코더',2,'한 번에 적은 수의 뉴런만 켜지도록 제한합니다.'],
+  ['MC','Markov Chain','마르코프 연쇄',3,'지금 상태만 보고 다음 상태로 넘어갈 확률을 정합니다.',1],
+  ['HN','Hopfield Network','홉필드 네트워크',3,'모든 뉴런이 서로 연결되어, 저장해 둔 패턴을 떠올립니다.'],
+  ['BM','Boltzmann Machine','볼츠만 머신',3,'뉴런이 확률적으로 켜지고 꺼지며 데이터의 분포를 배웁니다.'],
+  ['RBM','Restricted Boltzmann Machine','제한 볼츠만 머신',3,'같은 층끼리의 연결을 없애 학습을 쉽게 한 볼츠만 머신입니다.'],
+  ['DBN','Deep Belief Network','심층 신뢰 신경망',3,'제한 볼츠만 머신을 여러 층 쌓아 한 층씩 학습합니다.'],
+  ['DCN','Deep Convolutional Network','심층 합성곱 신경망',4,'작은 창을 이미지 위로 옮겨 가며 무늬를 찾습니다. 흔히 CNN이라고 부릅니다.'],
+  ['DN','Deconvolutional Network','역합성곱 신경망',4,'합성곱을 거꾸로 돌려, 작은 특징에서 큰 이미지를 만듭니다.'],
+  ['DCIGN','Deep Convolutional Inverse Graphics Network','심층 합성곱 역그래픽스 신경망',4,'합성곱으로 압축하고 역합성곱으로 다시 그립니다.'],
+  ['GAN','Generative Adversarial Network','생성적 적대 신경망',5,'만드는 쪽과 가려내는 쪽이 겨루며 함께 실력이 늡니다.'],
+  ['LSM','Liquid State Machine','액체 상태 머신',5,'무작위로 연결된 스파이크 뉴런에 신호를 흘리고, 출력 쪽만 학습합니다.'],
+  ['ELM','Extreme Learning Machine','극한 학습 머신',5,'은닉층 가중치는 무작위로 두고, 출력층만 한 번에 계산합니다.'],
+  ['ESN','Echo State Network','에코 상태 신경망',5,'무작위 순환 연결은 그대로 두고, 출력 쪽만 학습합니다.'],
+  ['DRN','Deep Residual Network','심층 잔차 신경망',5,'층을 건너뛰는 지름길을 두어 아주 깊게 쌓습니다. ResNet이 대표입니다.'],
+  ['KN','Kohonen Network','코호넨 네트워크',5,'비슷한 데이터가 가까이 모이도록 스스로 지도를 만듭니다(자기조직화 지도).'],
+  ['SVM','Support Vector Machine','서포트 벡터 머신',5,'두 무리 사이를 가장 넓게 가르는 경계를 찾습니다.',1],
+  ['NTM','Neural Turing Machine','뉴럴 튜링 머신',5,'신경망에 읽고 쓰는 외부 기억 장치를 붙였습니다.']
+];
+const $=s=>document.querySelector(s);
+const ATLAS='https://adminmrobo.github.io/neural_network_atlas/';
+let sel=0; // 0 = 로비, 1~27 = 층
+let onSelect=()=>{};
+
+function renderCard(){
+  const card=$('#card');
+  if(sel===0){
+    card.style.setProperty('--c','#6fb1ff');
+    card.innerHTML='<div class="grp">로비 · 모든 층의 공통 기초</div><h2>AI 뒤에 있는 수학</h2>'+
+      '<p class="en">Mathematics Behind AI</p>'+
+      '<p>어느 층에 가든 필요한 것을 먼저 봅니다. 손실을 줄이는 공 굴리기, 뉴런 하나의 계산, 활성화 함수 16종, 순전파와 역전파까지.</p>'+
+      '<span class="chip">열림</span><span class="chip">연구실 식구 6명 안내</span><br>'+
+      '<a class="go" href="math_behind_ai/">로비로 들어가기</a>';
+  }else{
+    const f=FLOORS[sel-1], g=GROUPS[f[3]];
+    card.style.setProperty('--c',g.c);
+    card.innerHTML='<div class="grp">'+sel+'층 · '+g.n+'</div><h2>'+f[0]+' · '+f[2]+'</h2>'+
+      '<p class="en">'+f[1]+'</p><p>'+f[4]+'</p>'+
+      '<p style="font-size:13px;color:var(--muted)">이 묶음: '+g.d+'</p>'+
+      (f[6]?'<span class="chip">열림</span>':'<span class="chip">준비 중</span>')+(f[5]?'<span class="chip">엄밀히는 신경망이 아님</span>':'')+'<br>'+
+      (f[6]?'<a class="go" href="'+f[6]+'">'+sel+'층으로 들어가기</a>':'<a class="go ghost" href="'+ATLAS+'1_neural_network_atlas_chart.html">도감에서 그림 먼저 보기</a>');
+  }
+  document.querySelectorAll('#lift button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.f===sel));
+}
+(function buildLift(){
+  let h='<div class="grpname" style="--c:#6fb1ff"><i></i>로비</div><div class="el" style="--c:#6fb1ff"><button data-f="0" style="grid-column:span 4"><b>L</b>AI 뒤에 있는 수학</button></div>';
+  GROUPS.forEach((g,gi)=>{ h+='<div class="grpname" style="--c:'+g.c+'"><i></i>'+g.n+'</div><div class="el" style="--c:'+g.c+'">';
+    FLOORS.forEach((f,i)=>{ if(f[3]===gi) h+='<button data-f="'+(i+1)+'"><b>'+(i+1)+'F</b>'+f[0]+'</button>'; }); h+='</div>'; });
+  $('#lift').innerHTML=h;
+  $('#lift').addEventListener('click',e=>{ const b=e.target.closest('button'); if(b) select(+b.dataset.f); });
+})();
+function select(i){ sel=i; renderCard(); onSelect(); }
+renderCard();
+
+/* ---------------- 3D 건물 ---------------- */
+(async function(){
+const stage=$('#stage'), canvas=$('#gl'), labelsEl=$('#labels');
+let T; try{ T=await import('three'); }catch(e){ $('#fail').style.display='flex'; return; }
+let renderer; try{ renderer=new T.WebGLRenderer({canvas,antialias:true,alpha:true}); }catch(e){ $('#fail').style.display='flex'; return; }
+let lab=null; try{ const m=await import('./chars3d/lab3d.js'); lab=m.createLab3D(T,{outline:true,shadow:false}); }catch(e){ console.warn('lab3d',e); }
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+const scene=new T.Scene(), camera=new T.PerspectiveCamera(38,1,0.1,600);
+scene.add(new T.AmbientLight(0xffffff,2.0));
+const sun=new T.DirectionalLight(0xffffff,2.4); sun.position.set(20,60,30); scene.add(sun);
+const V=(x,y,z)=>new T.Vector3(x,y,z);
+const FH=1.6, W=10, D=7, BASE=2.4;       // 층 높이, 폭, 깊이, 로비 높이
+const fy=i=>BASE+(i-1)*FH;               // i층 바닥 높이
+const TOP=fy(28);
+
+// 땅과 로비
+const ground=new T.Mesh(new T.BoxGeometry(34,0.3,26),new T.MeshStandardMaterial({color:0x141d38,roughness:0.9})); ground.position.y=-0.15; scene.add(ground);
+const ge=new T.LineSegments(new T.EdgesGeometry(ground.geometry),new T.LineBasicMaterial({color:0x27345a})); ge.position.copy(ground.position); scene.add(ge);
+const picks=[];
+function block(w,h,d,y,color,idx){
+  const g=new T.BoxGeometry(w,h,d);
+  const m=new T.Mesh(g,new T.MeshStandardMaterial({color,emissive:color,emissiveIntensity:0.12,transparent:true,opacity:0.5,roughness:0.3}));
+  m.position.set(0,y+h/2,0); m.userData.f=idx; scene.add(m); picks.push(m);
+  const e=new T.LineSegments(new T.EdgesGeometry(g),new T.LineBasicMaterial({color})); e.position.copy(m.position); scene.add(e);
+  return m;
+}
+const meshes=[block(W+3,BASE-0.25,D+3,0,0x6fb1ff,0)];
+// 층마다 바닥판 + 유리 방
+FLOORS.forEach((f,i)=>{
+  const c=new T.Color(GROUPS[f[3]].c).getHex(), y=fy(i+1);
+  const slab=new T.Mesh(new T.BoxGeometry(W+0.5,0.16,D+0.5),new T.MeshStandardMaterial({color:0x1a2444,roughness:0.8})); slab.position.set(0,y-0.08,0); scene.add(slab);
+  meshes.push(block(W,FH-0.3,D,y,c,i+1));
+  // 방 안의 불빛 몇 개 (그 층에 뉴런이 있다는 표시)
+  const n=3+((i*7)%4);
+  for(let k=0;k<n;k++){ const b=new T.Mesh(new T.SphereGeometry(0.17,12,10),new T.MeshBasicMaterial({color:0xffffff}));
+    b.position.set(-W/2+1.2+k*((W-2.4)/(n-1)),y+0.55+((k+i)%2)*0.3,((k*5+i*3)%5-2)*0.9); scene.add(b); }
+});
+// 옥상과 간판
+const roof=new T.Mesh(new T.BoxGeometry(W+0.5,0.3,D+0.5),new T.MeshStandardMaterial({color:0x1a2444})); roof.position.set(0,TOP+0.05,0); scene.add(roof);
+const mast=new T.Mesh(new T.CylinderGeometry(0.08,0.08,4,8),new T.MeshStandardMaterial({color:0x9aa7c7})); mast.position.set(0,TOP+2.2,0); scene.add(mast);
+const beacon=new T.Mesh(new T.SphereGeometry(0.35,16,12),new T.MeshBasicMaterial({color:0xff3d8f})); beacon.position.set(0,TOP+4.3,0); scene.add(beacon);
+
+// 라벨
+const labels=[];
+function label(html,pos,cls,color){ const el=document.createElement('div'); el.className='lb '+(cls||''); el.innerHTML=html; if(color)el.style.setProperty('--c',color);
+  labelsEl.appendChild(el); const o={el,pos}; labels.push(o); return o; }
+const fl=[label('<b>L</b>로비 · AI 뒤에 있는 수학',V(-(W+3)/2-0.4,BASE/2,(D+3)/2),'','#6fb1ff')];
+FLOORS.forEach((f,i)=>fl.push(label('<b>'+(i+1)+'</b>'+f[0],V(-W/2-0.4,fy(i+1)+0.6,D/2),'',GROUPS[f[3]].c)));
+label('신경망 연구소',V(0,TOP+5.6,0),'sign');
+const tmp=new T.Vector3(); let W0=0,H0=0;
+function updateLabels(){
+  for(const o of labels){ tmp.copy(o.pos).project(camera);
+    if(tmp.z>1||tmp.z<-1){ o.el.style.display='none'; continue; } o.el.style.display='';
+    const x=(tmp.x*0.5+0.5)*W0, y=(-tmp.y*0.5+0.5)*H0, right=o.el.classList.contains('sign')?'-50%':'-100%';
+    o.el.style.transform='translate('+x.toFixed(1)+'px,'+y.toFixed(1)+'px) translate('+right+',-50%)'; }
+}
+
+// 연구실 식구: 로비 앞
+const crew=[];
+if(lab){ ['sia','haru','doctor','jupanbot','fruitfly','moa'].forEach((k,i)=>{
+  const o=lab.build(k,{unit:2.6,pose:i%2?'wave':'idle',expr:'E01'}); o.position.set(-6.5+i*2.6,0,(D+3)/2+2.2+(i%2)*0.8); scene.add(o); crew.push(o); }); }
+
+// 카메라
+const cur={x:0,y:20,z:0,r:140,th:0.9,ph:1.2}, goal={x:0,y:20,z:0,r:100,th:0.55,ph:1.25};
+let aspect=1.5, first=true;
+function aim(){
+  if(first){ goal.y=TOP/2+1; goal.r=(TOP+10)/(2*Math.tan(19*Math.PI/180))*1.08*Math.max(1,0.62/aspect*1.0); return; }
+  goal.y=sel===0?2.2:fy(sel)+0.6; goal.r=(sel===0?30:26)*Math.max(1,1.25/aspect);
+  goal.ph=sel===0?1.38:1.3;
+}
+onSelect=()=>{ first=false; aim();
+  meshes.forEach((m,i)=>{ m.material.opacity=i===sel?0.95:0.5; m.material.emissiveIntensity=i===sel?0.55:0.12; });
+  fl.forEach((o,i)=>o.el.classList.toggle('sel',i===sel)); };
+fl[0].el.classList.add('sel'); meshes[0].material.opacity=0.95; meshes[0].material.emissiveIntensity=0.55;
+
+const ptrs=new Map(); let moved=0, pinch=0;
+canvas.addEventListener('pointerdown',e=>{ canvas.setPointerCapture(e.pointerId); ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY}); moved=0;
+  if(ptrs.size===2){ const a=[...ptrs.values()]; pinch=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y); } });
+canvas.addEventListener('pointermove',e=>{ const p=ptrs.get(e.pointerId); if(!p)return;
+  const dx=e.clientX-p.x, dy=e.clientY-p.y; p.x=e.clientX; p.y=e.clientY; moved+=Math.abs(dx)+Math.abs(dy);
+  if(ptrs.size===1){ goal.th-=dx*0.006; goal.ph=Math.max(0.35,Math.min(1.54,goal.ph-dy*0.005)); }
+  else if(ptrs.size===2){ const a=[...ptrs.values()], d=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y); if(pinch) goal.r=Math.max(10,Math.min(260,goal.r*pinch/d)); pinch=d; } });
+const ray=new T.Raycaster(), ndc=new T.Vector2();
+function endPtr(e){ const had=ptrs.has(e.pointerId); ptrs.delete(e.pointerId); if(ptrs.size<2)pinch=0;
+  if(!had||moved>6||e.type!=='pointerup')return;
+  const r=canvas.getBoundingClientRect(); ndc.set(((e.clientX-r.left)/r.width)*2-1,-((e.clientY-r.top)/r.height)*2+1);
+  ray.setFromCamera(ndc,camera); const h=ray.intersectObjects(picks)[0]; if(h) select(h.object.userData.f); }
+canvas.addEventListener('pointerup',endPtr); canvas.addEventListener('pointercancel',endPtr);
+canvas.addEventListener('wheel',e=>{ e.preventDefault(); goal.r=Math.max(10,Math.min(260,goal.r*Math.exp(e.deltaY*0.001))); },{passive:false});
+
+function resize(){ const w=stage.clientWidth,h=stage.clientHeight; if(!w||!h||(w===W0&&h===H0))return; W0=w;H0=h;
+  renderer.setSize(w,h,false); aspect=w/h; camera.aspect=aspect; camera.updateProjectionMatrix(); aim(); }
+if(window.ResizeObserver) new ResizeObserver(resize).observe(stage); window.addEventListener('resize',resize); resize();
+const still=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+if(still) Object.assign(cur,goal);
+let last=performance.now(), time=0;
+function frame(now){
+  const dt=Math.min(0.05,(now-last)/1000); last=now; time+=dt;
+  const k=still?1:1-Math.pow(0.002,dt); for(const a in cur)cur[a]+=(goal[a]-cur[a])*k;
+  const sp=Math.sin(cur.ph);
+  camera.position.set(cur.x+cur.r*sp*Math.sin(cur.th),cur.y+cur.r*Math.cos(cur.ph),cur.z+cur.r*sp*Math.cos(cur.th));
+  camera.lookAt(cur.x,cur.y,cur.z);
+  beacon.scale.setScalar(1+0.25*Math.sin(time*3));
+  crew.forEach(o=>o.userData.update(time));
+  renderer.render(scene,camera); updateLabels(); requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+})();
+</script>
 </body>
 </html>
