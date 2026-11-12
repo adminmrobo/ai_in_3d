@@ -91,6 +91,27 @@ select{width:100%;background:var(--panel2);border:1px solid var(--line);border-r
 .crew{display:grid;grid-template-columns:repeat(2,1fr);gap:8px 10px}
 .crew div{display:grid;grid-template-columns:46px 1fr;gap:8px;align-items:center;font-size:12px;color:var(--muted);line-height:1.35}
 .crew b{display:block;color:var(--text);font-size:13px}
+.eqbox{background:#0a0f1e;border:1px solid var(--line);border-radius:10px;margin:12px 0 4px;padding:0}
+.eqbox summary{cursor:pointer;padding:8px 12px;font-size:13px;font-weight:700;color:var(--acc)}
+.eqbox .eqs{padding:0 14px 10px}
+.eqbox code{display:block;font-family:"Noto Sans KR",sans-serif;font-size:14.5px;font-weight:500;color:var(--text);margin:2px 0;white-space:normal}
+.eqbox p{font-size:12.5px;color:var(--muted);margin:6px 0 0}
+.why{font-size:13.5px;background:var(--panel2);border:1px dashed var(--line);border-radius:10px;padding:8px 12px;margin:6px 0 4px}
+.quiz{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:0 0 8px}
+.quiz b{display:block;font-size:14px;margin-bottom:6px}
+.quiz button{display:block;width:100%;text-align:left;background:#0a0f1e;border:1px solid var(--line);border-radius:8px;padding:6px 10px;margin:4px 0;cursor:pointer;font-size:13.5px}
+.quiz button:hover{border-color:var(--acc)}
+.quiz button.ok{border-color:var(--green);background:#123526}.quiz button.no{border-color:#ff7a7a;background:#3a1720}
+.quiz p{font-size:13px;margin:6px 0 0;color:var(--muted)}
+.refs{font-size:12px;color:var(--muted);padding-left:18px;margin:0}
+.refs li{margin-bottom:4px}
+.nextbtn{display:block;text-align:center;margin-top:14px;padding:10px;border-radius:10px;background:var(--acc);color:#0a0f1e!important;font-weight:700;text-decoration:none}
+#pbar{display:none;position:fixed;top:10px;right:12px;z-index:20;gap:6px;align-items:center;background:#0a0f1ee6;border:1px solid var(--line);border-radius:999px;padding:4px 6px 4px 14px;font-size:13.5px}
+#pbar button{background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:3px 11px;cursor:pointer}
+body.present header,body.present aside{display:none}
+body.present main{grid-template-columns:1fr}
+body.present #pbar{display:flex}
+body.present #stage{height:100vh}
 .foot{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
 .foot p{margin:0 0 4px}
 @media (max-width:860px){
@@ -105,6 +126,9 @@ select{width:100%;background:var(--panel2);border:1px solid var(--line);border-r
   .lb.num{font-size:10.5px;padding:0 4px}
   .lb.say{font-size:11px;max-width:150px}
   .lb.stage,.lb.wl{display:none!important}
+  header{padding:8px 12px}
+  nav{flex-wrap:nowrap;overflow-x:auto;width:100%;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+  body.present{overflow:hidden;height:100%}
 }
 </style>
 </head>
@@ -119,9 +143,10 @@ select{width:100%;background:var(--panel2);border:1px solid var(--line);border-r
     <button data-s="3" style="--c:var(--yellow)">③ 핵심 부품</button>
     <button data-s="4" style="--c:var(--green)">④ 그래프 판</button>
     <button data-s="5" style="--c:var(--purple)">⑤ 실험</button>
-    <a id="nPrev" href="#"></a><a href="../">건물</a><a id="nNext" href="#"></a>
+    <button id="pOn" type="button" style="border-style:dashed">발표 보기</button><a id="nPrev" href="#"></a><a href="../">건물</a><a id="nNext" href="#"></a>
   </nav>
 </header>
+<div id="pbar" role="toolbar" aria-label="발표 보기"><span id="pName"></span><button id="pL" aria-label="앞 구역">←</button><button id="pR" aria-label="다음 구역">→</button><button id="pX">나가기</button></div>
 <main>
   <div id="stage">
     <canvas class="gl" id="gl"></canvas>
@@ -174,8 +199,9 @@ const dbtn = demo.controls.filter(c => c.b); if (dbtn.length) ctl += '<div class
 const ioSay = EX.say || ('넣는 것은 <b>' + EX.io[0] + '</b>, 나오는 것은 <b>' + EX.io[1] + '</b>.');
 $('#panel').innerHTML =
   '<section data-p="0" class="on" style="--acc:' + GP.c + '">' +
-    '<div class="grp">' + fnum + '층 · ' + band(fnum) + ' · ' + GP.n + '</div><h2>' + F.ab + ' · ' + F.ko + '</h2><p class="en">' + F.en + '</p>' + (F.nn ? '<span class="chip">엄밀히는 신경망이 아님</span>' : '') +
+    '<div class="grp">' + fnum + '층 · ' + band(fnum) + ' · ' + GP.n + '</div><h2>' + F.ab + ' · ' + F.ko + '</h2><p class="en">' + F.en + '</p>' + (F.nn ? '<span class="chip">엄밀히는 신경망이 아님</span>' : '') + (F.nnWhy ? '<p class="why">' + F.nnWhy + '</p>' : '') +
     three(F.three) + talk(F.talk) +
+    '<details class="eqbox" open><summary>핵심 식 (접기·펼치기)</summary><div class="eqs">' + F.eq.map(q => '<code>' + q + '</code>').join('') + '<p>' + F.eqNote + '</p></div></details>' +
     '<h3>오늘 안내하는 연구실 식구</h3><div class="crew">' +
       [['haru', 'E01', '① 하는 일'], ['doctor', 'E13', '② 견주기'], ['jupanbot', 'E13', '③ 핵심 부품'], ['fruitfly', 'E13', '④ 그래프 판'], ['sia', 'E13', '⑤ 실험'], ['moa', 'E01', '⑤ 실험']].map(c => '<div><img src="../assets/' + c[0] + '_' + c[1] + '.webp" alt=""><span><b>' + NAME[c[0]] + '</b>' + c[2] + '</span></div>').join('') + '</div>' +
     '<h3>구역 고르기</h3><div class="cards">' +
@@ -185,6 +211,8 @@ $('#panel').innerHTML =
       '<button class="card" data-s="3" style="--c:var(--yellow)"><i>3</i><div><b>핵심 부품</b><span>이 구조에만 있는 장치</span></div></button>' +
       '<button class="card" data-s="4" style="--c:var(--green)"><i>4</i><div><b>그래프 판</b><span>' + CV.title + '</span></div></button>' +
       '<button class="card" data-s="5" style="--c:var(--purple)"><i>5</i><div><b>실험</b><span>값을 바꿔 가며 직접 돌려 보기</span></div></button></div>' +
+    '<h3>확인 문제</h3>' + F.quiz.map((q, i) => '<div class="quiz" data-q="' + i + '"><b>Q' + (i + 1) + '. ' + q[0] + '</b>' + q[1].map((o, j) => '<button type="button" data-o="' + j + '">' + 'ㄱㄴㄷ'[j] + '. ' + o + '</button>').join('') + '<p hidden></p></div>').join('') +
+    (fnum < 27 ? '<a class="nextbtn" href="?f=' + (fnum + 1) + '">↑ ' + (fnum + 1) + '층 ' + FLOORS[fnum].ab + ' · ' + FLOORS[fnum].ko + '로 올라가기</a>' : '<a class="nextbtn" href="../">꼭대기 층까지 왔습니다 · 건물 전체로 돌아가기</a>') +
     '<h3>더 알아보기</h3><div class="more">' +
       (F.rel || []).map(r => '<a class="btn" href="' + r[1] + '">진짜 뇌와 견주기 · ' + r[0] + '</a>').join('') +
       '<a class="btn" href="' + LINKS.ATLAS + '1_neural_network_atlas_chart.html">도감에서 ' + F.ab + ' 그림 보기</a>' +
@@ -192,6 +220,7 @@ $('#panel').innerHTML =
       '<a class="btn" href="../math_behind_ai/#training">학습이 도는 한 바퀴 (로비 ⑤)</a>' +
       '<a class="btn" href="' + LINKS.FISH + '02_loss_and_gradient.html">손실 함수와 경사하강법 (Fish Market 연구실 2장)</a>' +
       '<a class="btn" href="' + LINKS.FISH + '03_rate_batch_epoch.html">학습률·배치·에포크 (Fish Market 연구실 3장)</a></div>' +
+    '<h3>참고 문헌</h3><ol class="refs">' + F.refs.map(r => '<li>' + r + '</li>').join('') + '</ol>' +
     '<div class="foot"><p>글 · 안상선 ((주)M-Robo 대표)</p><p>27종의 구성은 신경망 구조 도감을 따릅니다. 원본 차트: Stefan Leijnen &amp; Fjodor van Veen, "The Neural Network Zoo" (CC BY). 구조 그림은 단순화해 새로 그렸습니다.</p><p>화면의 수치는 이 페이지 안에서 계산한 교육용 예시입니다.</p><p>캐릭터 이름·설정 © 안상선</p></div>' +
   '</section>' +
   '<section data-p="6" style="--acc:#ff7ab8"><h2>위층 · ' + F.ab + ' 설계도</h2>' +
@@ -210,7 +239,7 @@ $('#panel').innerHTML =
     '<h3>이 층의 세포</h3>' + legend + '</section>' +
   '<section data-p="3" style="--acc:var(--yellow)"><h2>③ 핵심 부품</h2>' +
     three(EX.part.t) + talk([['jupanbot', 'E13', EX.part.say]]) +
-    '<h3>부품 순서</h3><div class="sumbox">' + EX.part.items.map((it, i) => '<span>' + (i + 1) + '</span><b>' + it[2] + '</b>').join('') + (EX.part.loops || []).map(l => '<span>↺</span><b>' + l[2] + '</b>').join('') + '</div></section>' +
+    '<h3>부품 순서</h3><div class="sumbox">' + EX.part.items.map((it, i) => '<span>' + (i + 1) + '</span><b>' + it[2] + '</b>').join('') + (EX.part.loops || []).map(l => '<span>↺</span><b>' + l[2] + '</b>').join('') + '</div>' + (F.more ? '<p class="note">' + F.more + '</p>' : '') + '</section>' +
   '<section data-p="4" style="--acc:var(--green)"><h2>④ 그래프 판</h2>' +
     three([...CV.t, '노란 선은 넣은 값에서 올라가 곡선에 닿고, 왼쪽으로 꺾여 결과를 가리킵니다.']) +
     talk([['fruitfly', 'E13', '값을 직접 넣어 확인하겠습니다. 슬라이더를 움직여 보십시오.']]) +
@@ -223,6 +252,24 @@ function sync() { inputs.forEach(el => { const c = demo.controls.find(q => q.k =
 inputs.forEach(el => el.addEventListener('input', () => { const k = el.dataset.k; st[k] = el.type === 'range' ? +el.value : el.value; if (demo.change) demo.change(st, k); sync(); }));
 $$('#panel [data-b]').forEach(b => b.addEventListener('click', () => { demo.click(st, b.dataset.b); sync(); }));
 sync();
+$$('#panel .quiz').forEach(box => { const q = F.quiz[+box.dataset.q], out = box.querySelector('p');
+  box.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { const j = +b.dataset.o, ok = j === q[2];
+    box.querySelectorAll('button').forEach(x => x.classList.remove('ok', 'no')); b.classList.add(ok ? 'ok' : 'no'); if (!ok) box.querySelector('[data-o="' + q[2] + '"]').classList.add('ok');
+    out.hidden = false; out.innerHTML = (ok ? '<b style="display:inline;color:var(--green)">맞았습니다.</b> ' : '<b style="display:inline;color:#ff9a9a">정답은 ' + 'ㄱㄴㄷ'[q[2]] + '입니다.</b> ') + q[3]; })); });
+
+/* ---------- 발표 보기 ---------- */
+const PORD = [0, 6, 1, 2, 3, 4, 5], PNAME = { 0: '전체 보기', 6: '위층 · 설계도', 1: '① 하는 일', 2: '② 아래층과 견주기', 3: '③ 핵심 부품', 4: '④ 그래프 판', 5: '⑤ 실험' };
+const curS = () => { const b = $('#tabs button[aria-pressed="true"]'); return b ? +b.dataset.s : 0; };
+const goS = i => { const b = $('#tabs button[data-s="' + i + '"]'); if (b) b.click(); $('#pName').textContent = fnum + '층 ' + F.ab + ' · ' + PNAME[i]; };
+const pStep = d => { const k = PORD.indexOf(curS()); goS(PORD[(k + d + PORD.length) % PORD.length]); };
+function present(on) { document.body.classList.toggle('present', on); if (on) { goS(curS()); try { document.documentElement.requestFullscreen && document.documentElement.requestFullscreen().catch(() => {}); } catch (e) { } }
+  else { try { document.fullscreenElement && document.exitFullscreen(); } catch (e) { } } window.dispatchEvent(new Event('resize')); }
+$('#pOn').addEventListener('click', () => present(true)); $('#pX').addEventListener('click', () => present(false));
+$('#pL').addEventListener('click', () => pStep(-1)); $('#pR').addEventListener('click', () => pStep(1));
+document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && document.body.classList.contains('present')) present(false); });
+document.addEventListener('keydown', e => { if (!document.body.classList.contains('present') || /INPUT|SELECT/.test(e.target.tagName)) return;
+  if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); pStep(1); } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); pStep(-1); } else if (e.key === 'Escape') present(false); });
+if (new URLSearchParams(location.search).get('present') === '1') present(true);
 
 /* ---------- 실험 화면 (캔버스) ---------- */
 const cv = document.createElement('canvas'); cv.width = CW; cv.height = CH; const g2 = cv.getContext('2d');
@@ -411,7 +458,7 @@ function tickDemo(dt, draw) { if (demo.step) demo.step(st, dt); if (draw) demo.d
     [[SKY.w(V(3.2, -3, 0)), V(S2.cx + 2.6, 6.2, S2.cz)], [SKY.w(V(0, -3.2, 0)), V(0, 5.6, S3.cz)], [SKY.w(V(4, -2.6, 0)), V(S5.cx, 5.6, S5.cz - 2.2)]].forEach(q => { const m = new T.Mesh(cylGeo, bm); place(m, q[0], q[1], .07); G.add(m); }); })();
 
   /* ================= 카메라와 탭 ================= */
-  const VIEW = [{ t: [0, 6.5, 1], r: 66, th: 0, ph: .9 }, { t: [S1.cx + .5, 3.2, S1.cz + .8], r: 20.5, th: -.2, ph: 1.26 }, { t: [S2.cx - .4, 3.3, S2.cz + 1.2], r: 20.5, th: .22, ph: 1.26 }, { t: [.6, 3.9, S3.cz], r: 25.5, th: 0, ph: 1.32 },
+  const VIEW = [{ t: [0, 6.5, 1], r: 66, th: 0, ph: .9 }, { t: [S1.cx + .5, 3.2, S1.cz + .8], r: 20.5, th: -.2, ph: 1.26 }, { t: [S2.cx - .4, 3.3, S2.cz + 1.2], r: 20.5, th: .22, ph: 1.26 }, { t: [.6, 3.5, S3.cz], r: 24, th: 0, ph: 1.32 },
     { t: [S4.cx + .5, 3.1, S4.cz + 1.2], r: 20.5, th: -.12, ph: 1.3 }, { t: [S5.cx, 2.9, S5.cz - .4], r: 22, th: .08, ph: 1.12 }, { t: [0, 12.5, -5], r: 40, th: 0, ph: 1.2 }];
   const need = [1.75, 1.3, 1.3, 2.3, 1.3, 1.3, 2.0], cur = { x: 0, y: 6.5, z: 1, r: 90, th: .5, ph: .6 }, goal = { x: 0, y: 6.5, z: 1, r: 66, th: 0, ph: .9 }; let aspect = 1.5;
   function goView(i) { const v = VIEW[i]; goal.x = v.t[0]; goal.y = v.t[1]; goal.z = v.t[2]; goal.th = v.th; goal.ph = v.ph; goal.r = v.r * Math.max(1, need[i] / aspect); }

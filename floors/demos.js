@@ -602,8 +602,8 @@ const VIEWS = {
   LSTM: { t: '기억 세포와 문 세 개', f(s) { const q = this.run(s);
     return [PLOT({ series: [{ v: q.cs, c: C.a, n: '기억 세포' }, { v: q.hs, c: C.y, n: '밖으로 내보낸 값' }, { v: runRNN(.8, seqIn(true)), c: C.mu, n: '13층 RNN', dash: 1 }], ymin: -1.1, ymax: 1.1, marks: mark2, title: '시간 →' })]; } },
   LSM: { t: '스파이크가 웅덩이에 번지는 모습', f(s) {
-    const v = new Array(40 * 170).fill(0); s.ras.forEach((f, t) => f.forEach(i => { v[i * 170 + t] = 1; })); const rate = s.ras.map(f => f.length);
-    return [{ id: 'r', type: 'tiles', x: 0, z: -2.2, w: 10.2, rows: 40, cols: 170, hgt: 2.7, y0: 1.95, v, depth: .3, color: C.r, cellColor: i => i % 5 === 4 ? 0x6fb1ff : 0xff6b5e, title: '스파이크 · 가로: 시간 · 세로: 뉴런 40개 (위 8개가 입력) · 파랑: 억제 뉴런' },
+    const v = new Array(40 * 85).fill(0), o = 170 - s.ras.length; s.ras.forEach((f, t) => f.forEach(i => { v[i * 85 + ((t + o) >> 1)] = 1; }));  /* 두 순간을 한 칸으로 묶어 칸 수를 절반으로 */ const rate = s.ras.map(f => f.length);
+    return [{ id: 'r', type: 'tiles', x: 0, z: -2.2, w: 10.2, rows: 40, cols: 85, hgt: 2.7, y0: 1.95, v, depth: .3, color: C.r, cellColor: i => i % 5 === 4 ? 0x6fb1ff : 0xff6b5e, title: '스파이크 · 가로: 시간 · 세로: 뉴런 40개 (위 8개가 입력) · 파랑: 억제 뉴런' },
       PLOT({ x: 0, z: -2.2, y0: .2, h: 1.3, series: [{ v: rate.length > 1 ? rate : [0, 0], c: C.y, len: 170, n: '한순간에 쏜 뉴런 수' }], ymin: 0, ymax: 20 })]; } },
   HN: { t: '망가진 패턴을 되돌려 놓기', f(s) { const m = hMatch(s.s);
     return [...HP.map((p, k) => ({ id: 'm' + k, type: 'tiles', x: -4.3 + k * 1.3, z: -1.6, y0: 3.75, w: 1.05, rows: 5, cols: 5, v: p, mode: 1, depth: .15, color: C.mu, title: '저장 ' + HPN[k] })),

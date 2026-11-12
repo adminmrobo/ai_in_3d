@@ -112,7 +112,16 @@ select{width:100%;background:var(--panel2);border:1px solid var(--line);border-r
   .lb.big{font-size:12px;padding:0 5px}
   .lb.num{font-size:10.5px;padding:0 4px}
   .lb.stage,.lb.wl{display:none!important}
+  header{padding:8px 12px}
+  nav{flex-wrap:nowrap;overflow-x:auto;width:100%;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+  body.present{overflow:hidden;height:100%}
 }
+#pbar{display:none;position:fixed;top:10px;right:12px;z-index:20;gap:6px;align-items:center;background:#0a0f1ee6;border:1px solid var(--line);border-radius:999px;padding:4px 6px 4px 14px;font-size:13.5px}
+#pbar button{background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:3px 11px;cursor:pointer;color:var(--text)}
+body.present header,body.present aside{display:none}
+body.present main{grid-template-columns:1fr}
+body.present #pbar{display:flex}
+body.present #stage{height:100vh}
 </style>
 </head>
 <body>
@@ -129,8 +138,10 @@ select{width:100%;background:var(--panel2);border:1px solid var(--line);border-r
     <button data-s="3" style="--c:var(--yellow)">③ 뉴런 하나</button>
     <button data-s="4" style="--c:var(--green)">④ 활성화 함수</button>
     <button data-s="5" style="--c:var(--purple)">⑤ 순전파·역전파</button>
+    <button id="pOn" type="button" style="border-style:dashed">발표 보기</button>
   </nav>
 </header>
+<div id="pbar" role="toolbar" aria-label="발표 보기"><span id="pName"></span><button id="pL" aria-label="앞 구역">←</button><button id="pR" aria-label="다음 구역">→</button><button id="pX">나가기</button></div>
 <main>
   <div id="stage">
     <canvas id="gl"></canvas>
@@ -985,6 +996,20 @@ function frame(now){
 const h0=names.indexOf(location.hash.slice(1)); setActive(h0>0?h0:0,true);
 requestAnimationFrame(frame);
 })();
+
+/* ---------- 발표 보기 ---------- */
+(function(){const $q=x=>document.querySelector(x),PORD=[0,6,1,2,3,4,5];
+const curS=()=>{const b=$q('#tabs button[aria-pressed="true"]');return b?+b.dataset.s:0;};
+const goS=i=>{const b=$q('#tabs button[data-s="'+i+'"]');if(b){b.click();$q('#pName').textContent='로비 · '+b.textContent;}};
+const pStep=d=>{const k=PORD.indexOf(curS());goS(PORD[(k+d+PORD.length)%PORD.length]);};
+function present(on){document.body.classList.toggle('present',on);if(on){goS(curS());try{document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen().catch(()=>{});}catch(e){}}
+  else{try{document.fullscreenElement&&document.exitFullscreen();}catch(e){}}window.dispatchEvent(new Event('resize'));}
+$q('#pOn').addEventListener('click',()=>present(true));$q('#pX').addEventListener('click',()=>present(false));
+$q('#pL').addEventListener('click',()=>pStep(-1));$q('#pR').addEventListener('click',()=>pStep(1));
+document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&document.body.classList.contains('present'))present(false);});
+document.addEventListener('keydown',e=>{if(!document.body.classList.contains('present')||/INPUT|SELECT/.test(e.target.tagName))return;
+  if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '){e.preventDefault();pStep(1);}else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();pStep(-1);}else if(e.key==='Escape')present(false);});
+if(new URLSearchParams(location.search).get('present')==='1')present(true);})();
 </script>
 </body>
 </html>
