@@ -49,9 +49,9 @@
 ├─ index.html          신경망 연구소 건물 (첫 화면: 건물 전체, 엘리베이터로 층 고르기)
 ├─ math_behind_ai/     로비
 ├─ floors/
-│  ├─ index.html       층 페이지 하나 (주소 끝의 ?f=1 ~ ?f=27 로 층을 고름)
+│  ├─ index.html       층 페이지 하나 (주소 끝의 ?f=1 ~ ?f=27 로 층을 고름). 로비와 같은 구성: 상공의 설계도 + 구역 ①~⑤
 │  ├─ data.js          층 순서·이름·설명·대사·구조 그림 명세 (건물 첫 화면도 같이 씀)
-│  └─ demos.js         층별 실험 27개
+│  └─ demos.js         층별 실험 27개(⑤)와 구역 ①③④의 내용(EXTRA: 하는 일·핵심 부품·그래프 곡선)
 ├─ chars3d/lab3d.js    연구실 식구 3D 모델 (fruitfly-lab-expressions 사본)
 └─ assets/             얼굴 그림
 ```
