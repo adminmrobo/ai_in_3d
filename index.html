@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3D로 설명하는 AI</title>
+<meta name="description" content="AI의 원리를 직접 돌려 보고 만져 보는 3D 해설 시리즈">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0f1e;--panel:#111a30;--panel2:#18233f;--line:#27345a;--text:#e9edf9;--muted:#9aa7c7;--pink:#ff8fc7;--blue:#6fb1ff;--yellow:#ffd76a;--green:#7fe0a8;--purple:#b79cff}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(120% 60% at 50% 0%,#17224a 0%,var(--bg) 60%) no-repeat var(--bg);color:var(--text);font-family:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;font-size:16px;line-height:1.7;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1040px;margin:0 auto;padding:56px 22px 60px}
+.tag{color:var(--yellow);font-weight:700;font-size:13px}
+h1{font-size:clamp(30px,5vw,44px);font-weight:900;letter-spacing:-.03em;line-height:1.25;margin:6px 0 14px}
+.lead{color:var(--muted);max-width:640px;margin:0 0 6px}
+.by{color:var(--muted);font-size:14px;margin:0 0 40px}
+h2{font-size:14px;color:var(--muted);font-weight:700;margin:0 0 14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:18px}
+.card{display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden;color:inherit;text-decoration:none;transition:transform .15s,border-color .15s}
+a.card:hover{transform:translateY(-3px);border-color:var(--c)}
+a.card:focus-visible{outline:2px solid #fff;outline-offset:3px}
+.thumb{aspect-ratio:3/2;background:#0d1530;display:grid;place-items:center;border-bottom:1px solid var(--line)}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb span{color:var(--line);font-size:54px;font-weight:900}
+.body{padding:16px 18px 18px;display:flex;flex-direction:column;gap:6px;flex:1}
+.no{font-size:12.5px;font-weight:700;color:var(--c)}
+.card h3{margin:0;font-size:19px;font-weight:700;letter-spacing:-.01em}
+.card p{margin:0;color:var(--muted);font-size:14px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chips span{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:1px 9px;color:var(--muted)}
+.soon{opacity:.62}
+.soon .no::after{content:" · 준비 중"}
+footer{margin-top:48px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+footer p{margin:0 0 4px}
+@media (prefers-reduced-motion:reduce){.card{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="tag">ahnboat lab · 3D 해설 시리즈</div>
+  <h1>3D로 설명하는 AI</h1>
+  <p class="lead">그림으로만 보던 AI의 원리를 3D 판 위에 올렸습니다. 돌려 보고, 값을 바꿔 보고, 연구실 식구들의 안내를 따라가면 됩니다.</p>
+  <p class="by">글 · 안상선 ((주)M-Robo 대표)</p>
+
+  <h2>편 고르기</h2>
+  <div class="grid">
+    <a class="card" href="math_behind_ai/" style="--c:var(--pink)">
+      <div class="thumb"><img src="assets/cover_01.webp" alt="손실 지형, 신경망, 뉴런, 활성화 함수, 학습 구역이 놓인 3D 판"></div>
+      <div class="body">
+        <div class="no">01</div>
+        <h3>AI 뒤에 있는 수학</h3>
+        <p>손실을 줄이는 공 굴리기부터 뉴런 하나의 계산, 작은 신경망이 실제로 배우는 한 바퀴까지.</p>
+        <div class="chips"><span>손실 지형</span><span>뉴런</span><span>활성화 함수</span><span>학습</span></div>
+      </div>
+    </a>
+    <div class="card soon" style="--c:var(--blue)">
+      <div class="thumb"><span>02</span></div>
+      <div class="body">
+        <div class="no">02</div>
+        <h3>미니배치 경사하강</h3>
+        <p>데이터를 조금씩만 보고 내려가면 왜 싸고, 왜 흔들리고, 그래도 왜 도착하는지.</p>
+      </div>
+    </div>
+    <div class="card soon" style="--c:var(--green)">
+      <div class="thumb"><span>03</span></div>
+      <div class="body">
+        <div class="no">03</div>
+        <h3>곡면의 기울기</h3>
+        <p>접선 두 개와 법선 하나로, 공이 그 방향으로 가는 이유를 봅니다.</p>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>화면의 수치는 개념 설명용 예시입니다.</p>
+    <p>캐릭터 이름·설정 © 안상선. 그림·모델은 저작권자의 허락 없이 쓸 수 없습니다.</p>
+  </footer>
+</div>
+</body>
+</html>

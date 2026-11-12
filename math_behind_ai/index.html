@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3D로 설명하는 AI 01 — AI 뒤에 있는 수학</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0f1e; --panel:#111a30; --panel2:#18233f; --line:#27345a;
+  --text:#e9edf9; --muted:#9aa7c7;
+  --pink:#ff8fc7; --blue:#6fb1ff; --yellow:#ffd76a; --green:#7fe0a8; --purple:#b79cff; --red:#ff6b5e;
+  --acc:var(--blue);
+  --body:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --head:var(--body); --mono:var(--body);
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--text);font-family:var(--body);font-size:15px;line-height:1.65;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;display:flex;flex-direction:column;overflow:hidden}
+button,input,select{font:inherit;color:inherit}
+header{display:flex;align-items:center;gap:18px;padding:10px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.brand{display:flex;flex-direction:column;line-height:1.15;margin-right:auto}
+.brand small{font-size:12px;font-weight:700;color:var(--yellow);margin-bottom:2px}
+.brand h1{font-size:22px;margin:0;font-weight:900;letter-spacing:-.02em}
+nav{display:flex;gap:6px;flex-wrap:wrap}
+nav button{background:transparent;border:1px solid var(--line);border-radius:999px;padding:5px 13px;cursor:pointer;font-size:13.5px;color:var(--muted);white-space:nowrap}
+nav button:hover{color:var(--text);border-color:var(--muted)}
+nav button[aria-pressed="true"]{background:var(--c,var(--blue));border-color:var(--c,var(--blue));color:#0a0f1e;font-weight:700}
+nav button:focus-visible,.btn:focus-visible,.card:focus-visible{outline:2px solid #fff;outline-offset:2px}
+main{flex:1;display:grid;grid-template-columns:minmax(0,1fr) 390px;min-height:0}
+#stage{position:relative;min-height:0;overflow:hidden;background:radial-gradient(120% 90% at 50% 0%,#17224a 0%,#0a0f1e 62%)}
+#stage canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+#stage canvas:active{cursor:grabbing}
+#labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.lb{position:absolute;left:0;top:0;white-space:nowrap;font-size:12.5px;color:var(--text);text-shadow:0 1px 3px #000,0 0 8px #0a0f1e;will-change:transform}
+.lb.title{font-size:14.5px;font-weight:700;padding:3px 13px;border-radius:999px;color:#0a0f1e;background:var(--c);text-shadow:none}
+.lb.stage{font-size:13.5px;font-weight:700;color:var(--yellow)}
+.lb.num{font-size:12.5px;font-weight:500;background:#0a0f1ecc;border:1px solid var(--line);border-radius:6px;padding:0 6px;text-shadow:none}
+.lb.big{font-size:14.5px;font-weight:700;background:#0a0f1ee6;border:1px solid var(--c,var(--line));border-radius:8px;padding:1px 8px;text-shadow:none}
+.lb.note{color:var(--muted)}
+.lb.say{background:#fff;color:#141a2e;text-shadow:none;font-size:13px;font-weight:500;line-height:1.45;padding:6px 11px;border-radius:12px;white-space:normal;width:max-content;max-width:230px;box-shadow:0 4px 14px #0008}
+.lb.say::after{content:"";position:absolute;left:50%;bottom:-6px;width:12px;height:12px;background:#fff;transform:translateX(-50%) rotate(45deg);border-radius:2px}
+.lb.say b{color:#b0307a}
+.talk{display:grid;gap:8px;margin:12px 0 4px}
+.talk div{display:grid;grid-template-columns:46px 1fr;gap:10px;align-items:start}
+.talk img,.crew img{width:46px;height:46px;border-radius:50%;background:#22305a;border:2px solid var(--line);object-fit:cover}
+.talk p{margin:0;background:var(--panel2);border:1px solid var(--line);border-radius:4px 12px 12px 12px;padding:7px 11px;font-size:14px}
+.talk p b{display:block;font-size:12px;color:var(--acc)}
+.crew{display:grid;grid-template-columns:repeat(2,1fr);gap:8px 10px}
+.crew div{display:grid;grid-template-columns:46px 1fr;gap:8px;align-items:center;font-size:12px;color:var(--muted);line-height:1.35}
+.crew b{display:block;color:var(--text);font-size:13px}
+#hint{position:absolute;left:14px;bottom:12px;font-size:12px;color:var(--muted);background:#0a0f1ecc;border:1px solid var(--line);border-radius:8px;padding:4px 10px}
+#fail{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:30px;color:var(--muted)}
+aside{border-left:1px solid var(--line);background:var(--panel);overflow-y:auto;padding:18px 18px 26px}
+aside section{display:none}
+aside section.on{display:block}
+aside h2{font-size:21px;font-weight:900;letter-spacing:-.02em;margin:0 0 8px;color:var(--acc);line-height:1.3}
+aside h3{font-size:13px;margin:18px 0 8px;color:var(--muted);font-weight:700;letter-spacing:.04em}
+aside p{margin:0 0 10px}
+.three{background:var(--panel2);border-left:3px solid var(--acc);border-radius:0 10px 10px 0;padding:10px 12px;margin:10px 0 4px}
+.three p{margin:0 0 4px}.three p:last-child{margin:0}
+.kv{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.kv.k4{grid-template-columns:repeat(4,1fr)}
+.kv div{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:7px 10px}
+.kv span{display:block;font-size:11.5px;color:var(--muted)}
+.kv b{font-size:17px;font-weight:700}
+.row{display:grid;grid-template-columns:74px 1fr 52px;align-items:center;gap:8px;margin:5px 0}
+.row label{font-size:13px;color:var(--muted)}
+.row output{font-size:13px;font-weight:500;text-align:right}
+input[type=range]{width:100%;accent-color:var(--acc);height:22px}
+.btns{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.btn{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:13.5px}
+.btn:hover{border-color:var(--acc)}
+.btn.pri{background:var(--acc);border-color:var(--acc);color:#0a0f1e;font-weight:700}
+.btn[aria-pressed="true"]{border-color:var(--acc);color:var(--acc)}
+.status{font-size:13px;color:var(--yellow);min-height:21px;margin:6px 0 0}
+.formula{font-size:14.5px;background:#0a0f1e;border:1px solid var(--line);border-radius:10px;padding:10px 12px;overflow-x:auto;white-space:nowrap}
+.sumbox{background:#0a0f1e;border:1px solid var(--line);border-radius:10px;padding:10px 14px;display:grid;grid-template-columns:1fr auto;gap:0 14px;font-size:14px}
+.sumbox span{color:var(--muted);font-size:12.5px}
+.sumbox b{text-align:right;font-weight:400}
+.sumbox .tot{border-top:1px solid var(--muted);padding-top:3px;margin-top:3px;font-weight:600;color:var(--yellow)}
+.sumbox .out{color:var(--pink);font-weight:600}
+.cards{display:grid;gap:8px;margin-top:6px}
+.card{display:grid;grid-template-columns:34px 1fr;gap:10px;align-items:center;text-align:left;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:9px 12px;cursor:pointer}
+.card:hover{border-color:var(--c)}
+.card i{font-style:normal;font-weight:900;font-size:16px;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--c);color:#0a0f1e}
+.card b{display:block;font-size:14.5px}.card span{font-size:12.5px;color:var(--muted)}
+.steps{list-style:none;padding:0;margin:0;display:grid;gap:5px}
+.steps li{border:1px solid var(--line);border-radius:9px;padding:6px 10px;font-size:13.5px;color:var(--muted)}
+.steps li.now{border-color:var(--acc);color:var(--text);background:var(--panel2)}
+.steps li b{color:var(--acc)}
+#lossplot{width:100%;height:110px;display:block;background:#0a0f1e;border:1px solid var(--line);border-radius:10px}
+.legend{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin-top:8px}
+.legend i{flex:1;height:8px;border-radius:4px;background:linear-gradient(90deg,#2b6cff,#29d3e6,#7be07f,#ffd84d,#ff5a4d)}
+.foot{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+.foot p{margin:0 0 4px}
+@media (max-width:860px){
+  body{overflow:auto;height:auto}
+  main{display:block}
+  #stage{height:56vh;min-height:330px}
+  aside{border-left:0;border-top:1px solid var(--line);overflow:visible}
+  .brand h1{font-size:19px}
+  .lb.title{font-size:12px;padding:2px 9px}
+  .lb.say{font-size:11px;max-width:150px}
+  .lb{font-size:10.5px}
+  .lb.big{font-size:12px;padding:0 5px}
+  .lb.num{font-size:10.5px;padding:0 4px}
+  .lb.stage,.lb.wl{display:none!important}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <small><a href="../" style="color:inherit;text-decoration:none">3D로 설명하는 AI</a> · 01</small>
+    <h1>AI 뒤에 있는 수학</h1>
+  </div>
+  <nav id="tabs" aria-label="구역 이동">
+    <button data-s="0" aria-pressed="true">전체 보기</button>
+    <button data-s="1" style="--c:var(--pink)">① 손실 지형</button>
+    <button data-s="2" style="--c:var(--blue)">② 신경망</button>
+    <button data-s="3" style="--c:var(--yellow)">③ 뉴런 하나</button>
+    <button data-s="4" style="--c:var(--green)">④ 활성화 함수</button>
+    <button data-s="5" style="--c:var(--purple)">⑤ 학습 한 바퀴</button>
+  </nav>
+</header>
+<main>
+  <div id="stage">
+    <canvas id="gl"></canvas>
+    <div id="labels"></div>
+    <div id="hint">끌기: 돌려 보기 · 휠/두 손가락: 확대 · 구역 누르기: 들어가기</div>
+    <div id="fail">3D 화면을 불러오지 못했습니다.<br>인터넷 연결과 WebGL 지원을 확인해 주세요. 오른쪽 설명은 그대로 읽을 수 있습니다.</div>
+  </div>
+  <aside id="panel">
+
+    <section data-p="0" class="on">
+      <h2>한 장의 그림을 3D 판 위에 올렸습니다</h2>
+      <div class="three">
+        <p>AI가 "배운다"는 것은 <b>틀린 정도(손실)를 줄이는 숫자를 찾는 일</b>입니다.</p>
+        <p>그 숫자는 뉴런마다 달린 <b>가중치와 편향</b>입니다.</p>
+        <p>아래 다섯 구역을 차례로 돌면 이 과정이 한 바퀴 이어집니다.</p>
+      </div>
+      <h3>오늘 안내하는 연구실 식구</h3>
+      <div class="crew">
+        <div><img src="../assets/haru_E01.webp" alt=""><span><b>조수(하루)</b>① 공 굴리기</span></div>
+        <div><img src="../assets/doctor_E13.webp" alt=""><span><b>박사</b>② 해설</span></div>
+        <div><img src="../assets/jupanbot_E13.webp" alt=""><span><b>주판봇</b>③ 계산</span></div>
+        <div><img src="../assets/fruitfly_E13.webp" alt=""><span><b>초파리 연구원</b>④ 검증</span></div>
+        <div><img src="../assets/sia_E13.webp" alt=""><span><b>시아</b>⑤ 판정</span></div>
+        <div><img src="../assets/moa_E01.webp" alt=""><span><b>모아</b>⑤ 응원</span></div>
+      </div>
+      <h3>구역 고르기</h3>
+      <div class="cards">
+        <button class="card" data-s="1" style="--c:var(--pink)"><i>1</i><div><b>손실 지형</b><span>공을 굴려 가장 낮은 곳을 찾기</span></div></button>
+        <button class="card" data-s="2" style="--c:var(--blue)"><i>2</i><div><b>신경망 (멀리서 보기)</b><span>입력층 → 은닉층 → 출력층</span></div></button>
+        <button class="card" data-s="3" style="--c:var(--yellow)"><i>3</i><div><b>뉴런 하나가 하는 일</b><span>곱하고, 더하고, 구부리기</span></div></button>
+        <button class="card" data-s="4" style="--c:var(--green)"><i>4</i><div><b>활성화 함수</b><span>ReLU와 시그모이드</span></div></button>
+        <button class="card" data-s="5" style="--c:var(--purple)"><i>5</i><div><b>학습 한 바퀴</b><span>작은 신경망이 실제로 배우는 모습</span></div></button>
+      </div>
+      <div class="foot">
+        <p>글 · 안상선 ((주)M-Robo 대표)</p>
+        <p>구성 참고: 인포그래픽 「Mathematics Behind AI」(ML Tut). 3D 장면과 설명문은 새로 만들었습니다.</p>
+        <p>화면의 수치는 개념 설명용 예시입니다.</p>
+        <p>캐릭터 이름·설정 © 안상선</p>
+      </div>
+    </section>
+
+    <section data-p="1" style="--acc:var(--pink)">
+      <h2>① 손실을 줄이며 배우기</h2>
+      <div class="three">
+        <p>바닥의 두 방향은 <b>가중치 두 개</b>, 높이는 <b>손실</b>(틀린 정도)입니다.</p>
+        <p>공은 지금 선 자리에서 <b>가장 가파른 내리막</b>으로 한 걸음씩 갑니다.</p>
+        <p>한 걸음의 크기가 <b>학습률</b>입니다.</p>
+      </div>
+      <div class="talk"><div><img src="../assets/haru_E04.webp" alt=""><p><b>조수(하루)</b>박사님, 공은 어느 쪽이 내리막인지 어떻게 아나요?</p></div><div><img src="../assets/doctor_E13.webp" alt=""><p><b>박사</b>멀리 볼 필요가 없습니다. 발밑의 기울기만 보고 가장 가파른 쪽으로 한 걸음, 그것을 반복합니다.</p></div></div>
+      <div class="btns">
+        <button class="btn pri" id="gdPlay">▶ 굴리기</button>
+        <button class="btn" id="gdStep">한 걸음</button>
+        <button class="btn" id="gdReset">처음 자리로</button>
+      </div>
+      <div class="row"><label for="gdLr">학습률</label><input id="gdLr" type="range" min="0.05" max="4" step="0.05" value="0.4"><output id="gdLrO">0.40</output></div>
+      <h3>출발 위치</h3>
+      <div class="btns">
+        <button class="btn" data-start="-0.5,-1.5">언덕 옆</button>
+        <button class="btn" data-start="-1.7,0.3">왼쪽 비탈</button>
+        <button class="btn" data-start="1.8,-1.7">먼 구석</button>
+        <button class="btn" data-start="r">무작위</button>
+      </div>
+      <p style="font-size:13px;color:var(--muted)">지형을 직접 눌러도 그 자리에서 출발합니다.</p>
+      <div class="kv k4">
+        <div><span>걸음</span><b id="gdN">0</b></div>
+        <div><span>가중치 1</span><b id="gdA">0</b></div>
+        <div><span>가중치 2</span><b id="gdB">0</b></div>
+        <div><span>손실</span><b id="gdL">0</b></div>
+      </div>
+      <p class="status" id="gdS"></p>
+      <div class="legend">낮은 손실<i></i>높은 손실</div>
+      <h3>해 볼 것</h3>
+      <p>학습률을 끝(4.0)까지 올려 보세요. 공이 골짜기 바닥을 계속 건너뛰며 끝내 자리를 잡지 못합니다. "왼쪽 비탈"에서 학습률 0.4로 출발하면 가장 낮은 곳이 아닌 <b>작은 웅덩이</b>에 멈추고, 2.0으로 올리면 웅덩이를 뛰어넘습니다.</p>
+    </section>
+
+    <section data-p="2" style="--acc:var(--blue)">
+      <h2>② 신경망을 멀리서 보면</h2>
+      <div class="three">
+        <p><b>입력층</b>은 데이터의 특징을 받습니다.</p>
+        <p><b>은닉층</b>은 여러 겹으로 복잡한 패턴을 배웁니다.</p>
+        <p><b>출력층</b>이 예측을 내놓습니다.</p>
+      </div>
+      <div class="talk"><div><img src="../assets/doctor_E13.webp" alt=""><p><b>박사</b>멀리서 보면 층은 세 종류뿐입니다. 받는 층, 배우는 층, 답하는 층.</p></div><div><img src="../assets/haru_E01.webp" alt=""><p><b>조수(하루)</b>선마다 숫자가 하나씩 붙어 있고, 그 숫자를 고치는 일이 학습이군요.</p></div></div>
+      <p>공 하나하나가 뉴런이고, 선 하나하나에 가중치가 하나씩 붙어 있습니다. 흐르는 빛은 신호가 왼쪽에서 오른쪽으로 전달되는 모습입니다.</p>
+      <h3>학습이 푸는 문제</h3>
+      <div class="formula">min<sub>w,b</sub> &nbsp;(1/n) Σ<sub>i=1…n</sub> ℒ( h(x<sub>i</sub>; w, b), y<sub>i</sub> )</div>
+      <p style="margin-top:10px">읽는 법: 데이터 n개에 대해 <b>예측 h(x)</b>와 <b>정답 y</b>의 차이(ℒ, 손실)를 평균 내고, 그 평균이 가장 작아지는 <b>가중치 w와 편향 b</b>를 찾습니다. ①번 구역의 공 굴리기가 바로 이 일입니다.</p>
+      <div class="kv">
+        <div><span>이 그림의 뉴런</span><b id="nnN">0</b></div>
+        <div><span>가중치(선) 수</span><b id="nnE">0</b></div>
+      </div>
+    </section>
+
+    <section data-p="3" style="--acc:var(--yellow)">
+      <h2>③ 뉴런 하나가 하는 일</h2>
+      <div class="three">
+        <p>입력마다 <b>가중치를 곱합니다.</b></p>
+        <p>모두 <b>더하고 편향을 보탭니다.</b></p>
+        <p><b>활성화 함수</b>로 구부려 다음 층에 넘깁니다.</p>
+      </div>
+      <div class="talk"><div><img src="../assets/jupanbot_E13.webp" alt=""><p><b>주판봇</b>곱하고, 더하고, 구부린다. 계산은 제가 맡습니다.</p></div><div><img src="../assets/fruitfly_E13.webp" alt=""><p><b>초파리 연구원</b>값을 바꿔도 맞는지 보겠습니다. 슬라이더를 움직여 보세요.</p></div></div>
+      <h3>입력</h3>
+      <div class="row"><label>입력 1</label><input type="range" data-n="x0" min="0" max="1" step="0.01"><output></output></div>
+      <div class="row"><label>입력 2</label><input type="range" data-n="x1" min="0" max="1" step="0.01"><output></output></div>
+      <div class="row"><label>입력 3</label><input type="range" data-n="x2" min="0" max="1" step="0.01"><output></output></div>
+      <h3>가중치와 편향</h3>
+      <div class="row"><label>가중치 1</label><input type="range" data-n="w0" min="-1" max="1" step="0.01"><output></output></div>
+      <div class="row"><label>가중치 2</label><input type="range" data-n="w1" min="-1" max="1" step="0.01"><output></output></div>
+      <div class="row"><label>가중치 3</label><input type="range" data-n="w2" min="-1" max="1" step="0.01"><output></output></div>
+      <div class="row"><label>편향</label><input type="range" data-n="b" min="-1" max="1" step="0.01"><output></output></div>
+      <div class="btns">
+        <button class="btn" data-act="sigmoid" aria-pressed="true">시그모이드</button>
+        <button class="btn" data-act="relu" aria-pressed="false">ReLU</button>
+        <button class="btn" id="nReset">처음 값으로</button>
+      </div>
+      <h3>계산</h3>
+      <div class="sumbox" id="nSum"></div>
+      <p style="font-size:13px;color:var(--muted);margin-top:10px">선의 굵기는 가중치의 크기, 파란색은 양수, 붉은색은 음수입니다.</p>
+    </section>
+
+    <section data-p="4" style="--acc:var(--green)">
+      <h2>④ 활성화 함수</h2>
+      <div class="three">
+        <p>더한 값을 그대로 넘기면 층을 아무리 쌓아도 <b>직선</b>밖에 못 그립니다.</p>
+        <p>활성화 함수가 값을 <b>구부려</b> 곡선 패턴을 배울 수 있게 합니다.</p>
+        <p>가장 자주 쓰는 두 가지가 ReLU와 시그모이드입니다.</p>
+      </div>
+      <div class="talk"><div><img src="../assets/fruitfly_E13.webp" alt=""><p><b>초파리 연구원</b>굳이 구부려야 합니까? 더하기만 해도 되지 않습니까?</p></div><div><img src="../assets/doctor_E13.webp" alt=""><p><b>박사</b>직선은 아무리 겹쳐도 직선입니다. 구부려야 곡선 모양의 패턴을 배웁니다.</p></div></div>
+      <div class="row"><label for="acZ">넣는 값 x</label><input id="acZ" type="range" min="-6" max="6" step="0.01" value="0.439"><output id="acZO"></output></div>
+      <div class="btns"><button class="btn" id="acFromN">③번 뉴런의 합계 넣기</button></div>
+      <div class="kv">
+        <div><span>ReLU · max(0, x)</span><b id="acR">0</b></div>
+        <div><span>시그모이드 · 1/(1+e<sup>−x</sup>)</span><b id="acS">0</b></div>
+      </div>
+      <h3>차이</h3>
+      <p><b>ReLU</b>는 음수를 0으로 막고 양수는 그대로 통과시킵니다. 계산이 가벼워 은닉층에 많이 씁니다.</p>
+      <p><b>시그모이드</b>는 어떤 값이든 0과 1 사이로 눌러 줍니다. "맞다/아니다"의 확률처럼 읽을 때 출력층에 씁니다.</p>
+    </section>
+
+    <section data-p="5" style="--acc:var(--purple)">
+      <h2>⑤ 학습 한 바퀴</h2>
+      <div class="three">
+        <p>이 작은 신경망은 지금 <b>실제로 학습</b>하고 있습니다.</p>
+        <p>예측하고, 틀린 정도를 재고, 거꾸로 돌아가며 가중치를 고칩니다.</p>
+        <p>이 네 단계를 반복하면 손실이 내려갑니다.</p>
+      </div>
+      <div class="talk"><div><img src="../assets/sia_E13.webp" alt=""><p><b>시아</b>예측과 정답의 차이는 제가 판정합니다.</p></div><div><img src="../assets/moa_E01.webp" alt=""><p><b>모아</b>맞힌 비율이 90%를 넘으면 제가 응원할게요!</p></div></div>
+      <ol class="steps" id="flSteps">
+        <li><b>1 순전파</b> · 입력이 앞으로 흘러 예측 ŷ이 나옵니다</li>
+        <li><b>2 손실 계산</b> · 예측과 정답의 차이를 잽니다</li>
+        <li><b>3 역전파</b> · 어느 가중치 탓인지 거꾸로 따집니다</li>
+        <li><b>4 가중치 갱신</b> · 손실이 줄어드는 쪽으로 조금 고칩니다</li>
+      </ol>
+      <div class="btns">
+        <button class="btn pri" id="flPlay">⏸ 멈춤</button>
+        <button class="btn" id="flFast" aria-pressed="false">빠르게</button>
+        <button class="btn" id="flReset">처음부터 다시</button>
+      </div>
+      <div class="kv k4" style="grid-template-columns:repeat(3,1fr)">
+        <div><span>반복</span><b id="flN">0</b></div>
+        <div><span>평균 손실</span><b id="flL">0</b></div>
+        <div><span>맞힌 비율</span><b id="flA">0</b></div>
+      </div>
+      <h3>손실 변화</h3>
+      <canvas id="lossplot" width="700" height="220" aria-label="반복에 따른 손실 변화 그래프"></canvas>
+      <p style="font-size:13px;color:var(--muted);margin-top:10px">연습 문제: 숫자 세 개를 받아 "입력1 + 입력2가 입력3보다 0.5 이상 큰가"를 맞히기. 예시 데이터 32개를 씁니다. 선이 밝을수록 가중치가 크고, 파랑은 양수, 붉은색은 음수입니다.</p>
+    </section>
+  </aside>
+</main>
+
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js"}}</script>
+<script type="module">
+(async function(){
+const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+const stage=$('#stage'), canvas=$('#gl'), labelsEl=$('#labels');
+let T; try{ T=await import('three'); }catch(e){ $('#fail').style.display='flex'; return; }
+let lab=null; try{ const m=await import('../chars3d/lab3d.js'); lab=m.createLab3D(T,{outline:true,shadow:false}); }catch(e){ console.warn('lab3d',e); }
+let renderer;
+try{ renderer=new T.WebGLRenderer({canvas,antialias:true,alpha:true}); }
+catch(e){ $('#fail').style.display='flex'; return; }
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+const scene=new T.Scene();
+const camera=new T.PerspectiveCamera(38,1,0.1,400);
+scene.add(new T.AmbientLight(0xffffff,2.2));
+const sun=new T.DirectionalLight(0xffffff,2.4); sun.position.set(8,20,12); scene.add(sun);
+const fill=new T.DirectionalLight(0x88aaff,0.9); fill.position.set(-12,8,-10); scene.add(fill);
+
+let G=scene; const groups=[null];
+function beginStation(){ G=new T.Group(); scene.add(G); groups.push(G); }
+const COL={pink:0xff8fc7,blue:0x6fb1ff,yellow:0xffd76a,green:0x7fe0a8,purple:0xb79cff,red:0xff6b5e};
+const CSS={1:'var(--pink)',2:'var(--blue)',3:'var(--yellow)',4:'var(--green)',5:'var(--purple)'};
+const V=(x,y,z)=>new T.Vector3(x,y,z);
+let active=0;
+
+/* ---------- labels ---------- */
+const labels=[];
+function label(html,pos,cls,st,anchor){
+  const el=document.createElement('div'); el.className='lb '+(cls||''); el.innerHTML=html;
+  if(st) el.style.setProperty('--c',CSS[st]);
+  labelsEl.appendChild(el);
+  const o={el,pos,st:st||0,always:(cls||'').includes('title'),anchor:anchor||'c'}; labels.push(o); return o;
+}
+const tmp=new T.Vector3();
+function updateLabels(w,h){
+  for(const o of labels){
+    const show=o.always?active===0:o.st===active;
+    if(!show){ if(o.vis!==false){o.el.style.display='none';o.vis=false;} continue; }
+    tmp.copy(o.pos).project(camera);
+    if(tmp.z>1||tmp.z<-1){ if(o.vis!==false){o.el.style.display='none';o.vis=false;} continue; }
+    if(o.vis!==true){o.el.style.display='';o.vis=true;}
+    const x=(tmp.x*0.5+0.5)*w, y=(-tmp.y*0.5+0.5)*h;
+    const ax=o.anchor==='l'?'0':(o.anchor==='r'?'-100%':'-50%'); const ay=o.anchor==='b'?'-100%':'-50%';
+    o.el.style.transform='translate('+x.toFixed(1)+'px,'+y.toFixed(1)+'px) translate('+ax+','+ay+')';
+  }
+}
+
+/* ---------- helpers ---------- */
+const UP=V(0,1,0);
+function place(m,a,b,r){
+  const d=new T.Vector3().subVectors(b,a), len=d.length()||1e-6;
+  m.position.copy(a).addScaledVector(d,0.5); m.scale.set(r,len,r);
+  m.quaternion.setFromUnitVectors(UP,d.multiplyScalar(1/len));
+}
+const cylGeo=new T.CylinderGeometry(1,1,1,12,1,true);
+function tube(a,b,r,color,parent){
+  const m=new T.Mesh(cylGeo,new T.MeshStandardMaterial({color,roughness:0.5}));
+  place(m,a,b,r); (parent||G).add(m); return m;
+}
+function ball(p,r,color,emis,parent){
+  const m=new T.Mesh(new T.SphereGeometry(r,24,18),new T.MeshStandardMaterial({color,roughness:0.35,emissive:color,emissiveIntensity:emis==null?0.25:emis}));
+  m.position.copy(p); (parent||G).add(m); return m;
+}
+function line(pts,color,opacity,parent){
+  const g=new T.BufferGeometry().setFromPoints(pts);
+  const l=new T.Line(g,new T.LineBasicMaterial({color,transparent:opacity<1,opacity:opacity==null?1:opacity}));
+  (parent||G).add(l); return l;
+}
+const pulseGeo=new T.SphereGeometry(0.1,10,8);
+function pulse(color,parent){
+  const m=new T.Mesh(pulseGeo,new T.MeshBasicMaterial({color})); (parent||G).add(m); return m;
+}
+const slabs=[];
+function slab(st,cx,cz,w,d,color){
+  const m=new T.Mesh(new T.BoxGeometry(w,0.3,d),new T.MeshStandardMaterial({color:0x141d38,roughness:0.9}));
+  m.position.set(cx,-0.15,cz); m.userData.st=st; G.add(m); slabs.push(m);
+  const e=new T.LineSegments(new T.EdgesGeometry(m.geometry),new T.LineBasicMaterial({color}));
+  e.position.copy(m.position); G.add(e);
+}
+const UNIT=2.7, cast={};
+function putChar(id,key,st,pos,ry,pose,text){
+  const info=lab?lab.ROSTER.find(r=>r.key===key):{h:0.9};
+  const c=cast[id]={key,st,pos,ry,pose,expr:'E13',obj:null,grp:groups[st]};
+  c.bub=label(text||'',V(pos.x,info.h*UNIT+0.45,pos.z),'say',st,'b');
+  if(!lab) c.bub.el.style.visibility='hidden';
+  buildChar(id);
+}
+function buildChar(id){ const c=cast[id]; if(!lab)return;
+  if(c.obj){ c.grp.remove(c.obj); lab.dispose(c.obj); }
+  const o=lab.build(c.key,{unit:UNIT,pose:c.pose,expr:c.expr}); o.position.copy(c.pos); o.rotation.y=c.ry; c.grp.add(o); c.obj=o; }
+function act(id,pose,expr){ const c=cast[id]; if(!c)return; expr=expr||'E13';
+  if(expr!==c.expr){ c.expr=expr; c.pose=pose; buildChar(id); }
+  else if(pose!==c.pose){ c.pose=pose; if(c.obj)c.obj.userData.setPose(pose); } }
+function say(id,html){ const c=cast[id]; if(c&&c.said!==html){ c.said=html; c.bub.el.innerHTML=html; } }
+const fmt=(v,n)=>Number(v).toFixed(n==null?3:n);
+const sigmoid=x=>1/(1+Math.exp(-x));
+
+/* ================= ① 손실 지형 ================= */
+beginStation();
+const S1={cx:-9,cz:-8,k:2.4};
+slab(1,S1.cx,S1.cz,12,11,COL.pink);
+label('① 손실 지형',V(S1.cx,0.5,S1.cz+5.5),'title',1);
+function Lf(a,b){
+  return 1.15-0.95*Math.exp(-((a-0.9)**2+(b-0.8)**2)/3.4)
+        -0.40*Math.exp(-((a+1.2)**2+(b-1.2)**2)/0.45)
+        +0.45*Math.exp(-((a+0.9)**2+(b+0.9)**2)/0.7);
+}
+function Lg(a,b){ const e=1e-4; return [(Lf(a+e,b)-Lf(a-e,b))/(2*e),(Lf(a,b+e)-Lf(a,b-e))/(2*e)]; }
+const hY=L=>0.5+L*2.7;
+const surfPos=(a,b,off)=>V(S1.cx+a*S1.k, hY(Lf(a,b))+(off||0), S1.cz+b*S1.k);
+const ramp=[[0x2b,0x6c,0xff],[0x29,0xd3,0xe6],[0x7b,0xe0,0x7f],[0xff,0xd8,0x4d],[0xff,0x5a,0x4d]];
+const _c=new T.Color();
+function rampCol(t){ t=Math.max(0,Math.min(0.9999,t))*4; const i=Math.floor(t),f=t-i,a=ramp[i],b=ramp[i+1];
+  _c.setRGB((a[0]+(b[0]-a[0])*f)/255,(a[1]+(b[1]-a[1])*f)/255,(a[2]+(b[2]-a[2])*f)/255,T.SRGBColorSpace); return [_c.r,_c.g,_c.b]; }
+
+let gmin={a:0,b:0,L:9}, lmax=0;
+for(let i=0;i<=80;i++)for(let j=0;j<=80;j++){ const a=-2+i/20,b=-2+j/20,l=Lf(a,b); if(l<gmin.L)gmin={a,b,L:l}; if(l>lmax)lmax=l; }
+let surfMesh;
+(function(){
+  const N=64, g=new T.PlaneGeometry(4*S1.k,4*S1.k,N,N); g.rotateX(-Math.PI/2);
+  const p=g.attributes.position, c=new Float32Array(p.count*3);
+  for(let i=0;i<p.count;i++){
+    const a=p.getX(i)/S1.k,b=p.getZ(i)/S1.k,l=Lf(a,b); p.setY(i,hY(l));
+    const rc=rampCol((l-gmin.L)/(lmax-gmin.L)); c[i*3]=rc[0];c[i*3+1]=rc[1];c[i*3+2]=rc[2];
+  }
+  g.setAttribute('color',new T.BufferAttribute(c,3)); g.computeVertexNormals();
+  surfMesh=new T.Mesh(g,new T.MeshStandardMaterial({vertexColors:true,side:T.DoubleSide,roughness:0.55,metalness:0.05}));
+  surfMesh.position.set(S1.cx,0,S1.cz); G.add(surfMesh);
+  const pts=[];
+  for(let i=0;i<=16;i++){ const u=-2+i*0.25;
+    for(let j=0;j<48;j++){ const v0=-2+j/12,v1=-2+(j+1)/12;
+      pts.push(surfPos(u,v0,0.015),surfPos(u,v1,0.015),surfPos(v0,u,0.015),surfPos(v1,u,0.015)); } }
+  G.add(new T.LineSegments(new T.BufferGeometry().setFromPoints(pts),new T.LineBasicMaterial({color:0xffffff,transparent:true,opacity:0.22})));
+  const ring=new T.Mesh(new T.TorusGeometry(0.42,0.045,8,40),new T.MeshBasicMaterial({color:0xffffff}));
+  ring.rotation.x=Math.PI/2; ring.position.copy(surfPos(gmin.a,gmin.b,0.06)); G.add(ring);
+  label('가장 낮은 손실',surfPos(gmin.a,gmin.b,-0.75),'note',1);
+  // 축
+  const o=V(S1.cx-5.2,0.05,S1.cz+5.2);
+  line([o,V(o.x+3,o.y,o.z)],COL.green,1); line([o,V(o.x,o.y,o.z-3)],COL.red,1); line([o,V(o.x,o.y+3,o.z)],COL.blue,1);
+  label('가중치 1',V(o.x+3.3,0.2,o.z),'',1,'l'); label('가중치 2',V(o.x,0.2,o.z-3.4),'',1); label('손실',V(o.x,3.4,o.z),'',1);
+})();
+const gd={a:-0.5,b:-1.5,sa:-0.5,sb:-1.5,n:0,play:false,t:0,lr:0.4,done:false};
+const gdBall=ball(V(0,0,0),0.24,0xff3b30,0.5);
+const TR=600, trArr=new Float32Array(TR*3), trGeo=new T.BufferGeometry();
+trGeo.setAttribute('position',new T.BufferAttribute(trArr,3));
+G.add(new T.Line(trGeo,new T.LineBasicMaterial({color:0x111111})));
+G.add(new T.Points(trGeo,new T.PointsMaterial({color:0x111111,size:6,sizeAttenuation:false})));
+const gdLab=label('',V(0,0,0),'big',1);
+function gdPush(){ if(gd.n>=TR)return; const p=surfPos(gd.a,gd.b,0.08); trArr.set([p.x,p.y,p.z],gd.n*3); trGeo.setDrawRange(0,gd.n+1); trGeo.attributes.position.needsUpdate=true; }
+putChar('haru','haru',1,V(S1.cx+5.25,0,S1.cz+4.9),-0.55,'explain','공을 굴려 볼게요. <b>▶ 굴리기</b>를 눌러 주세요.');
+function gdShow(){
+  const l=Lf(gd.a,gd.b); gdBall.position.copy(surfPos(gd.a,gd.b,0.24));
+  gdLab.pos.copy(gdBall.position).y+=0.8; gdLab.el.textContent='손실 '+fmt(l);
+  $('#gdN').textContent=gd.n; $('#gdA').textContent=fmt(gd.a,2); $('#gdB').textContent=fmt(gd.b,2); $('#gdL').textContent=fmt(l);
+}
+function gdStart(a,b){ act('haru','explain'); say('haru','출발! 발밑에서 가장 가파른 쪽으로 갑니다.'); gd.a=gd.sa=a; gd.b=gd.sb=b; gd.n=0; gd.done=false; $('#gdS').textContent=''; gdPush(); gdShow(); }
+function gdStep(){
+  if(gd.done)return;
+  const g=Lg(gd.a,gd.b), mag=Math.hypot(g[0],g[1]);
+  if(mag<0.004||gd.n>=TR-1){
+    gd.done=true; gdPlay(false);
+    const l=Lf(gd.a,gd.b);
+    if(gd.n>=TR-1){ act('haru','think','E04'); say('haru','걸음이 너무 커서 자리를 못 잡아요. 학습률을 줄여 볼까요?'); }
+    else if(l>gmin.L+0.06){ act('haru','think','E04'); say('haru','어, <b>작은 웅덩이</b>에 갇혔어요. 여기가 제일 낮은 곳은 아닌데…'); }
+    else { act('haru','cheer','E01'); say('haru','도착! '+gd.n+'걸음 만에 <b>가장 낮은 손실</b>을 찾았어요.'); }
+    $('#gdS').textContent = gd.n>=TR-1 ? '걸음 수 한도에 닿았습니다. 학습률이 너무 커서 자리를 못 잡는 중입니다.'
+      : (l>gmin.L+0.06 ? '멈춤 · 가장 낮은 곳이 아닌 작은 웅덩이(지역 최소점)에 갇혔습니다.' : '도착 · 가장 낮은 손실을 찾았습니다.');
+    return;
+  }
+  gd.a=Math.max(-2,Math.min(2,gd.a-gd.lr*g[0])); gd.b=Math.max(-2,Math.min(2,gd.b-gd.lr*g[1])); gd.n++;
+  gdPush(); gdShow();
+}
+function gdPlay(on){ gd.play=on; $('#gdPlay').textContent=on?'⏸ 멈춤':'▶ 굴리기'; }
+$('#gdPlay').onclick=()=>{ if(gd.done) gdStart(gd.sa,gd.sb); gdPlay(!gd.play); };
+$('#gdStep').onclick=()=>{ gdPlay(false); gdStep(); };
+$('#gdReset').onclick=()=>{ gdPlay(false); gdStart(gd.sa,gd.sb); };
+$('#gdLr').oninput=e=>{ gd.lr=+e.target.value; $('#gdLrO').textContent=fmt(gd.lr,2); };
+$$('[data-start]').forEach(b=>b.onclick=()=>{
+  const v=b.dataset.start; let a,c;
+  if(v==='r'){ a=Math.random()*3.6-1.8; c=Math.random()*3.6-1.8; } else { [a,c]=v.split(',').map(Number); }
+  gdStart(a,c); gdPlay(true);
+});
+gdStart(gd.a,gd.b); say('haru','공을 굴려 볼게요. <b>▶ 굴리기</b>를 눌러 주세요.');
+
+/* ================= ② 신경망 ================= */
+beginStation();
+const S2={cx:9,cz:-8};
+slab(2,S2.cx,S2.cz,12,11,COL.blue);
+label('② 신경망',V(S2.cx,0.5,S2.cz+5.5),'title',2);
+function buildNet(cx,cz,sizes,dx,dy,cy,colors,st){
+  const nodes=sizes.map((n,l)=>{ const arr=[]; for(let j=0;j<n;j++){
+    const z=(l>0&&l<sizes.length-1)?((j%2?1:-1)*0.75):0;
+    arr.push(V(cx+(l-(sizes.length-1)/2)*dx, cy+((n-1)/2-j)*dy, cz+z)); } return arr; });
+  nodes.forEach((arr,l)=>arr.forEach((p,j)=>ball(p,0.3,typeof colors[l]==='number'?colors[l]:colors[l][j],0.3)));
+  const edges=[];
+  for(let l=0;l<sizes.length-1;l++)for(let i=0;i<sizes[l];i++)for(let j=0;j<sizes[l+1];j++)edges.push({l,i,j,a:nodes[l][i],b:nodes[l+1][j]});
+  return {nodes,edges,sizes};
+}
+const net2=buildNet(S2.cx,S2.cz,[4,5,4,5,2],2.1,1.05,3.5,[COL.green,0x3f7bff,0x3f7bff,0x3f7bff,[0xff4d4d,COL.pink]],2);
+(function(){
+  const pts=[]; net2.edges.forEach(e=>pts.push(e.a,e.b));
+  G.add(new T.LineSegments(new T.BufferGeometry().setFromPoints(pts),new T.LineBasicMaterial({color:0x9db8ff,transparent:true,opacity:0.22})));
+  const x0=net2.nodes[0][0].x, x4=net2.nodes[4][0].x;
+  label('입력층 (특징)',V(x0,6.2,S2.cz),'stage',2); label('은닉층 (복잡한 패턴 학습)',V(S2.cx,6.9,S2.cz),'stage',2); label('출력층 (예측)',V(x4,5.0,S2.cz),'stage',2);
+  net2.nodes[0].forEach((p,j)=>label('입력 '+(j+1),V(p.x-0.55,p.y,p.z),'note',2,'r'));
+  net2.nodes[4].forEach((p,j)=>label('출력 '+(j+1),V(p.x+0.55,p.y,p.z),'note',2,'l'));
+  $('#nnN').textContent=net2.sizes.reduce((a,b)=>a+b,0); $('#nnE').textContent=net2.edges.length;
+})();
+putChar('doctor','doctor',2,V(S2.cx-4.9,0,S2.cz+4.6),0.45,'explain','공 하나가 <b>뉴런</b>, 선 하나가 <b>가중치</b>입니다.');
+const p2=[]; for(let i=0;i<30;i++){ p2.push({m:pulse(0xffffff),l:0,i:0,j:0,t:Math.random(),sp:0.7+Math.random()*0.6}); }
+function p2Next(p,fresh){
+  if(fresh||p.l>=net2.sizes.length-2){ p.l=0; p.i=Math.floor(Math.random()*net2.sizes[0]); } else { p.l++; p.i=p.j; }
+  p.j=Math.floor(Math.random()*net2.sizes[p.l+1]);
+}
+p2.forEach(p=>{ p2Next(p,true); p.l=Math.floor(Math.random()*4); p.i=Math.floor(Math.random()*net2.sizes[p.l]); p.j=Math.floor(Math.random()*net2.sizes[p.l+1]); });
+
+/* ================= ③ 뉴런 하나 ================= */
+beginStation();
+const S3={cx:0,cz:3,y:[5.0,3.2,1.4]};
+slab(3,S3.cx,S3.cz,30,7,COL.yellow);
+label('③ 뉴런 하나가 하는 일',V(0,0.5,S3.cz+3.5),'title',3);
+const N0={x:[0.2,0.5,0.43],w:[0.4,0.26,0.3],b:0.1,act:'sigmoid'};
+const nu=JSON.parse(JSON.stringify(N0));
+const X={inp:-11,box:-1.5,act:3.6,out:7.2,nxt:11};
+[['1. 입력',X.inp],['2. 가중치 곱하기',-6.2],['3. 더하고 편향 보태기',X.box],['4. 활성화 함수',X.act],['5. 출력',(X.out+X.nxt)/2]]
+  .forEach(a=>label(a[0],V(a[1],6.7,S3.cz),'stage',3));
+const nIn=S3.y.map(y=>ball(V(X.inp,y,S3.cz),0.5,0xa855f7,0.3));
+const nInLab=S3.y.map(y=>label('',V(X.inp,y+0.95,S3.cz),'num',3));
+const boxC=V(X.box,3.2,S3.cz);
+(function(){
+  const g=new T.BoxGeometry(2.6,3.6,1.4);
+  const m=new T.Mesh(g,new T.MeshStandardMaterial({color:0x1b3a8a,transparent:true,opacity:0.45,roughness:0.3}));
+  m.position.copy(boxC); G.add(m);
+  const e=new T.LineSegments(new T.EdgesGeometry(g),new T.LineBasicMaterial({color:0x6fb1ff})); e.position.copy(boxC); G.add(e);
+  // 활성화 판
+  const pg=new T.PlaneGeometry(2.6,2.6);
+  const pm=new T.Mesh(pg,new T.MeshStandardMaterial({color:0x10204a,side:T.DoubleSide,transparent:true,opacity:0.8}));
+  pm.position.set(X.act,3.2,S3.cz); G.add(pm);
+  const pe=new T.LineSegments(new T.EdgesGeometry(pg),new T.LineBasicMaterial({color:0x6fb1ff})); pe.position.copy(pm.position); G.add(pe);
+  line([V(X.act-1.1,2.3,S3.cz+0.02),V(X.act+1.1,2.3,S3.cz+0.02)],0xffffff,0.6);
+  line([V(X.act,2.1,S3.cz+0.02),V(X.act,4.3,S3.cz+0.02)],0xffffff,0.6);
+  tube(V(X.box+1.3,3.2,S3.cz),V(X.act-1.3,3.2,S3.cz),0.06,0x6fb1ff);
+  tube(V(X.act+1.3,3.2,S3.cz),V(X.out-0.6,3.2,S3.cz),0.06,0x6fb1ff);
+})();
+const nTubes=S3.y.map(y=>tube(V(X.inp+0.5,y,S3.cz),V(X.box-1.3,3.2+(y-3.2)*0.45,S3.cz),0.08,0x6fb1ff));
+const nWLab=S3.y.map(y=>label('',V(-6.2,3.2+(y-3.2)*0.72+0.55,S3.cz),'num wl',3));
+const biasBox=new T.Mesh(new T.BoxGeometry(1.5,0.6,0.9),new T.MeshStandardMaterial({color:0x1d4ed8,emissive:0x1d4ed8,emissiveIntensity:0.3}));
+biasBox.position.set(X.box,0.55,S3.cz); G.add(biasBox);
+const nBTube=tube(V(X.box,0.85,S3.cz),V(X.box,1.4,S3.cz),0.08,0x6fb1ff);
+const nBLab=label('',V(X.box+1.0,0.55,S3.cz),'num',3,'l');
+const nSumLab=label('',V(X.box,3.2,S3.cz+0.8),'big',3); nSumLab.el.style.setProperty('--c','var(--yellow)');
+const nOut=ball(V(X.out,3.2,S3.cz),0.6,0xff5cc8,0.4);
+const nOutLab=label('',V(X.out,4.35,S3.cz),'big',3); nOutLab.el.style.setProperty('--c','var(--pink)');
+const nNext=S3.y.map(y=>{ const b=ball(V(X.nxt,y,S3.cz),0.5,0xff5cc8,0.3); tube(V(X.out+0.6,3.2,S3.cz),V(X.nxt-0.55,y,S3.cz),0.05,0x6fb1ff); return b; });
+label('다음 층으로',V(X.nxt,0.5,S3.cz),'note',3);
+const actGeo=new T.BufferGeometry(); actGeo.setAttribute('position',new T.BufferAttribute(new Float32Array(61*3),3));
+G.add(new T.Line(actGeo,new T.LineBasicMaterial({color:0x4fd1ff})));
+const actDot=ball(V(0,0,0),0.11,0xffd76a,0.9);
+const nPulses=[]; for(let k=0;k<3;k++)for(let q=0;q<2;q++)nPulses.push({m:pulse(0xffffff),seg:k,off:q/2});
+for(let q=0;q<2;q++)nPulses.push({m:pulse(0xffd76a),seg:3,off:q/2});
+for(let k=0;k<3;k++)nPulses.push({m:pulse(0xff9bd8),seg:4+k,off:0.3});
+const nSeg=[]; S3.y.forEach(y=>nSeg.push([V(X.inp+0.5,y,S3.cz),V(X.box-1.3,3.2+(y-3.2)*0.45,S3.cz)]));
+nSeg.push([V(X.box+1.3,3.2,S3.cz),V(X.out-0.6,3.2,S3.cz)]);
+S3.y.forEach(y=>nSeg.push([V(X.out+0.6,3.2,S3.cz),V(X.nxt-0.55,y,S3.cz)]));
+const actF=(a,x)=>a==='relu'?Math.max(0,x):sigmoid(x);
+function nCalc(){ const pr=nu.x.map((x,i)=>x*nu.w[i]); const z=pr[0]+pr[1]+pr[2]+nu.b; return {pr,z,o:actF(nu.act,z)}; }
+putChar('jupan','jupanbot',3,V(13.5,0,S3.cz+2.3),-0.6,'hold','');
+function nRender(){
+  const r=nCalc();
+  say('jupan','합계 <b>'+fmt(r.z)+'</b>, 구부리면 <b>'+fmt(r.o)+'</b>. 계산 끝.');
+  $$('[data-n]').forEach(inp=>{ const k=inp.dataset.n; const v=k==='b'?nu.b:nu[k[0]][+k[1]]; inp.value=v; inp.nextElementSibling.textContent=fmt(v,2); });
+  $$('[data-act]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.act===nu.act));
+  for(let i=0;i<3;i++){
+    nInLab[i].el.textContent=fmt(nu.x[i],2);
+    nIn[i].scale.setScalar(0.7+nu.x[i]*0.6);
+    nWLab[i].el.textContent='× '+fmt(nu.w[i],2)+' = '+fmt(r.pr[i]);
+    const t=nTubes[i], y=S3.y[i];
+    place(t,V(X.inp+0.5,y,S3.cz),V(X.box-1.3,3.2+(y-3.2)*0.45,S3.cz),0.03+0.16*Math.abs(nu.w[i]));
+    t.material.color.setHex(nu.w[i]>=0?0x6fb1ff:0xff6b5e);
+  }
+  nBLab.el.textContent='편향 = '+fmt(nu.b,2);
+  nBTube.material.color.setHex(nu.b>=0?0x6fb1ff:0xff6b5e);
+  nSumLab.el.textContent='합계 '+fmt(r.z);
+  nOutLab.el.textContent='= '+fmt(r.o);
+  const oc=Math.max(0,Math.min(1,r.o));
+  nOut.scale.setScalar(0.6+oc*0.8); nOut.material.emissiveIntensity=0.1+oc*0.9;
+  nNext.forEach(b=>b.material.emissiveIntensity=0.1+oc*0.7);
+  // 판 위의 곡선
+  const p=actGeo.attributes.position, relu=nu.act==='relu';
+  for(let i=0;i<=60;i++){ const x=-6+i*0.2, f=relu?Math.max(0,x)/6:sigmoid(x);
+    p.setXYZ(i,X.act+x/6*1.1,2.3+f*1.9,S3.cz+0.03); }
+  p.needsUpdate=true;
+  const zc=Math.max(-6,Math.min(6,r.z)), fz=relu?Math.max(0,zc)/6:sigmoid(zc);
+  actDot.position.set(X.act+zc/6*1.1,2.3+fz*1.9,S3.cz+0.05);
+  $('#nSum').innerHTML=
+    r.pr.map((v,i)=>'<span>입력 '+(i+1)+' × 가중치 '+(i+1)+'</span><b>'+fmt(v)+'</b>').join('')+
+    '<span>편향</span><b>'+(nu.b>=0?'+ ':'− ')+fmt(Math.abs(nu.b))+'</b>'+
+    '<span class="tot">합계</span><b class="tot">'+fmt(r.z)+'</b>'+
+    '<span class="out">'+(nu.act==='relu'?'ReLU':'시그모이드')+' 통과 → 출력</span><b class="out">'+fmt(r.o)+'</b>';
+}
+$$('[data-n]').forEach(inp=>inp.oninput=()=>{ const k=inp.dataset.n,v=+inp.value; if(k==='b')nu.b=v; else nu[k[0]][+k[1]]=v; nRender(); });
+$$('[data-act]').forEach(b=>b.onclick=()=>{ nu.act=b.dataset.act; nRender(); });
+$('#nReset').onclick=()=>{ Object.assign(nu,JSON.parse(JSON.stringify(N0))); nRender(); };
+nRender();
+
+/* ================= ④ 활성화 함수 ================= */
+beginStation();
+const S4={cx:-9,cz:13,y0:0.9,sx:0.42,d:1.6};
+slab(4,S4.cx,S4.cz,12,11,COL.green);
+label('④ 활성화 함수',V(S4.cx,0.5,S4.cz+5.5),'title',4);
+function ribbon(cx,f,sy,color){
+  const n=80, pos=[], idx=[];
+  for(let i=0;i<=n;i++){ const x=-6+12*i/n, y=S4.y0+f(x)*sy;
+    pos.push(cx+x*S4.sx,y,S4.cz-S4.d/2, cx+x*S4.sx,y,S4.cz+S4.d/2);
+    if(i<n){ const k=i*2; idx.push(k,k+1,k+2,k+1,k+3,k+2); } }
+  const g=new T.BufferGeometry(); g.setAttribute('position',new T.Float32BufferAttribute(pos,3)); g.setIndex(idx); g.computeVertexNormals();
+  G.add(new T.Mesh(g,new T.MeshStandardMaterial({color,side:T.DoubleSide,roughness:0.4,emissive:color,emissiveIntensity:0.15})));
+  const front=[]; for(let i=0;i<=n;i++){ const x=-6+12*i/n; front.push(V(cx+x*S4.sx,S4.y0+f(x)*sy,S4.cz+S4.d/2+0.01)); }
+  line(front,0xffffff,1);
+  line([V(cx-6*S4.sx-0.3,S4.y0,S4.cz+S4.d/2),V(cx+6*S4.sx+0.3,S4.y0,S4.cz+S4.d/2)],0xffffff,0.5);
+  line([V(cx,S4.y0-0.3,S4.cz+S4.d/2),V(cx,S4.y0+4.2,S4.cz+S4.d/2)],0xffffff,0.5);
+}
+const A4={relu:{cx:S4.cx-2.75,f:x=>Math.max(0,x),sy:0.62},sig:{cx:S4.cx+2.75,f:sigmoid,sy:3.6}};
+ribbon(A4.relu.cx,A4.relu.f,A4.relu.sy,0x2563eb); ribbon(A4.sig.cx,A4.sig.f,A4.sig.sy,0xe0457b);
+label('ReLU · max(0, x)',V(A4.relu.cx,5.6,S4.cz),'stage',4); label('시그모이드 · 1/(1+e<sup>−x</sup>)',V(A4.sig.cx,5.6,S4.cz),'stage',4);
+line([V(A4.sig.cx-2.6,S4.y0+3.6,S4.cz+S4.d/2),V(A4.sig.cx+2.6,S4.y0+3.6,S4.cz+S4.d/2)],0xffffff,0.3);
+label('1',V(A4.sig.cx-2.9,S4.y0+3.6,S4.cz+S4.d/2),'note',4); label('0',V(A4.sig.cx-2.9,S4.y0,S4.cz+S4.d/2),'note',4);
+const acDotR=ball(V(0,0,0),0.17,0xffd76a,0.9), acDotS=ball(V(0,0,0),0.17,0xffd76a,0.9);
+const acLabR=label('',V(0,0,0),'big',4), acLabS=label('',V(0,0,0),'big',4);
+const acDropR=line([V(0,0,0),V(0,0,0)],0xffd76a,0.8), acDropS=line([V(0,0,0),V(0,0,0)],0xffd76a,0.8);
+let acZ=0.439;
+putChar('fly','fruitfly',4,V(S4.cx,0,S4.cz+4.2),0,'think','');
+function acRender(){
+  $('#acZ').value=acZ; $('#acZO').textContent=fmt(acZ,2);
+  const r=Math.max(0,acZ), s=sigmoid(acZ), zf=S4.cz+S4.d/2+0.05;
+  $('#acR').textContent=fmt(r); $('#acS').textContent=fmt(s);
+  if(acZ<0){ act('fly','think','E04'); say('fly','음수를 넣으니 ReLU는 <b>0</b>으로 막습니다. 시그모이드는 '+fmt(s,2)+'.'); }
+  else if(acZ>4){ act('fly','explain'); say('fly','큰 값도 시그모이드는 <b>1 근처</b>에서 멈춥니다. ReLU는 '+fmt(r,2)+' 그대로.'); }
+  else { act('fly','think'); say('fly','ReLU는 '+fmt(r,2)+' 그대로, 시그모이드는 <b>'+fmt(s,2)+'</b>로 눌립니다.'); }
+  [[A4.relu,r,acDotR,acLabR,acDropR],[A4.sig,s,acDotS,acLabS,acDropS]].forEach(a=>{
+    const x=a[0].cx+acZ*S4.sx, y=S4.y0+a[1]*a[0].sy;
+    a[2].position.set(x,y,zf); a[3].pos.set(x,y+0.75,zf); a[3].el.textContent='f('+fmt(acZ,2)+') = '+fmt(a[1]);
+    a[4].geometry.setFromPoints([V(x,S4.y0,zf),V(x,y,zf)]);
+  });
+}
+$('#acZ').oninput=e=>{ acZ=+e.target.value; acRender(); };
+$('#acFromN').onclick=()=>{ acZ=Math.max(-6,Math.min(6,nCalc().z)); acRender(); };
+acRender();
+
+/* ================= ⑤ 학습 한 바퀴 ================= */
+beginStation();
+const S5={cx:9,cz:13};
+slab(5,S5.cx,S5.cz,12,11,COL.purple);
+label('⑤ 학습 한 바퀴',V(S5.cx,0.5,S5.cz+5.5),'title',5);
+const net5=buildNet(S5.cx,S5.cz,[3,4,4,1],2.7,1.25,3.4,[0xa855f7,0x3f7bff,0x3f7bff,0xff5cc8],5);
+const e5Geo=new T.BufferGeometry();
+(function(){ const pts=[]; net5.edges.forEach(e=>pts.push(e.a,e.b)); e5Geo.setFromPoints(pts);
+  e5Geo.setAttribute('color',new T.BufferAttribute(new Float32Array(net5.edges.length*6),3));
+  G.add(new T.LineSegments(e5Geo,new T.LineBasicMaterial({vertexColors:true,transparent:true,blending:T.AdditiveBlending,depthWrite:false})));
+})();
+const fl5In=net5.nodes[0].map(p=>label('',V(p.x-0.6,p.y,p.z),'num',5,'r'));
+const fl5Out=label('',V(net5.nodes[3][0].x,net5.nodes[3][0].y+1.0,S5.cz),'big',5); fl5Out.el.style.setProperty('--c','var(--pink)');
+const fl5Y=label('',V(net5.nodes[3][0].x,net5.nodes[3][0].y-1.0,S5.cz),'num',5);
+const fl5Ph=label('',V(S5.cx,6.2,S5.cz),'stage',5);
+label('특징 (x)',V(net5.nodes[0][0].x,0.9,S5.cz),'note',5); label('예측 (ŷ)',V(net5.nodes[3][0].x,0.9,S5.cz),'note',5);
+const p5=net5.edges.map(()=>pulse(0xffffff)); p5.forEach(m=>m.visible=false);
+putChar('sia','sia',5,V(S5.cx-4.3,0,S5.cz+4.6),0.4,'idle','예측과 정답의 차이를 판정합니다.');
+putChar('moa','moa',5,V(S5.cx+4.3,0,S5.cz+4.6),-0.4,'idle','');
+// 데이터와 작은 신경망
+let seed=7; const rnd=()=>{ seed=(seed*1664525+1013904223)>>>0; return seed/4294967296; };
+const DATA=[]; for(let i=0;i<32;i++){ const x=[rnd(),rnd(),rnd()]; DATA.push({x,y:(x[0]+x[1]-x[2]>0.5)?1:0}); }
+const SZ=[3,4,4,1]; let W,B,fl;
+function flInit(){
+  seed=20261112; W=[];B=[];
+  for(let l=0;l<3;l++){ W.push([]);B.push([]); for(let j=0;j<SZ[l+1];j++){ B[l].push(0); W[l].push([]); for(let i=0;i<SZ[l];i++)W[l][j].push((rnd()*2-1)*0.9); } }
+  fl={n:0,ph:0,t:0,play:true,fast:false,hist:[],loss:0,acc:0,k:0};
+  flEval(); fl.hist.push(fl.loss); flColors(); flSample(); flStats(); flPlot(); flPhase();
+}
+function fwd(x){ const a=[x]; for(let l=0;l<3;l++){ const o=[]; for(let j=0;j<SZ[l+1];j++){ let z=B[l][j]; for(let i=0;i<SZ[l];i++)z+=W[l][j][i]*a[l][i]; o.push(l<2?Math.tanh(z):sigmoid(z)); } a.push(o); } return a; }
+function flEval(){ let L=0,c=0; for(const d of DATA){ const p=Math.min(1-1e-7,Math.max(1e-7,fwd(d.x)[3][0])); L+=-(d.y*Math.log(p)+(1-d.y)*Math.log(1-p)); if((p>0.5?1:0)===d.y)c++; } fl.loss=L/DATA.length; fl.acc=c/DATA.length; }
+function flTrain(){
+  const lr=0.6, gW=W.map(l=>l.map(r=>r.map(()=>0))), gB=B.map(l=>l.map(()=>0));
+  for(const d of DATA){ const a=fwd(d.x); let del=[a[3][0]-d.y];
+    for(let l=2;l>=0;l--){ const prev=new Array(SZ[l]).fill(0);
+      for(let j=0;j<SZ[l+1];j++){ gB[l][j]+=del[j]; for(let i=0;i<SZ[l];i++){ gW[l][j][i]+=del[j]*a[l][i]; prev[i]+=del[j]*W[l][j][i]; } }
+      if(l>0) del=prev.map((v,i)=>v*(1-a[l][i]*a[l][i])); } }
+  const n=DATA.length;
+  for(let l=0;l<3;l++)for(let j=0;j<SZ[l+1];j++){ B[l][j]-=lr*gB[l][j]/n; for(let i=0;i<SZ[l];i++)W[l][j][i]-=lr*gW[l][j][i]/n; }
+  fl.n++; flEval(); fl.hist.push(fl.loss);
+}
+function flColors(flash){
+  const c=e5Geo.attributes.color;
+  net5.edges.forEach((e,k)=>{ const w=W[e.l][e.j][e.i], m=Math.min(1,Math.abs(w)/1.6)*0.85+0.1+(flash||0);
+    const r=w>=0?0.35:1.0, g=w>=0?0.62:0.36, b=w>=0?1.0:0.32;
+    c.setXYZ(k*2,r*m,g*m,b*m); c.setXYZ(k*2+1,r*m,g*m,b*m); });
+  c.needsUpdate=true;
+}
+function flSample(){ const d=DATA[fl.k%DATA.length], p=fwd(d.x)[3][0]; fl.cur={d,p};
+  fl5In.forEach((o,i)=>o.el.textContent='x'+(i+1)+' = '+fmt(d.x[i],2)); fl5Out.el.textContent='ŷ = ?'; fl5Y.el.textContent='정답 y = '+d.y; }
+function flCrew(){ if(fl.acc>=0.9){ act('moa','cheer','E01'); say('moa','맞힌 비율 <b>'+Math.round(fl.acc*100)+'%</b>! 잘 배우고 있어요.'); } else { act('moa','idle'); say('moa','아직 '+Math.round(fl.acc*100)+'%예요. 조금만 더!'); } }
+function flStats(){ flCrew(); $('#flN').textContent=fl.n; $('#flL').textContent=fmt(fl.loss); $('#flA').textContent=Math.round(fl.acc*100)+'%'; }
+const PH=['1 순전파','2 손실 계산','3 역전파','4 가중치 갱신'];
+function flPhase(){ fl5Ph.el.textContent=PH[fl.ph]; $$('#flSteps li').forEach((li,i)=>li.classList.toggle('now',i===fl.ph)); }
+function flPlot(){
+  const cv=$('#lossplot'), c=cv.getContext('2d'), w=cv.width, h=cv.height, H=fl.hist;
+  c.clearRect(0,0,w,h); c.strokeStyle='#27345a'; c.lineWidth=1;
+  for(let i=1;i<4;i++){ c.beginPath(); c.moveTo(0,h*i/4); c.lineTo(w,h*i/4); c.stroke(); }
+  const mx=Math.max(0.8,H[0]||0.8), n=Math.max(40,H.length-1);
+  c.strokeStyle='#b79cff'; c.lineWidth=4; c.beginPath();
+  H.forEach((v,i)=>{ const x=14+(w-28)*i/n, y=h-14-(h-28)*Math.min(1,v/mx); i?c.lineTo(x,y):c.moveTo(x,y); }); c.stroke();
+  c.fillStyle='#9aa7c7'; c.font='22px sans-serif'; c.fillText(fmt(mx,2),8,26); c.fillText('0',8,h-8);
+  c.textAlign='right'; c.fillText('반복 '+(H.length-1),w-8,h-8); c.textAlign='left';
+}
+const DUR=[0.9,0.7,0.9,0.5];
+function flTick(dt){
+  if(!fl.play)return;
+  const sp=fl.fast?5:1; fl.t+=dt*sp;
+  const d=DUR[fl.ph], p=Math.min(1,fl.t/d);
+  if(fl.ph===0||fl.ph===2){
+    const back=fl.ph===2;
+    net5.edges.forEach((e,k)=>{ const m=p5[k]; const lt=back?(p*3-(2-e.l)):(p*3-e.l);
+      if(lt<0||lt>1){ m.visible=false; return; } m.visible=true; m.material.color.setHex(back?0xffa94d:0x9fd0ff);
+      m.position.lerpVectors(back?e.b:e.a,back?e.a:e.b,lt); });
+  }
+  if(fl.t>=d){
+    fl.t=0; p5.forEach(m=>m.visible=false);
+    if(fl.ph===0){ fl5Out.el.textContent='ŷ = '+fmt(fl.cur.p,2); }
+    if(fl.ph===1){ }
+    if(fl.ph===2){ const steps=fl.fast?5:1; for(let i=0;i<steps;i++)flTrain(); flColors(0.35); flStats(); flPlot(); }
+    if(fl.ph===3){ flColors(); fl.k++; flSample(); }
+    fl.ph=(fl.ph+1)%4; flPhase();
+    if(fl.ph===1){ act('sia','referee'); say('sia','차이 <b>'+fmt(Math.abs(fl.cur.p-fl.cur.d.y),2)+'</b>. '+(((fl.cur.p>0.5?1:0)===fl.cur.d.y)?'맞혔습니다.':'틀렸습니다.')); } else if(fl.ph===2){ act('sia','idle'); }
+    if(fl.ph===1){ const c=fl.cur; fl5Y.el.textContent='정답 y = '+c.d.y+' · 차이 '+fmt(Math.abs(c.p-c.d.y),2); }
+  }
+}
+$('#flPlay').onclick=()=>{ fl.play=!fl.play; $('#flPlay').textContent=fl.play?'⏸ 멈춤':'▶ 이어서'; };
+$('#flFast').onclick=e=>{ fl.fast=!fl.fast; e.target.setAttribute('aria-pressed',fl.fast); };
+$('#flReset').onclick=()=>{ flInit(); $('#flPlay').textContent='⏸ 멈춤'; $('#flFast').setAttribute('aria-pressed','false'); };
+flInit();
+
+/* ================= 카메라 ================= */
+const VIEW=[
+  {t:[0,0.5,3.2],r:43,th:0,ph:0.78},
+  {t:[S1.cx+0.6,1.8,S1.cz+0.6],r:22,th:-0.5,ph:1.02},
+  {t:[S2.cx-0.6,3.0,S2.cz+1.2],r:20.5,th:0.25,ph:1.26},
+  {t:[0.6,3.3,S3.cz],r:25,th:0,ph:1.32},
+  {t:[S4.cx,2.5,S4.cz+1.4],r:18.5,th:-0.2,ph:1.22},
+  {t:[S5.cx,2.9,S5.cz+1.4],r:21,th:0.2,ph:1.26}
+];
+const need=[2.1,1.3,1.3,2.25,1.3,1.3]; // 구역별로 필요한 가로/세로 비
+const cur={x:0,y:1.5,z:3.6,r:60,th:0.5,ph:0.6}, goal={x:0,y:1.5,z:3.6,r:47,th:0,ph:0.8};
+let aspect=1.5;
+function goView(i){ const v=VIEW[i]; goal.x=v.t[0];goal.y=v.t[1];goal.z=v.t[2]; goal.th=v.th; goal.ph=v.ph; goal.r=v.r*Math.max(1,need[i]/aspect); }
+const names=['overview','loss','network','neuron','activation','training'];
+function setActive(i,noHash){
+  active=i; goView(i);
+  groups.forEach((g,k)=>{ if(g) g.visible=(i===0||k===i); });
+  $$('#tabs button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.s===i));
+  $$('#panel section').forEach(s=>s.classList.toggle('on',+s.dataset.p===i));
+  $('#panel').scrollTop=0;
+  $('#hint').textContent = i===1 ? '지형을 누르면 그 자리에서 공이 출발합니다 · 끌기: 돌려 보기' : (i===0?'끌기: 돌려 보기 · 휠/두 손가락: 확대 · 구역 누르기: 들어가기':'끌기: 돌려 보기 · 휠/두 손가락: 확대');
+  if(!noHash){ try{ history.replaceState(null,'','#'+names[i]); }catch(e){ } }
+}
+$$('[data-s]').forEach(b=>b.addEventListener('click',()=>setActive(+b.dataset.s)));
+window.addEventListener('hashchange',()=>{ const i=names.indexOf(location.hash.slice(1)); if(i>=0&&i!==active)setActive(i,true); });
+
+/* 포인터 조작 */
+const ptrs=new Map(); let moved=0, pinch=0;
+canvas.addEventListener('pointerdown',e=>{ canvas.setPointerCapture(e.pointerId); ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY}); moved=0;
+  if(ptrs.size===2){ const a=[...ptrs.values()]; pinch=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y); } });
+canvas.addEventListener('pointermove',e=>{
+  const p=ptrs.get(e.pointerId); if(!p)return;
+  const dx=e.clientX-p.x, dy=e.clientY-p.y; p.x=e.clientX; p.y=e.clientY; moved+=Math.abs(dx)+Math.abs(dy);
+  if(ptrs.size===1){ goal.th-=dx*0.006; goal.ph=Math.max(0.2,Math.min(1.52,goal.ph-dy*0.005)); }
+  else if(ptrs.size===2){ const a=[...ptrs.values()], d=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y); if(pinch){ goal.r=Math.max(6,Math.min(110,goal.r*pinch/d)); } pinch=d; }
+});
+const ray=new T.Raycaster(), ndc=new T.Vector2();
+function endPtr(e){
+  const had=ptrs.has(e.pointerId); ptrs.delete(e.pointerId); if(ptrs.size<2)pinch=0;
+  if(!had||moved>6||e.type!=='pointerup')return;
+  const r=canvas.getBoundingClientRect(); ndc.set(((e.clientX-r.left)/r.width)*2-1,-((e.clientY-r.top)/r.height)*2+1);
+  ray.setFromCamera(ndc,camera);
+  if(active===1){ const h=ray.intersectObject(surfMesh)[0];
+    if(h){ gdStart(Math.max(-2,Math.min(2,(h.point.x-S1.cx)/S1.k)),Math.max(-2,Math.min(2,(h.point.z-S1.cz)/S1.k))); gdPlay(true); return; } }
+  if(active===0){ const h=ray.intersectObjects(slabs)[0]; if(h)setActive(h.object.userData.st); }
+}
+canvas.addEventListener('pointerup',endPtr); canvas.addEventListener('pointercancel',endPtr);
+canvas.addEventListener('wheel',e=>{ e.preventDefault(); goal.r=Math.max(6,Math.min(110,goal.r*Math.exp(e.deltaY*0.001))); },{passive:false});
+
+/* 크기 */
+let W0=0,H0=0;
+function resize(){ const w=stage.clientWidth,h=stage.clientHeight; if(!w||!h||(w===W0&&h===H0))return; W0=w;H0=h;
+  renderer.setSize(w,h,false); aspect=w/h; camera.aspect=aspect; camera.updateProjectionMatrix(); goView(active); }
+if(window.ResizeObserver) new ResizeObserver(resize).observe(stage); window.addEventListener('resize',resize); resize();
+
+/* 루프 */
+const still=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+if(still){ Object.assign(cur,goal); }
+let last=performance.now(), time=0;
+function frame(now){
+  const dt=Math.min(0.05,(now-last)/1000); last=now; time+=dt;
+  const k=still?1:1-Math.pow(0.002,dt);
+  for(const a in cur)cur[a]+=(goal[a]-cur[a])*k;
+  const sp=Math.sin(cur.ph);
+  camera.position.set(cur.x+cur.r*sp*Math.sin(cur.th),cur.y+cur.r*Math.cos(cur.ph),cur.z+cur.r*sp*Math.cos(cur.th));
+  camera.lookAt(cur.x,cur.y,cur.z);
+  // ① 경사하강
+  if(gd.play){ gd.t+=dt; if(gd.t>0.16){ gd.t=0; gdStep(); } }
+  // ② 신호
+  for(const p of p2){ p.t+=dt*p.sp; if(p.t>=1){ p.t=0; p2Next(p); }
+    p.m.position.lerpVectors(net2.nodes[p.l][p.i],net2.nodes[p.l+1][p.j],p.t); }
+  // ③ 뉴런 신호
+  for(const p of nPulses){ const s=nSeg[p.seg], t=(time*0.55+p.off)%1; p.m.position.lerpVectors(s[0],s[1],t); }
+  // ⑤ 학습
+  flTick(dt);
+  for(const k in cast){ const o=cast[k].obj; if(o)o.userData.update(time); }
+  renderer.render(scene,camera);
+  updateLabels(W0,H0);
+  requestAnimationFrame(frame);
+}
+const h0=names.indexOf(location.hash.slice(1)); setActive(h0>0?h0:0,true);
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
