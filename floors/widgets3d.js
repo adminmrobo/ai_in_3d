@@ -22,8 +22,8 @@ export function makeWidgets(T, ctx) {
     surface() {
       const w = { labels: [], grp: new T.Group() }, G2 = w.grp, N = 36; let Wd = 0, g, pa, col, frame;
       parent.add(G2);
-      const pts = inst(sphG, new T.MeshStandardMaterial({ roughness: .35 }), 420), rings = inst(torG, new T.MeshBasicMaterial({ color: 0xffd76a }), 80), mk = inst(sphG, new T.MeshStandardMaterial({ roughness: .3 }), 100);
-      G2.add(pts, rings, mk);
+      const cubes = inst(boxG, new T.MeshStandardMaterial({ roughness: .35 }), 420), pts = inst(sphG, new T.MeshStandardMaterial({ roughness: .35 }), 420), rings = inst(torG, new T.MeshBasicMaterial({ color: 0xffd76a }), 80), mk = inst(sphG, new T.MeshStandardMaterial({ roughness: .3 }), 100);
+      G2.add(pts, cubes, rings, mk);
       const sg = new T.BufferGeometry(); sg.setAttribute('position', new T.BufferAttribute(new Float32Array(600 * 6), 3));
       const seg = new T.LineSegments(sg, new T.LineBasicMaterial({ color: 0xffffff })); seg.frustumCulled = false; G2.add(seg);
       const mkR = [], c0 = new T.Color(0x1f3a7a), c1 = new T.Color(0xc8703a), cf = new T.Color(0x16224a);
@@ -39,11 +39,12 @@ export function makeWidgets(T, ctx) {
         for (let i = 0; i < pa.count; i++) { const X = pa.getX(i), Z = pa.getZ(i), v = fn ? cl(fn(X / half * R, -Z / half * R), 0, 1) : 0; pa.setY(i, v * H);
           cT.copy(fn ? c0 : cf); if (fn) cT.lerp(c1, v); col[i * 3] = cT.r; col[i * 3 + 1] = cT.g; col[i * 3 + 2] = cT.b; }
         pa.needsUpdate = true; g.attributes.color.needsUpdate = true; g.computeVertexNormals();
-        const P = sp.pts || [], pr = sp.pr || .13; let rc = 0;
-        P.forEach((d, k) => { const [px, pz] = toP(d.x, d.y), y = hAt(d.x, d.y) + pr + .03;
-          M4.compose(Pv.set(px, y, pz), Qi, Sv.setScalar(pr)); pts.setMatrixAt(k, M4); pts.setColorAt(k, colr(d.col != null ? d.col : (d.c ? 0xff9f6b : 0x6fb1ff)));
+        const P = sp.pts || [], pr = sp.pr || .13; let rc = 0, nb = 0, nq = 0;
+        P.forEach((d, k) => { const [px, pz] = toP(d.x, d.y), y = hAt(d.x, d.y) + pr + .03, cube = d.col == null && d.c;
+          if (cube) { M4.compose(Pv.set(px, y, pz), Qi, Sv.setScalar(pr * 1.65)); cubes.setMatrixAt(nq, M4); cubes.setColorAt(nq++, colr(0xff9f6b)); }
+          else { M4.compose(Pv.set(px, y, pz), Qi, Sv.setScalar(pr)); pts.setMatrixAt(nb, M4); pts.setColorAt(nb++, colr(d.col != null ? d.col : 0x6fb1ff)); }
           if (sp.ring && sp.ring[k]) { M4.compose(Pv.set(px, y, pz), Qr, Sv.setScalar(.27)); rings.setMatrixAt(rc++, M4); } });
-        pts.count = P.length; rings.count = rc; done(pts); done(rings);
+        pts.count = nb; cubes.count = nq; rings.count = rc; done(pts); done(cubes); done(rings);
         const MK = sp.marks || [];
         MK.forEach((m, k) => { const [px, pz] = toP(m.x, m.y), s = m.s || .17, y = hAt(m.x, m.y) + s + .03;
           M4.compose(Pv.set(px, y, pz), Qi, Sv.setScalar(s)); mk.setMatrixAt(k, M4); mk.setColorAt(k, colr(m.c));

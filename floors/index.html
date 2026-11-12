@@ -139,8 +139,9 @@ import { makeWidgets } from './widgets3d.js';
 const $ = s => document.querySelector(s), $$ = s => Array.from(document.querySelectorAll(s));
 const fnum = Math.max(1, Math.min(27, parseInt(new URLSearchParams(location.search).get('f') || '1', 10) || 1));
 const F = FLOORS[fnum - 1], GP = GROUPS[F.g], demo = DEMOS[F.ab], EX = EXTRA[F.ab], CV = EX.curve;
-const PREV = fnum > 1 ? FLOORS[fnum - 2] : { ab: '로비', ko: '뉴런 하나', topo: { layers: [[3, 'i'], [1, 'o']] } };
-const prevName = fnum > 1 ? (fnum - 1) + '층 ' + PREV.ab : '로비의 뉴런 하나';
+const CMP = F.cmp == null ? fnum - 1 : F.cmp;
+const PREV = CMP > 0 ? FLOORS[CMP - 1] : { ab: '로비', ko: '뉴런 하나', topo: { layers: [[3, 'i'], [1, 'o']] } };
+const prevName = CMP > 0 ? CMP + '층 ' + PREV.ab : '로비의 뉴런 하나';
 const NAME = { doctor: '박사', haru: '조수(하루)', fruitfly: '초파리 연구원', jupanbot: '주판봇', sia: '시아', moa: '모아' };
 const SHORT = { i: '입력', h: '은닉', o: '출력', x: '출력', r: '순환', m: '기억 세포', g: '문 달린 뉴런', p: '확률 뉴런', b: '보이는 뉴런', n: '잡음 섞인 입력', s: '스파이크 뉴런', k: '창', img: '그림', rb: '거리 뉴런', sv: '서포트 벡터', pr: '상태', z: '씨앗' };
 const fmt = (v, n = 3) => Number(v).toFixed(n);
@@ -160,6 +161,7 @@ if (fnum < 27) { nx.href = '?f=' + (fnum + 1); nx.textContent = '↑ ' + (fnum +
 const st = {}; demo.controls.forEach(c => { if (c.k) st[c.k] = c.v; }); demo.init(st);
 const curveF = x => { if (!CV.step) return CV.f(x); const a = Math.floor((x - CV.lo) / CV.step + 1e-9) * CV.step + CV.lo, b = Math.min(CV.hi, a + CV.step), t = b > a ? (x - a) / (b - a) : 0, r = v => Math.round(v / CV.step) * CV.step; return CV.f(r(a)) * (1 - t) + CV.f(r(b)) * t; };
 let cx0 = CV.v;
+const hasPts = (() => { try { return demo.view(st).some(w => w.type === 'surface' && (w.pts || []).some(d => d.col == null)); } catch (e) { return false; } })();
 
 /* ---------- 오른쪽 설명 ---------- */
 const types = [...new Set([...(F.topo.layers || []), ...(F.topo.ring || [])].map(l => l[1]).concat(F.topo.grid ? [F.topo.grid[2]] : [], F.topo.mem ? ['mem'] : []))];
@@ -169,7 +171,7 @@ demo.controls.forEach(c => { if (c.b) return;
   if (c.opts) ctl += '<div class="row sel"><label for="c_' + c.k + '">' + c.l + '</label><select id="c_' + c.k + '" data-k="' + c.k + '">' + c.opts.map(o => '<option value="' + o[0] + '">' + o[1] + '</option>').join('') + '</select></div>';
   else ctl += '<div class="row"><label for="c_' + c.k + '">' + c.l + '</label><input type="range" id="c_' + c.k + '" data-k="' + c.k + '" min="' + c.min + '" max="' + c.max + '" step="' + c.step + '"><output></output></div>'; });
 const dbtn = demo.controls.filter(c => c.b); if (dbtn.length) ctl += '<div class="btns">' + dbtn.map(c => '<button class="btn" data-b="' + c.b + '">' + c.l + '</button>').join('') + '</div>';
-const ioSay = '넣는 것은 <b>' + EX.io[0] + '</b>, 나오는 것은 <b>' + EX.io[1] + '</b>. 이 층은 이 일을 해요.';
+const ioSay = EX.say || ('넣는 것은 <b>' + EX.io[0] + '</b>, 나오는 것은 <b>' + EX.io[1] + '</b>.');
 $('#panel').innerHTML =
   '<section data-p="0" class="on" style="--acc:' + GP.c + '">' +
     '<div class="grp">' + fnum + '층 · ' + band(fnum) + ' · ' + GP.n + '</div><h2>' + F.ab + ' · ' + F.ko + '</h2><p class="en">' + F.en + '</p>' + (F.nn ? '<span class="chip">엄밀히는 신경망이 아님</span>' : '') +
@@ -199,12 +201,12 @@ $('#panel').innerHTML =
     '<h3>아래층에서 살펴보기</h3><div class="btns"><button class="btn" data-s="2">② 아래층과 견주기</button><button class="btn" data-s="3">③ 핵심 부품</button><button class="btn" data-s="5">⑤ 실험</button></div></section>' +
   '<section data-p="1" style="--acc:var(--pink)"><h2>① 이 층이 하는 일</h2>' +
     three([F.line, '넣는 것: <b>' + EX.io[0] + '</b>', '나오는 것: <b>' + EX.io[1] + '</b>']) +
-    talk([['haru', 'E01', ioSay], F.talk[0]]) +
+    talk([['haru', 'E01', ioSay]]) +
     '<h3>한눈에</h3><div class="sumbox"><span>넣는 것</span><b>' + EX.io[0] + '</b><span>가운데</span><b>' + F.ab + ' · ' + F.ko + '</b><span>나오는 것</span><b>' + EX.io[1] + '</b></div>' +
     '<p style="font-size:13px;color:var(--muted);margin-top:10px">가운데 상자 안에서 무슨 일이 벌어지는지는 ②~④에서, 실제로 돌려 보는 것은 ⑤에서 합니다. ⑤의 물체는 조절 값을 바꾸면 그 자리에서 다시 만들어집니다.</p></section>' +
   '<section data-p="2" style="--acc:var(--blue)"><h2>② 아래층과 견주기</h2>' +
     three(['왼쪽 회색이 <b>' + prevName + '</b>의 구조입니다.', '오른쪽이 이 층, <b>' + F.ab + '</b>의 구조입니다.', F.diff]) +
-    talk([['doctor', 'E13', F.diff]]) +
+    talk([['doctor', 'E13', '왼쪽 회색과 오른쪽 구조를 나란히 보십시오. 달라진 곳이 이 층의 핵심입니다.']]) +
     '<h3>이 층의 세포</h3>' + legend + '</section>' +
   '<section data-p="3" style="--acc:var(--yellow)"><h2>③ 핵심 부품</h2>' +
     three(EX.part.t) + talk([['jupanbot', 'E13', EX.part.say]]) +
@@ -215,7 +217,7 @@ $('#panel').innerHTML =
     '<div class="row"><label for="cvX">' + CV.xl + '</label><input id="cvX" type="range" min="' + CV.lo + '" max="' + CV.hi + '" step="' + (CV.step || (CV.hi - CV.lo) / 200) + '"><output id="cvXO"></output></div>' +
     '<div class="kv"><div><span>' + CV.xl + '</span><b id="cvA"></b></div><div><span>' + CV.yl + '</span><b id="cvB"></b></div></div></section>' +
   '<section data-p="5" style="--acc:var(--purple)"><h2>⑤ 실험: 직접 바꿔 보기</h2>' +
-    three(F.three) + talk(F.talk) + '<h3>조절</h3>' + ctl + '<div class="kv" id="kv"></div>' + (demo.note ? '<p class="note">' + demo.note + '</p>' : '') + '</section>';
+    three(['<b>' + (demo.vt || '') + '</b>', '조절 값을 바꾸면 3D 물체가 그 자리에서 다시 만들어집니다.', '말풍선과 아래 숫자 칸이 지금 결과를 읽어 줍니다.'].concat(hasPts ? ['데이터: <b style="color:#6fb1ff">파란 공</b>이 한 무리, <b style="color:#ff9f6b">주황 정육면체</b>가 다른 무리입니다.'] : [])) + '<h3>조절</h3>' + ctl + '<div class="kv" id="kv"></div>' + (demo.note ? '<p class="note">' + demo.note + '</p>' : '') + '</section>';
 const inputs = $$('#panel [data-k]');
 function sync() { inputs.forEach(el => { const c = demo.controls.find(q => q.k === el.dataset.k); if (document.activeElement !== el) el.value = st[c.k]; if (el.type === 'range') el.nextElementSibling.textContent = c.f ? c.f(st[c.k]) : (c.step >= 1 ? st[c.k] : Number(st[c.k]).toFixed(2)); }); }
 inputs.forEach(el => el.addEventListener('input', () => { const k = el.dataset.k; st[k] = el.type === 'range' ? +el.value : el.value; if (demo.change) demo.change(st, k); sync(); }));
