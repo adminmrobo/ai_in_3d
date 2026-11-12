@@ -556,3 +556,92 @@ export const EXTRA = {
     part: { items: [['ball', K.i, '입력'], ['box', K.h, '제어기 (신경망)'], ['gate', K.gt, '읽기·쓰기 머리'], ['tiles', K.m, '공책 (외부 기억)'], ['ball', K.o, '출력']], loops: [[3, 1, '읽은 내용']], t: ['제어기가 입력을 받아 무엇을 할지 정합니다.', '머리가 공책의 어느 칸에 쓰고 어느 칸을 읽을지 정합니다.', '읽은 내용이 제어기로 돌아와 출력에 쓰입니다.'], say: '계산하는 곳과 기억하는 곳을 나눴습니다. 컴퓨터와 닮았습니다.' },
     curve: { f: x => Math.exp(-(x - 3) * (x - 3) * 2), lo: 0, hi: 7, v: 3.4, xl: '공책 칸 번호', yl: '읽는 정도 (머리가 3번 칸에 있을 때)', title: '머리는 부드럽게 고릅니다', t: ['머리는 한 칸만 딱 고르지 않고, 가까운 칸을 조금씩 섞어 읽습니다.', '부드럽게 고르기 때문에 "어디를 읽을지"도 학습할 수 있습니다.'] } },
 };
+
+/* ================= ⑤ 실험을 3D 물체로 보여 주는 장면 명세 =================
+   view(s) 는 widgets3d.js 가 그릴 물체 목록을 돌려준다. 좌표는 ⑤ 구역 바닥판 기준(가로 −6~6, 앞이 +z). */
+function clipLine(a, b, c, R = 1.2) { const P = [];
+  if (Math.abs(b) > 1e-9) for (const x of [-R, R]) { const y = (-c - a * x) / b; if (Math.abs(y) <= R + 1e-9) P.push([x, y]); }
+  if (Math.abs(a) > 1e-9) for (const y of [-R, R]) { const x = (-c - b * y) / a; if (Math.abs(x) <= R + 1e-9) P.push([x, y]); }
+  let best = null, bd = 1e-6; for (let i = 0; i < P.length; i++) for (let j = i + 1; j < P.length; j++) { const d = Math.hypot(P[i][0] - P[j][0], P[i][1] - P[j][1]); if (d > bd) { bd = d; best = [...P[i], ...P[j]]; } } return best; }
+const SURF = o => ({ id: 'f', type: 'surface', x: 0, z: -.7, w: 7.2, ...o });
+const T5 = (id, x, v, title, o) => ({ id, type: 'tiles', x, z: -1.6, w: 2.8, rows: 5, cols: 5, v, title, ...o });
+const PLOT = o => ({ id: 'p', type: 'plot', x: 0, z: -2.2, w: 10.2, h: 4, ...o });
+const VIEWS = {
+  P: { t: '직선 하나로 두 색 가르기 · 솟은 쪽이 "켜짐"', f(s) { return [SURF({ fn: this.fn(s), pts: s.d })]; } },
+  FF: { t: '대각선끼리 같은 색 (XOR) · 솟은 쪽이 주황', f(s) { return [SURF({ fn: (x, y) => s.net.out(x, y), pts: s.d })]; } },
+  DFF: { t: '과녁 무늬: 가운데·띠·바깥 · 솟은 쪽이 주황', f(s) { return [SURF({ fn: (x, y) => s.net.out(x, y), pts: s.d })]; } },
+  RBF: { t: '기준점에서 가까우면 반응 · 노란 원이 반응 폭', f(s) { return [SURF({ fn: s.fn, pts: s.d, marks: s.cs.map(c => ({ x: c[0], y: c[1], c: 0xffd76a, r: s.sg })) })]; } },
+  ELM: { t: '은닉층은 뽑기, 출력층만 계산', f(s) { return [SURF({ fn: s.fn, pts: s.d })]; } },
+  MC: { t: '오늘 날씨만 보고 내일 정하기', f(s) {
+    const P = [[-1.7, 1.2, 0], [1.7, 1.2, 0], [0, 3.6, 0]], col = [0xffd76a, 0x9aa7c7, 0x6fb1ff], nm = ['맑음', '흐림', '비'], L = [];
+    for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) if (i !== j) L.push([i, j, s.M[i][j], 0xe9edf9, i < j ? .22 : -.22]);
+    return [{ id: 'g', type: 'nodes', x: -2.7, z: -1.3, ty: 5.2, title: '상태와 넘어갈 확률 (굵을수록 큼)', nodes: P.map((p, i) => ({ p, r: .58, c: col[i], glow: i === s.cur ? 1 : .08, t: nm[i] + (i === s.cur ? ' · 오늘' : '') })), links: L },
+      { id: 'b', type: 'bars', x: 2.9, z: -1.4, w: 4, h: 3.4, v: s.cnt.map(c => c / (s.n || 1)), colors: col, max: 1, labels: nm, refs: s.pi, title: '실제로 머문 비율 · 흰 판: 계산한 값' }]; } },
+  SVM: { t: '여백이 가장 넓은 선 찾기 · 노란 고리: 선을 정하는 점', f(s) {
+    const g = (x, y) => s.w[0] * x + s.w[1] * y + s.b, sv = s.d.map(d => (d.c ? 1 : -1) * g(d.x, d.y) <= 1.02), segs = [];
+    [0, 1, -1].forEach(o => { const L = clipLine(s.w[0], s.w[1], s.b - o); if (L) segs.push(L); });
+    return [SURF({ fn: (x, y) => g(x, y) > 0 ? 1 : 0, h: .6, pts: s.d, ring: sv, segs, segY: .66 })]; } },
+  KN: { t: '정답 없이 스스로 펴지는 그물', f(s) {
+    const n = s.n, segs = [];
+    for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) { const a = s.w[i * n + j]; if (j < n - 1) { const b = s.w[i * n + j + 1]; segs.push([a[0], a[1], b[0], b[1]]); } if (i < n - 1) { const b = s.w[(i + 1) * n + j]; segs.push([a[0], a[1], b[0], b[1]]); } }
+    return [SURF({ fn: null, pts: s.d.map(q => ({ x: q[0], y: q[1], col: 0x3d5596 })), pr: .055, marks: s.w.map(w => ({ x: w[0], y: w[1], c: 0x7fe0a8, s: .12 })), segs, segC: 0xffd76a, segY: .15 })]; } },
+  AE: { t: '좁은 통로로 압축했다가 복원', f(s) { const q = this.calc(s), c = [...q.c, ...new Array(10 - s.k).fill(0)];
+    return [T5('a', -3.9, q.v, '입력 (숫자 25개)'), { id: 'b', type: 'bars', x: 0, z: -1.4, w: 3, h: 2.6, v: c, colors: c.map((t, i) => i < s.k ? (t >= 0 ? C.y : C.p) : C.ln), max: 2.2, title: '통로 (숫자 ' + s.k + '개)' }, T5('c', 3.9, q.o, '출력 (복원)', { color: C.g })]; } },
+  DAE: { t: '망가진 입력에서 원본 되살리기', f(s) { const q = this.calc(s); return [T5('a', -3.9, q.v, '원본'), T5('b', 0, q.n, '잡음 섞인 입력', { color: C.r }), T5('c', 3.9, q.o, '출력', { color: C.g })]; } },
+  SAE: { t: '뉴런 12개 중 몇 개만 켜기', f(s) { const q = this.calc(s);
+    return [T5('a', -4.1, q.v, '입력 (두 그림 겹침)'), { id: 'b', type: 'bars', x: 0, z: -1.4, w: 3.8, h: 2.6, v: q.co, colors: q.co.map(t => t ? C.y : C.ln), max: 3.2, labels: GN, title: '은닉 뉴런 12개' }, T5('c', 4.1, q.o, '출력', { color: C.g })]; } },
+  DCN: { t: '작은 창을 옮겨 가며 무늬 찾기', f(s) { const p = Math.min(35, s.pos);
+    return [{ id: 'a', type: 'tiles', x: -3.9, z: -1.6, w: 3.2, rows: 8, cols: 8, v: s.im, hl: [Math.floor(p / 6), p % 6, 3, 3], title: '그림 8×8 · 분홍 테: 창' },
+      { id: 'k', type: 'tiles', x: -.3, z: -1.6, w: 1.7, rows: 3, cols: 3, v: s.kv, mode: 'k', color: C.p, title: '창 3×3' },
+      { id: 'o', type: 'tiles', x: 3.6, z: -1.6, w: 3, rows: 6, cols: 6, v: s.out.map((t, i) => i < s.pos ? t / s.mx : 0), title: '찾은 결과 6×6' }]; } },
+  RNN: { t: '처음 신호가 얼마나 오래 남나', f(s) { return [PLOT({ series: [{ v: runRNN(s.w, seqIn(false)), c: C.a, n: '은닉 뉴런의 값(기억)' }], ymin: -.1, ymax: 1.1, marks: [mark2[0]], title: '시간 →' })]; } },
+  ESN: { t: '저수지의 메아리와 다음 값 예측', f(s) {
+    return [PLOT({ id: 'e', x: -2.75, w: 5, h: 3.6, series: s.echo.map((v, i) => ({ v, c: [C.a, C.g, C.p, C.y][i] })), ymin: -1, ymax: 1, marks: [[2 / 39, '신호', C.y]], title: '신호 한 번 → 뉴런 4개의 메아리' }),
+      PLOT({ id: 'q', x: 2.75, w: 5, h: 3.6, series: [{ v: s.tg, c: C.fg, n: '정답' }, { v: s.pr, c: C.b, n: '예측', dash: 1 }], ymin: -1.1, ymax: 1.1, title: '다음 값 맞히기 (배우지 않은 구간)' })]; } },
+  GRU: { t: '문 두 개로 기억 지키기', f(s) { return [PLOT({ series: [{ v: this.run(s), c: C.a, n: 'GRU의 기억' }, { v: runRNN(.8, seqIn(true)), c: C.mu, n: '13층 RNN', dash: 1 }], ymin: -1.1, ymax: 1.1, marks: mark2, title: '시간 →' })]; } },
+  LSTM: { t: '기억 세포와 문 세 개', f(s) { const q = this.run(s);
+    return [PLOT({ series: [{ v: q.cs, c: C.a, n: '기억 세포' }, { v: q.hs, c: C.y, n: '밖으로 내보낸 값' }, { v: runRNN(.8, seqIn(true)), c: C.mu, n: '13층 RNN', dash: 1 }], ymin: -1.1, ymax: 1.1, marks: mark2, title: '시간 →' })]; } },
+  LSM: { t: '스파이크가 웅덩이에 번지는 모습', f(s) {
+    const v = new Array(40 * 170).fill(0); s.ras.forEach((f, t) => f.forEach(i => { v[i * 170 + t] = 1; })); const rate = s.ras.map(f => f.length);
+    return [{ id: 'r', type: 'tiles', x: 0, z: -2.2, w: 10.2, rows: 40, cols: 170, hgt: 2.7, y0: 1.95, v, depth: .3, color: C.r, cellColor: i => i % 5 === 4 ? 0x6fb1ff : 0xff6b5e, title: '스파이크 · 가로: 시간 · 세로: 뉴런 40개 (위 8개가 입력) · 파랑: 억제 뉴런' },
+      PLOT({ x: 0, z: -2.2, y0: .2, h: 1.3, series: [{ v: rate.length > 1 ? rate : [0, 0], c: C.y, len: 170, n: '한순간에 쏜 뉴런 수' }], ymin: 0, ymax: 20 })]; } },
+  HN: { t: '망가진 패턴을 되돌려 놓기', f(s) { const m = hMatch(s.s);
+    return [...HP.map((p, k) => ({ id: 'm' + k, type: 'tiles', x: -4.3 + k * 1.3, z: -1.6, y0: 3.75, w: 1.05, rows: 5, cols: 5, v: p, mode: 1, depth: .15, color: C.mu, title: '저장 ' + HPN[k] })),
+      { id: 's', type: 'tiles', x: -3, z: -1.6, y0: .3, w: 2.9, rows: 5, cols: 5, v: s.s, mode: 1 },
+      { id: 'b', type: 'bars', x: 2.8, z: -1.4, w: 4, h: 3.2, v: m, colors: [C.a, C.g, C.p], max: 1, labels: HPN.map((n, i) => n + ' ' + Math.round(m[i] * 100) + '%'), title: '저장 패턴과 일치하는 정도' }]; } },
+  BM: { t: '확률로 켜지고 꺼지는 뉴런들', f(s) { const m = hMatch(s.s).map(v => Math.max(v, 1 - v));
+    return [{ id: 's', type: 'tiles', x: -2.9, z: -1.6, w: 3.2, rows: 5, cols: 5, v: s.s, mode: 1, title: '지금 상태' },
+      { id: 'b', type: 'bars', x: 2.8, z: -1.4, w: 4, h: 3.2, v: m.map(v => (v - .5) * 2), colors: [C.a, C.g, C.p], max: 1, labels: HPN, title: '저장 패턴과 닮은 정도' }]; } },
+  RBM: { t: '보이는 층과 숨은 층을 오가기', f(s) {
+    return [...this.data.map((p, k) => ({ id: 'm' + k, type: 'tiles', x: -4.6 + k * 1.15, z: -1.6, y0: 3.75, w: .95, rows: 5, cols: 5, v: p, depth: .15, color: C.mu, title: k === 1 ? '배울 그림 4장' : null })),
+      { id: 'v', type: 'tiles', x: -2.9, z: -1.6, y0: .3, w: 2.9, rows: 5, cols: 5, v: s.v },
+      { id: 'h', type: 'bars', x: 2.8, z: -1.4, w: 4, h: 3, v: s.h, colors: C.g, max: 1, title: '숨은 층 6개' }]; } },
+  DBN: { t: '아래부터 한 층씩 학습하기', f(s) { const N = [], L = [];
+    s.h1.forEach((t, i) => N.push({ p: [-2 + i * .57, 1.2, 0], r: .22, c: 0xc8f0d8, glow: t })); s.h2.forEach((t, i) => N.push({ p: [-.6 + i * .6, 3.2, 0], r: .26, c: 0xc8f0d8, glow: t }));
+    for (let a = 0; a < 3; a++) for (let b = 0; b < 8; b++) L.push([8 + a, b, .08, 0x6b7493]);
+    return [{ id: 'v', type: 'tiles', x: -3.6, z: -1.6, w: 2.7, rows: 5, cols: 5, v: s.v, title: '보이는 층 (그림)' }, { id: 'n', type: 'nodes', x: 2.4, z: -1.4, ty: 4.4, title: '숨은 층: 아래 8개 · 위 3개', nodes: N, links: L }]; } },
+  DN: { t: '점 하나마다 도장 찍기', f(s) {
+    return [{ id: 'c', type: 'tiles', x: -4.2, z: -1.6, w: 1.8, rows: 3, cols: 3, v: s.cd, hl: s.pos < 9 ? [Math.floor(s.pos / 3), s.pos % 3, 1, 1] : null, title: '작은 지도 3×3' },
+      { id: 'k', type: 'tiles', x: -1.7, z: -1.6, w: 1.5, rows: 3, cols: 3, v: s.kv, color: C.p, title: '도장 3×3' },
+      { id: 'o', type: 'tiles', x: 2.5, z: -1.6, w: 4, rows: s.n, cols: s.n, v: this.out(s).map(t => t / 2), title: '만든 그림 ' + s.n + '×' + s.n }]; } },
+  DRN: { t: '깊이 쌓으면 신호가 얼마나 남나', f(s) { const c = this.calc(s), ser = [{ v: c.p, c: C.r, n: '지름길 없음' }]; if (s.skip) ser.push({ v: c.q, c: C.g, n: '지름길 있음' });
+    return [PLOT({ series: ser, ymin: 0, ymax: 3, title: '입력 층 → ' + s.dl + '번째 층' })]; } },
+  VAE: { t: '압축 공간의 아무 곳에서 새 그림 만들기', f(s) {
+    return [SURF({ x: -2.3, z: -.8, w: 5.4, range: 2.8, fn: null, marks: [...s.codes.map((c, i) => ({ x: c[0], y: c[1], c: 0x9aa7c7, s: .1, t: GN[i] })), { x: s.z1, y: s.z2, c: 0xffd76a, s: .24 }] }),
+      { id: 'o', type: 'tiles', x: 3.6, z: -1.6, w: 2.7, rows: 5, cols: 5, v: PCA.dec([s.z1 * s.sd[0], s.z2 * s.sd[1]]), title: '노란 공 자리에서 만든 그림' }]; } },
+  DCIGN: { t: '그림 → 뜻 있는 숫자 → 다시 그림', f(s) {
+    return [{ id: 'a', type: 'tiles', x: -3.9, z: -1.6, w: 3.1, rows: 12, cols: 12, v: s.im, title: '입력 그림' },
+      { id: 'b', type: 'bars', x: 0, z: -1.4, w: 2.4, h: 2.8, v: [s.cx / 11, s.cy / 11, s.sz / 4], colors: [C.a, C.g, C.p], max: 1, labels: ['가로 ' + s.cx, '세로 ' + s.cy, '크기 ' + s.sz], title: '가운데 코드' },
+      { id: 'c', type: 'tiles', x: 3.9, z: -1.6, w: 3.1, rows: 12, cols: 12, v: this.render(s.cx, s.cy, s.sz), color: C.g, title: '다시 그린 그림' }]; } },
+  GAN: { t: '가짜가 진짜를 닮아 가는 과정', f(s) {
+    const hist = new Array(40).fill(0); s.z.forEach(z => { const k = Math.floor((s.a * z + s.b + 4) / 8 * 40); if (k >= 0 && k < 40) hist[k]++; });
+    const dens = [], dc = []; for (let i = 0; i <= 160; i++) { const v = -4 + i * .05; dens.push(Math.exp(-((v - 1.5) ** 2) / .5) / (.5 * Math.sqrt(TAU)) * 1.05); dc.push(this.D(s, v)); }
+    return [PLOT({ series: [{ v: hist.map(c => c / 400 * 5 * 1.05), c: C.b, bar: 1, n: '가짜' }, { v: dens, c: C.a, n: '진짜' }, { v: dc, c: C.fg, dash: 1, n: '판별자가 "진짜"라고 보는 정도' }], ymin: 0, ymax: 1, title: '값 −4 → 4' })]; } },
+  NTM: { t: '공책에 쓰고, 돌아가서 읽기', f(s) {
+    const wr = Math.min(s.tick, s.n), rd = clamp(s.tick - s.n - 1, 0, s.n), cs = .42, head = s.tick <= s.n ? Math.min(wr, s.n - 1) : (rd > 0 ? rd - 1 : 0);
+    const tr = (rows, cols, fn) => { const v = []; for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) v.push(fn(r, c)); return v; };
+    return [{ id: 'i', type: 'tiles', x: -1.2, z: -1.6, y0: 4.7, w: s.n * cs, rows: 4, cols: s.n, v: tr(4, s.n, (r, c) => s.seq[c][r] ? (c < wr ? 1 : .4) : 0), title: '들어온 순서' },
+      { id: 'm', type: 'tiles', x: -1.2, z: -1.6, y0: 2.45, w: 8 * cs, rows: 4, cols: 8, v: tr(4, 8, (r, c) => c < wr && s.seq[c] ? s.seq[c][r] : 0), color: C.a, hl: [0, head, 4, 1], title: '공책 8칸 · 분홍 테: ' + (s.tick <= s.n ? '쓰는' : '읽는') + ' 자리' },
+      { id: 'o', type: 'tiles', x: -1.2, z: -1.6, y0: .2, w: s.n * cs, rows: 4, cols: s.n, v: tr(4, s.n, (r, c) => c < rd ? s.seq[c][r] : 0), color: C.g, title: '나간 순서' }]; } },
+};
+for (const k in VIEWS) { DEMOS[k].vt = VIEWS[k].t; DEMOS[k].view = VIEWS[k].f; }
