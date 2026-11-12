@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>신경망 연구소 — 층</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0f1e;--panel:#111a30;--panel2:#18233f;--line:#27345a;--text:#e9edf9;--muted:#9aa7c7;--acc:#6fb1ff}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--text);font-family:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;font-size:15px;line-height:1.65;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;display:flex;flex-direction:column;overflow:hidden}
+button,input,select{font:inherit;color:inherit}
+a{color:var(--acc)}
+header{display:flex;align-items:center;gap:12px;padding:10px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.brand{display:flex;flex-direction:column;line-height:1.2;margin-right:auto}
+.brand small{font-size:12px;font-weight:700;color:#ffd76a}
+.brand small a{color:inherit;text-decoration:none}
+.brand h1{font-size:21px;margin:0;font-weight:900;letter-spacing:-.02em}
+nav{display:flex;gap:6px;flex-wrap:wrap}
+nav a,.vbtn{border:1px solid var(--line);border-radius:999px;padding:5px 13px;font-size:13.5px;color:var(--muted);text-decoration:none;background:transparent;cursor:pointer;white-space:nowrap}
+nav a:hover,.vbtn:hover{color:var(--text);border-color:var(--muted)}
+.vbtn[aria-pressed="true"]{background:var(--acc);border-color:var(--acc);color:#0a0f1e;font-weight:700}
+nav a:focus-visible,.vbtn:focus-visible,.btn:focus-visible{outline:2px solid #fff;outline-offset:2px}
+main{flex:1;display:grid;grid-template-columns:minmax(0,1fr) 400px;min-height:0}
+#stage{position:relative;min-height:0;overflow:hidden;background:radial-gradient(120% 90% at 50% 0%,#17224a 0%,#0a0f1e 62%)}
+#stage canvas.gl{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+#stage canvas.flat{display:block;width:100%;height:auto;margin-top:54px}
+#labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.lb{position:absolute;left:0;top:0;white-space:nowrap;font-size:13px;font-weight:700;color:#ffd76a;text-shadow:0 1px 3px #000,0 0 8px #0a0f1e;will-change:transform}
+.lb.say{background:#fff;color:#141a2e;text-shadow:none;font-size:13px;font-weight:500;line-height:1.45;padding:6px 11px;border-radius:12px;white-space:normal;width:max-content;max-width:250px;box-shadow:0 4px 14px #0008}
+.lb.say::after{content:"";position:absolute;left:50%;bottom:-6px;width:12px;height:12px;background:#fff;transform:translateX(-50%) rotate(45deg);border-radius:2px}
+.lb.say b{color:#b0307a}
+#views{position:absolute;left:12px;top:12px;display:flex;gap:6px}
+#views .vbtn{background:#0a0f1ecc}
+#views .vbtn[aria-pressed="true"]{background:var(--acc)}
+#hint{position:absolute;right:12px;top:14px;font-size:12px;color:var(--muted);background:#0a0f1ecc;border:1px solid var(--line);border-radius:8px;padding:4px 10px}
+#cap{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);width:min(680px,calc(100% - 28px));display:grid;grid-template-columns:52px 1fr;gap:10px;align-items:center;background:#fff;color:#141a2e;border-radius:14px;padding:8px 14px 8px 8px;box-shadow:0 6px 18px #000a}
+#cap img{width:52px;height:52px;border-radius:50%;background:#22305a;object-fit:cover}
+#cap p{margin:0;font-size:14px;line-height:1.5}
+#cap b{color:#b0307a}
+#cap #capName{display:block;font-size:12px;color:#55607f}
+aside{border-left:1px solid var(--line);background:var(--panel);overflow-y:auto;padding:18px 18px 26px}
+aside h2{font-size:21px;font-weight:900;letter-spacing:-.02em;margin:0 0 2px;color:var(--acc);line-height:1.3}
+aside h3{font-size:13px;margin:18px 0 8px;color:var(--muted);font-weight:700}
+aside p{margin:0 0 10px}
+.grp{font-size:12.5px;font-weight:700;color:var(--acc)}
+.en{color:var(--muted);font-size:13px;margin:0 0 8px}
+.three{background:var(--panel2);border-left:3px solid var(--acc);border-radius:0 10px 10px 0;padding:10px 12px;margin:10px 0 4px}
+.three p{margin:0 0 4px}.three p:last-child{margin:0}
+.talk{display:grid;gap:8px;margin:12px 0 4px}
+.talk div{display:grid;grid-template-columns:46px 1fr;gap:10px;align-items:start}
+.talk img{width:46px;height:46px;border-radius:50%;background:#22305a;border:2px solid var(--line);object-fit:cover}
+.talk p{margin:0;background:var(--panel2);border:1px solid var(--line);border-radius:4px 12px 12px 12px;padding:7px 11px;font-size:14px}
+.talk p b{display:block;font-size:12px;color:var(--acc)}
+.row{display:grid;grid-template-columns:112px 1fr 50px;align-items:center;gap:8px;margin:5px 0}
+.row label{font-size:13px;color:var(--muted);line-height:1.3}
+.row output{font-size:13px;font-weight:500;text-align:right}
+.row.sel{grid-template-columns:112px 1fr}
+input[type=range]{width:100%;accent-color:var(--acc);height:22px}
+select{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 10px}
+.btns{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.btn{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:13.5px;text-decoration:none;color:var(--text);display:inline-block}
+.btn:hover{border-color:var(--acc)}
+.kv{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px}
+.kv div{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:7px 10px}
+.kv span{display:block;font-size:11.5px;color:var(--muted)}
+.kv b{font-size:15px;font-weight:700}
+.note{font-size:12.5px;color:var(--muted);margin-top:8px}
+.leg{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:13px}
+.leg span{display:inline-flex;align-items:center;gap:6px}
+.leg i{width:12px;height:12px;border-radius:50%;background:var(--c)}
+.chip{display:inline-block;font-size:12px;border:1px solid var(--line);border-radius:999px;padding:1px 9px;color:var(--muted);margin:0 4px 6px 0}
+.more{display:grid;gap:6px}
+.foot{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+.foot p{margin:0 0 4px}
+@media (max-width:860px){
+  body{overflow:auto;height:auto} main{display:block}
+  #stage{height:62vh;min-height:380px}
+  #hint{display:none}
+  #cap p{font-size:12.5px}
+  aside{border-left:0;border-top:1px solid var(--line);overflow:visible}
+  .lb{font-size:10.5px}.lb.say{font-size:11px;max-width:170px}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><small><a href="../">신경망 연구소</a> · <span id="hFloor"></span></small><h1 id="hTitle"></h1></div>
+  <nav><a id="nPrev" href="#">↓ 아래층</a><a href="../">건물 전체</a><a id="nNext" href="#">↑ 위층</a></nav>
+</header>
+<main>
+  <div id="stage">
+    <canvas class="gl" id="gl"></canvas>
+    <div id="labels"></div>
+    <div id="views"><button class="vbtn" data-v="all">방 전체</button><button class="vbtn" data-v="topo">구조</button><button class="vbtn" data-v="scr">실험 화면</button></div>
+    <div id="hint">끌기: 돌려 보기 · 휠/두 손가락: 확대</div>
+    <div id="cap"><img id="capImg" alt=""><p><b id="capName"></b><span id="capText"></span></p></div>
+  </div>
+  <aside id="panel"></aside>
+</main>
+
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js"}}</script>
+<script type="module">
+import { GROUPS, FLOORS, CELLS, LINKS, band } from './data.js';
+import { DEMOS, W as CW, H as CH } from './demos.js';
+const $ = s => document.querySelector(s), $$ = s => Array.from(document.querySelectorAll(s));
+const fnum = Math.max(1, Math.min(27, parseInt(new URLSearchParams(location.search).get('f') || '1', 10) || 1));
+const F = FLOORS[fnum - 1], GP = GROUPS[F.g], demo = DEMOS[F.ab];
+const NAME = { doctor: '박사', haru: '조수(하루)', fruitfly: '초파리 연구원', jupanbot: '주판봇', sia: '시아', moa: '모아' };
+const SHORT = { i: '입력', h: '은닉', o: '출력', x: '출력(입력과 비교)', r: '순환', m: '기억 세포', g: '문 달린 뉴런', p: '확률 뉴런', b: '보이는 뉴런', n: '잡음 섞인 입력', s: '스파이크 뉴런', k: '창', img: '그림', rb: '거리 뉴런', sv: '서포트 벡터', pr: '상태', z: '무작위 씨앗' };
+
+/* ---------- 머리말·패널 ---------- */
+document.title = '신경망 연구소 ' + fnum + '층 — ' + F.ab + ' ' + F.ko;
+document.documentElement.style.setProperty('--acc', GP.c);
+$('#hFloor').textContent = fnum + '층 · ' + band(fnum); $('#hTitle').textContent = F.ab + ' · ' + F.ko;
+const pv = $('#nPrev'), nx = $('#nNext');
+if (fnum > 1) { pv.href = '?f=' + (fnum - 1); pv.textContent = '↓ ' + (fnum - 1) + '층 ' + FLOORS[fnum - 2].ab; } else { pv.href = '../math_behind_ai/'; pv.textContent = '↓ 로비'; }
+if (fnum < 27) { nx.href = '?f=' + (fnum + 1); nx.textContent = '↑ ' + (fnum + 1) + '층 ' + FLOORS[fnum].ab; } else nx.style.display = 'none';
+
+$('#capImg').src = '../assets/' + F.host + '_E13.webp'; $('#capName').textContent = NAME[F.host];
+const st = {}; demo.controls.forEach(c => { if (c.k) st[c.k] = c.v; }); demo.init(st);
+const types = [...new Set([...(F.topo.layers || []), ...(F.topo.ring || [])].map(l => l[1]).concat(F.topo.grid ? [F.topo.grid[2]] : [], F.topo.mem ? ['mem'] : []))];
+let h = '<div class="grp">' + fnum + '층 · ' + band(fnum) + ' · ' + GP.n + '</div><h2>' + F.ab + ' · ' + F.ko + '</h2><p class="en">' + F.en + '</p>' +
+  (F.nn ? '<span class="chip">엄밀히는 신경망이 아님</span>' : '') +
+  '<div class="three">' + F.three.map(t => '<p>' + t + '</p>').join('') + '</div>' +
+  '<div class="talk">' + F.talk.map(t => '<div><img src="../assets/' + t[0] + '_' + t[1] + '.webp" alt=""><p><b>' + NAME[t[0]] + '</b>' + t[2] + '</p></div>').join('') + '</div>' +
+  '<h3>실험: 직접 바꿔 보기</h3>';
+demo.controls.forEach(c => {
+  if (c.b) return;
+  if (c.opts) h += '<div class="row sel"><label for="c_' + c.k + '">' + c.l + '</label><select id="c_' + c.k + '" data-k="' + c.k + '">' + c.opts.map(o => '<option value="' + o[0] + '">' + o[1] + '</option>').join('') + '</select></div>';
+  else h += '<div class="row"><label for="c_' + c.k + '">' + c.l + '</label><input type="range" id="c_' + c.k + '" data-k="' + c.k + '" min="' + c.min + '" max="' + c.max + '" step="' + c.step + '"><output></output></div>';
+});
+const btns = demo.controls.filter(c => c.b);
+if (btns.length) h += '<div class="btns">' + btns.map(c => '<button class="btn" data-b="' + c.b + '">' + c.l + '</button>').join('') + '</div>';
+h += '<div class="kv" id="kv"></div>' + (demo.note ? '<p class="note">' + demo.note + '</p>' : '') +
+  '<h3>이 층의 세포</h3><div class="leg">' + types.map(t => '<span style="--c:' + CELLS[t][0] + '"><i></i>' + CELLS[t][1] + '</span>').join('') + (F.topo.frozen ? '<span style="--c:#6b7493"><i></i>회색 선: 학습하지 않는 연결</span>' : '') + '</div>' +
+  '<h3>아래층과 다른 점</h3><p>' + F.diff + '</p>' +
+  '<h3>더 알아보기</h3><div class="more">' +
+  (F.rel || []).map(r => '<a class="btn" href="' + r[1] + '">진짜 뇌와 견주기 · ' + r[0] + '</a>').join('') +
+  '<a class="btn" href="' + LINKS.ATLAS + '1_neural_network_atlas_chart.html">도감에서 ' + F.ab + ' 그림 보기</a>' +
+  '<a class="btn" href="../math_behind_ai/#neuron">뉴런 하나의 계산 (로비 ③)</a>' +
+  '<a class="btn" href="../math_behind_ai/#training">학습이 도는 한 바퀴 (로비 ⑤)</a>' +
+  '<a class="btn" href="' + LINKS.FISH + '02_loss_and_gradient.html">손실 함수와 경사하강법 (Fish Market 연구실 2장)</a>' +
+  '<a class="btn" href="' + LINKS.FISH + '03_rate_batch_epoch.html">학습률·배치·에포크 (Fish Market 연구실 3장)</a></div>' +
+  '<div class="foot"><p>글 · 안상선 ((주)M-Robo 대표)</p><p>27종의 구성은 신경망 구조 도감을 따릅니다. 원본 차트: Stefan Leijnen &amp; Fjodor van Veen, "The Neural Network Zoo" (CC BY). 구조 그림은 단순화해 새로 그렸습니다.</p><p>화면의 수치는 이 페이지 안에서 계산한 교육용 예시입니다.</p><p>캐릭터 이름·설정 © 안상선</p></div>';
+$('#panel').innerHTML = h;
+const inputs = $$('#panel [data-k]');
+function sync() { inputs.forEach(el => { const c = demo.controls.find(q => q.k === el.dataset.k); if (document.activeElement !== el) el.value = st[c.k]; if (el.type === 'range') el.nextElementSibling.textContent = c.f ? c.f(st[c.k]) : (c.step >= 1 ? st[c.k] : Number(st[c.k]).toFixed(2)); }); }
+inputs.forEach(el => el.addEventListener('input', () => { const k = el.dataset.k; st[k] = el.type === 'range' ? +el.value : el.value; if (demo.change) demo.change(st, k); sync(); }));
+$$('#panel [data-b]').forEach(b => b.addEventListener('click', () => { demo.click(st, b.dataset.b); sync(); }));
+sync();
+
+/* ---------- 실험 화면 (2D 캔버스) ---------- */
+const cv = document.createElement('canvas'); cv.width = CW; cv.height = CH; const g2 = cv.getContext('2d');
+let sayText = '';
+function tickDemo(dt) {
+  if (demo.step) demo.step(st, dt); demo.draw(g2, st);
+}
+let uiT = 0;
+function tickUI(dt) { uiT += dt; if (uiT < .2) return; uiT = 0; sync();
+  $('#kv').innerHTML = demo.read(st).map(r => '<div><span>' + r[0] + '</span><b>' + r[1] + '</b></div>').join(''); const t = demo.say(st); if (t !== sayText) { sayText = t; $('#capText').innerHTML = t; } }
+
+/* ---------- 3D 방 ---------- */
+(async function () {
+  const stage = $('#stage'), canvas = $('#gl'), labelsEl = $('#labels');
+  function flat() { canvas.remove(); cv.className = 'flat'; stage.appendChild(cv); $('#hint').textContent = '3D를 불러오지 못해 실험 화면만 보여 줍니다.'; $('#hint').style.display = 'block'; $$('#views .vbtn').forEach(b => b.style.display = 'none');
+    let last = performance.now(); (function loop(now) { const dt = Math.min(.05, (now - last) / 1000); last = now; tickDemo(dt); tickUI(dt); requestAnimationFrame(loop); })(last); }
+  let T; try { T = await import('three'); } catch (e) { return flat(); }
+  let renderer; try { renderer = new T.WebGLRenderer({ canvas, antialias: true, alpha: true }); } catch (e) { return flat(); }
+  let lab = null; try { const m = await import('../chars3d/lab3d.js'); lab = m.createLab3D(T, { outline: true, shadow: false }); } catch (e) { console.warn('lab3d', e); }
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  const scene = new T.Scene(), camera = new T.PerspectiveCamera(38, 1, 0.1, 400);
+  scene.add(new T.AmbientLight(0xffffff, 2.2)); const sun = new T.DirectionalLight(0xffffff, 2.4); sun.position.set(8, 20, 12); scene.add(sun);
+  const V = (x, y, z) => new T.Vector3(x, y, z), UP = V(0, 1, 0), gc = new T.Color(GP.c).getHex();
+
+  // 바닥
+  const slab = new T.Mesh(new T.BoxGeometry(23.5, 0.3, 10), new T.MeshStandardMaterial({ color: 0x141d38, roughness: .9 })); slab.position.y = -.15; scene.add(slab);
+  const se = new T.LineSegments(new T.EdgesGeometry(slab.geometry), new T.LineBasicMaterial({ color: gc })); se.position.copy(slab.position); scene.add(se);
+
+  // 라벨
+  const labels = []; let W0 = 0, H0 = 0; const tmp = new T.Vector3();
+  function label(html, pos, cls, anchor) { const el = document.createElement('div'); el.className = 'lb ' + (cls || ''); el.innerHTML = html; labelsEl.appendChild(el); const o = { el, pos, anchor }; labels.push(o); return o; }
+  function updateLabels() { for (const o of labels) { tmp.copy(o.pos).project(camera); if (tmp.z > 1 || tmp.z < -1) { o.el.style.display = 'none'; continue; } o.el.style.display = '';
+    o.el.style.transform = 'translate(' + ((tmp.x * .5 + .5) * W0).toFixed(1) + 'px,' + ((-tmp.y * .5 + .5) * H0).toFixed(1) + 'px) translate(-50%,' + (o.anchor === 'b' ? '-100%' : '-50%') + ')'; } }
+
+  // 구조 그림
+  const TX = -6.9, CY = 3.9, nodes = [], edges = [];
+  const cylGeo = new T.CylinderGeometry(1, 1, 1, 8, 1, true);
+  function node(p, t, size) { const col = new T.Color(CELLS[t][0]).getHex(); let m;
+    if (t === 'k' || t === 'img' || t === 'mem') { const sz = size || 1; m = new T.Mesh(new T.BoxGeometry(sz, sz, .1), new T.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: .25, roughness: .4 })); }
+    else { m = new T.Mesh(new T.SphereGeometry(t === 'm' ? .44 : .34, 22, 16), new T.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: .3, roughness: .35 }));
+      if (t === 'p' || t === 'g' || t === 'm' || t === 's') { const ring = new T.Mesh(new T.TorusGeometry(t === 'm' ? .58 : .48, .035, 6, 26), new T.MeshBasicMaterial({ color: t === 's' ? 0xffffff : col })); m.add(ring); } }
+    m.position.copy(p); scene.add(m); const n = { p, t }; nodes.push(n); return n; }
+  const edge = (a, b, kind) => edges.push({ a: a.p, b: b.p, kind });
+  const sp = F.topo;
+  if (sp.ring) {
+    const flatT = []; sp.ring.forEach(l => { for (let i = 0; i < l[0]; i++) flatT.push(l[1]); }); const n = flatT.length;
+    const ns = flatT.map((t, i) => node(V(TX + Math.cos(i / n * Math.PI * 2 + Math.PI / 2) * 2.7, CY + Math.sin(i / n * Math.PI * 2 + Math.PI / 2) * 2.7, (i % 2 ? .5 : -.5)), t));
+    for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) edge(ns[i], ns[j]);
+    if (sp.directed) ns.forEach(a => { const t = new T.Mesh(new T.TorusGeometry(.5, .03, 6, 24), new T.MeshBasicMaterial({ color: 0x9db8ff })); t.position.copy(a.p).add(V(0, .62, 0)); scene.add(t); });
+    label(n === 3 ? '상태 세 개가 서로 오갑니다' : '모든 뉴런이 서로 연결됩니다', V(TX, CY - 3.9, 0));
+  } else {
+    const Ls = sp.layers, L = Ls.length, hasGrid = !!sp.grid, span = hasGrid ? 2.2 : 8, dx = L > 1 ? Math.min(2.6, span / (L - 1)) : 0, x0 = hasGrid ? TX - 3.9 : TX - dx * (L - 1) / 2;
+    const cols = Ls.map((l, li) => { const n = l[0], t = l[1], x = x0 + li * dx, out = [];
+      if (t === 'k' || t === 'img') { const size = t === 'img' ? 1.7 : Math.max(.8, 1.5 - .25 * Math.min(li, L - 1 - li)); for (let j = 0; j < n; j++) out.push(node(V(x + j * .16, CY + j * .18, (j - (n - 1) / 2) * .55), t, size)); }
+      else if ((sp.intra || []).includes(li)) { for (let j = 0; j < n; j++) out.push(node(V(x + Math.cos(j / n * Math.PI * 2) * 1.5, CY + Math.sin(j / n * Math.PI * 2) * 2.3, (j % 2 ? .6 : -.6)), t)); }
+      else { const dy = Math.min(1.3, 5.6 / n); for (let j = 0; j < n; j++) out.push(node(V(x, CY + ((n - 1) / 2 - j) * dy, (li > 0 && li < L - 1) ? (j % 2 ? .55 : -.55) : 0), t)); }
+      label(SHORT[t] || CELLS[t][1], V(x, CY - 3.6 - (L > 5 ? (li % 2) * .5 : 0), 0)); return out; });
+    for (let l = 0; l < L - 1; l++) cols[l].forEach(a => cols[l + 1].forEach(b => edge(a, b, (sp.frozen || []).includes(l) ? 'frozen' : '')));
+    (sp.intra || []).forEach(li => { let s = 7; const r = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; cols[li].forEach((a, i) => cols[li].forEach((b, j) => { if (i !== j && r() < .35) edge(a, b, 'frozen'); })); });
+    (sp.self || []).forEach(li => cols[li].forEach(a => { const t = new T.Mesh(new T.TorusGeometry(.42, .035, 6, 24), new T.MeshBasicMaterial({ color: new T.Color(CELLS[a.t][0]).getHex() })); t.position.copy(a.p).add(V(0, .55, 0)); scene.add(t); }));
+    if (sp.self) label('고리: 자기 출력을 다음 순간에 다시 받음', V(TX, CY + 3.7, 0));
+    if (sp.skip) for (let l = 1; l < L - 2; l++) { const a = cols[l][0].p, b = cols[l + 1 < L - 1 ? l + 1 : l][0].p, top = V((a.x + b.x) / 2 + dx / 2, CY + 3.4, 0), c = new T.QuadraticBezierCurve3(V(a.x - dx / 2, CY + 2.3, 0), top.clone().add(V(-dx / 2, 0, 0)), V(a.x + dx / 2, CY + 2.3, 0));
+      const tube = new T.Mesh(new T.TubeGeometry(c, 20, .06, 6), new T.MeshBasicMaterial({ color: 0x7fe0a8 })); scene.add(tube); }
+    if (sp.skip) label('초록 호: 층을 건너뛰는 지름길', V(TX, CY + 3.9, 0));
+    if (hasGrid) { const [gr, gcN, gt] = sp.grid, gn = []; for (let i = 0; i < gr; i++) for (let j = 0; j < gcN; j++) gn.push(node(V(TX - .9 + j * 1.3, CY + 1.95 - i * 1.3, (i - gr / 2) * .5), gt));
+      cols[0].forEach(a => gn.forEach(b => edge(a, b, 'thin'))); for (let i = 0; i < gr; i++) for (let j = 0; j < gcN; j++) { if (j < gcN - 1) edge(gn[i * gcN + j], gn[i * gcN + j + 1], 'nb'); if (i < gr - 1) edge(gn[i * gcN + j], gn[(i + 1) * gcN + j], 'nb'); }
+      label('뉴런이 그물(격자)로 놓입니다', V(TX + 1, CY - 3.6, 0)); }
+    if (sp.mem) { const mem = []; for (let k = 0; k < sp.mem; k++) mem.push(node(V(TX + (k - (sp.mem - 1) / 2) * 1.25, CY + 3.5, -.8), 'mem', 1.0)); cols[1].forEach(a => mem.forEach(b => edge(a, b, 'mem'))); label('외부 기억(공책)', V(TX, CY + 4.5, -.8)); }
+  }
+  const KIND = { '': [0x9db8ff, .38], frozen: [0x6b7493, .5], thin: [0x9db8ff, .1], nb: [0xffd76a, .9], mem: [0x3f6dff, .6] };
+  Object.keys(KIND).forEach(k => { const pts = []; edges.filter(e => e.kind === (k || '') || (!k && !e.kind)).forEach(e => pts.push(e.a, e.b)); if (pts.length) scene.add(new T.LineSegments(new T.BufferGeometry().setFromPoints(pts), new T.LineBasicMaterial({ color: KIND[k][0], transparent: true, opacity: KIND[k][1] }))); });
+  const pulses = Array.from({ length: Math.min(16, edges.length) }, () => { const m = new T.Mesh(new T.SphereGeometry(.1, 10, 8), new T.MeshBasicMaterial({ color: 0xffffff })); scene.add(m); return { m, e: edges[Math.floor(Math.random() * edges.length)], t: Math.random(), sp: .6 + Math.random() * .7, rev: false }; });
+  label('구조', V(TX, 8.6, 0));
+
+  // 실험 스크린
+  const tex = new T.CanvasTexture(cv); tex.colorSpace = T.SRGBColorSpace; tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  const SW = 12.2, SH = SW * CH / CW, scr = new T.Mesh(new T.PlaneGeometry(SW, SH), new T.MeshBasicMaterial({ map: tex }));
+  scr.position.set(5.2, .9 + SH / 2, -2.2); scr.rotation.y = -.1; scene.add(scr);
+  const back = new T.Mesh(new T.BoxGeometry(SW + .5, SH + .5, .3), new T.MeshStandardMaterial({ color: 0x1a2444 })); back.position.copy(scr.position).add(V(-.02, 0, -.2)); back.rotation.y = -.1; scene.add(back);
+  [-1, 1].forEach(k => { const leg = new T.Mesh(new T.BoxGeometry(.3, 1, .3), new T.MeshStandardMaterial({ color: 0x1a2444 })); leg.position.set(5.2 + k * 4.5, .45, -2.4); scene.add(leg); });
+  label('실험 화면', V(5.2, 1.3 + SH + .5, -2.2));
+
+  // 안내하는 식구
+  let host = null; const hpos = V(-10.9, 0, 4.4);
+  if (lab) { host = lab.build(F.host, { unit: 2.7, pose: 'explain', expr: 'E13' }); host.position.copy(hpos); host.rotation.y = .5; scene.add(host); }
+  // 카메라
+  const VIEWS = { all: { t: [-.2, 3.4, 0], r: 25.5, need: 1.72, th: 0, ph: 1.34 }, topo: { t: [TX, 3.6, 0], r: 17.5, need: 1.2, th: -.12, ph: 1.36 }, scr: { t: [5.2, .3 + SH / 2, -2.2], r: 14.5, need: 1.62, th: -.1, ph: 1.44 } };
+  const cur = { x: 0, y: 4, z: 0, r: 44, th: .3, ph: 1.1 }, goal = { ...cur }; let aspect = 1.5, view = null;
+  function setView(v) { view = v; const q = VIEWS[v]; goal.x = q.t[0]; goal.y = q.t[1]; goal.z = q.t[2]; goal.th = q.th; goal.ph = q.ph; goal.r = q.r * Math.max(1, q.need / aspect); $$('#views .vbtn').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === v)); }
+  $$('#views .vbtn').forEach(b => b.addEventListener('click', () => setView(b.dataset.v)));
+  const ptrs = new Map(); let pinch = 0;
+  canvas.addEventListener('pointerdown', e => { canvas.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); if (ptrs.size === 2) { const a = [...ptrs.values()]; pinch = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y); } });
+  canvas.addEventListener('pointermove', e => { const p = ptrs.get(e.pointerId); if (!p) return; const dx = e.clientX - p.x, dy = e.clientY - p.y; p.x = e.clientX; p.y = e.clientY;
+    if (ptrs.size === 1) { goal.th -= dx * .006; goal.ph = Math.max(.3, Math.min(1.54, goal.ph - dy * .005)); } else if (ptrs.size === 2) { const a = [...ptrs.values()], d = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y); if (pinch) goal.r = Math.max(6, Math.min(120, goal.r * pinch / d)); pinch = d; } });
+  const endP = e => { ptrs.delete(e.pointerId); if (ptrs.size < 2) pinch = 0; }; canvas.addEventListener('pointerup', endP); canvas.addEventListener('pointercancel', endP);
+  canvas.addEventListener('wheel', e => { e.preventDefault(); goal.r = Math.max(6, Math.min(120, goal.r * Math.exp(e.deltaY * .001))); }, { passive: false });
+  function resize() { const w = stage.clientWidth, hgt = stage.clientHeight; if (!w || !hgt || (w === W0 && hgt === H0)) return; W0 = w; H0 = hgt; renderer.setSize(w, hgt, false); aspect = w / hgt; camera.aspect = aspect; camera.updateProjectionMatrix(); setView(view || (aspect < 1 ? 'scr' : 'all')); }
+  if (window.ResizeObserver) new ResizeObserver(resize).observe(stage); window.addEventListener('resize', resize); resize();
+  const still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches; if (still) Object.assign(cur, goal);
+  let last = performance.now(), time = 0;
+  function frame(now) {
+    const dt = Math.min(.05, (now - last) / 1000); last = now; time += dt;
+    const k = still ? 1 : 1 - Math.pow(.002, dt); for (const a in cur) cur[a] += (goal[a] - cur[a]) * k;
+    const sn = Math.sin(cur.ph); camera.position.set(cur.x + cur.r * sn * Math.sin(cur.th), cur.y + cur.r * Math.cos(cur.ph), cur.z + cur.r * sn * Math.cos(cur.th)); camera.lookAt(cur.x, cur.y, cur.z);
+    for (const p of pulses) { p.t += dt * p.sp; if (p.t >= 1) { p.t = 0; p.e = edges[Math.floor(Math.random() * edges.length)]; p.rev = !!sp.ring && Math.random() < .5; } p.m.position.lerpVectors(p.rev ? p.e.b : p.e.a, p.rev ? p.e.a : p.e.b, p.t); }
+    tickDemo(dt); tex.needsUpdate = true; tickUI(dt);
+    if (host) host.userData.update(time);
+    renderer.render(scene, camera); updateLabels(); requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

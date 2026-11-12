@@ -84,57 +84,26 @@ aside p{margin:0 0 10px}
 
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js"}}</script>
 <script type="module">
-const GROUPS=[
-  {n:'기본 순방향 신경망',c:'#7fe0a8',d:'신호가 입력에서 출력으로 한 방향으로만 흐릅니다.'},
-  {n:'순환 신경망과 기억',c:'#6fb1ff',d:'출력이 다시 자신에게 돌아와 순서와 시간을 다룹니다.'},
-  {n:'오토인코더 계열',c:'#ffd76a',d:'입력을 좁은 통로로 압축했다가 복원하도록 배웁니다.'},
-  {n:'에너지·확률 기반 모델',c:'#ff9f6b',d:'층 구분 없이 연결되거나 확률적으로 켜지고 꺼집니다.'},
-  {n:'합성곱 신경망',c:'#ff8fc7',d:'작은 창을 이미지 전체에 같은 가중치로 반복 적용합니다.'},
-  {n:'생성·특수 구조',c:'#b79cff',d:'학습 방식이나 연결 방식이 독특한 구조들입니다.'}
-];
-// [약어, 영문, 한글, 묶음, 한 줄 소개, 신경망 아님 표시, 열린 층의 주소]
-const FLOORS=[
-  ['P','Perceptron','퍼셉트론',0,'입력에 가중치를 곱해 더하고, 문턱을 넘으면 켜지는 가장 단순한 뉴런 하나입니다.'],
-  ['FF','Feed Forward','순방향 신경망',0,'뉴런을 층으로 쌓아 신호를 앞으로만 보냅니다.'],
-  ['DFF','Deep Feed Forward','심층 순방향 신경망',0,'은닉층을 여러 겹 쌓은 순방향 신경망입니다. 다층 퍼셉트론(MLP)이라고도 합니다.'],
-  ['RBF','Radial Basis Function Network','방사 기저 함수 신경망',0,'기준점에서 얼마나 가까운지로 반응하는 뉴런을 씁니다.'],
-  ['ELM','Extreme Learning Machine','극한 학습 머신',5,'은닉층 가중치는 무작위로 두고, 출력층만 한 번에 계산합니다.'],
-  ['MC','Markov Chain','마르코프 연쇄',3,'지금 상태만 보고 다음 상태로 넘어갈 확률을 정합니다.',1],
-  ['SVM','Support Vector Machine','서포트 벡터 머신',5,'두 무리 사이를 가장 넓게 가르는 경계를 찾습니다.',1],
-  ['KN','Kohonen Network','코호넨 네트워크',5,'비슷한 데이터가 가까이 모이도록 스스로 지도를 만듭니다(자기조직화 지도).'],
-  ['AE','Auto Encoder','오토인코더',2,'입력을 좁게 압축했다가 다시 복원하며 핵심만 남깁니다.'],
-  ['DAE','Denoising Auto Encoder','잡음 제거 오토인코더',2,'일부러 망가뜨린 입력에서 원본을 되살리도록 배웁니다.'],
-  ['SAE','Sparse Auto Encoder','희소 오토인코더',2,'한 번에 적은 수의 뉴런만 켜지도록 제한합니다.'],
-  ['DCN','Deep Convolutional Network','심층 합성곱 신경망',4,'작은 창을 이미지 위로 옮겨 가며 무늬를 찾습니다. 흔히 CNN이라고 부릅니다.'],
-  ['RNN','Recurrent Neural Network','순환 신경망',1,'방금 낸 출력을 다시 받아, 순서가 있는 데이터를 다룹니다.'],
-  ['ESN','Echo State Network','에코 상태 신경망',5,'무작위 순환 연결은 그대로 두고, 출력 쪽만 학습합니다.'],
-  ['GRU','Gated Recurrent Unit','게이트 순환 유닛',1,'LSTM을 문 두 개로 줄인 가벼운 구조입니다.'],
-  ['LSTM','Long Short-Term Memory','장단기 기억',1,'문(게이트) 세 개로 기억할 것과 잊을 것을 고릅니다.'],
-  ['LSM','Liquid State Machine','액체 상태 머신',5,'무작위로 연결된 스파이크 뉴런에 신호를 흘리고, 출력 쪽만 학습합니다.'],
-  ['HN','Hopfield Network','홉필드 네트워크',3,'모든 뉴런이 서로 연결되어, 저장해 둔 패턴을 떠올립니다.'],
-  ['BM','Boltzmann Machine','볼츠만 머신',3,'뉴런이 확률적으로 켜지고 꺼지며 데이터의 분포를 배웁니다.'],
-  ['RBM','Restricted Boltzmann Machine','제한 볼츠만 머신',3,'같은 층끼리의 연결을 없애 학습을 쉽게 한 볼츠만 머신입니다.'],
-  ['DBN','Deep Belief Network','심층 신뢰 신경망',3,'제한 볼츠만 머신을 여러 층 쌓아 한 층씩 학습합니다.'],
-  ['DN','Deconvolutional Network','역합성곱 신경망',4,'합성곱을 거꾸로 돌려, 작은 특징에서 큰 이미지를 만듭니다.'],
-  ['DRN','Deep Residual Network','심층 잔차 신경망',5,'층을 건너뛰는 지름길을 두어 아주 깊게 쌓습니다. ResNet이 대표입니다.'],
-  ['VAE','Variational Auto Encoder','변분 오토인코더',2,'압축한 자리를 확률 분포로 두어 새 데이터를 만들 수 있습니다.'],
-  ['DCIGN','Deep Convolutional Inverse Graphics Network','심층 합성곱 역그래픽스 신경망',4,'합성곱으로 압축하고 역합성곱으로 다시 그립니다.'],
-  ['GAN','Generative Adversarial Network','생성적 적대 신경망',5,'만드는 쪽과 가려내는 쪽이 겨루며 함께 실력이 늡니다.'],
-  ['NTM','Neural Turing Machine','뉴럴 튜링 머신',5,'신경망에 읽고 쓰는 외부 기억 장치를 붙였습니다.']
-];
-const BANDS=[['저층부 · 쉬움',1,9],['중층부 · 보통',10,18],['고층부 · 어려움',19,27]];
-const band=n=>BANDS.find(b=>n>=b[1]&&n<=b[2])[0];
-const FISH='https://adminmrobo.github.io/fish_market_learning_epoch_etc/';
-const FLY='https://adminmrobo.github.io/AI_Model_Review_Fruit_fly_special/', BRAIN='https://adminmrobo.github.io/neuralink_animal_brain_ai/4_neuralink_animal_brain_ai.html';
-const REL={P:[['초파리 도약 회로로 보는 퍼셉트론',BRAIN+'#lv1']],FF:[['초파리 뇌 탐사: 신경망이 단계적으로 커지는 과정',FLY+'1_fruitfly_brain_deep_learning.html']],DFF:[['초파리 뇌 탐사: 신경망이 단계적으로 커지는 과정',FLY+'1_fruitfly_brain_deep_learning.html']],DCN:[['까마귀의 "봤다"와 CNN·YOLO',BRAIN+'#lv2']]};
+import { GROUPS, FLOORS as FD, BANDS, band } from './floors/data.js';
+const FLOORS=FD.map((f,i)=>[f.ab,f.en,f.ko,f.g,f.line,f.nn,'floors/?f='+(i+1)]);
+const REL={}; FD.forEach(f=>{ if(f.rel) REL[f.ab]=f.rel; });
+const FISH='https://adminmrobo.github.io/fish_market_learning_epoch_etc/', FLY='https://adminmrobo.github.io/AI_Model_Review_Fruit_fly_special/';
 const $=s=>document.querySelector(s);
 const ATLAS='https://adminmrobo.github.io/neural_network_atlas/';
-let sel=0; // 0 = 로비, 1~27 = 층
+let sel=-1; // -1 = 건물 전체, 0 = 로비, 1~27 = 층
 let onSelect=()=>{};
 
 function renderCard(){
   const card=$('#card');
-  if(sel===0){
+  if(sel<0){
+    card.style.setProperty('--c','#6fb1ff');
+    card.innerHTML='<div class="grp">3D로 설명하는 AI</div><h2>신경망 연구소</h2>'+
+      '<p class="en">27층 · 신경망 27종</p>'+
+      '<p>신경망 구조 하나가 한 층을 씁니다. 아래층일수록 쉽고, 올라갈수록 어려워집니다. 층마다 구조 그림과 직접 바꿔 보는 실험이 있습니다.</p>'+
+      '<p style="font-size:13.5px;color:var(--muted)">처음이라면 로비에서 뉴런 하나의 계산부터 보고 1층으로 올라가면 됩니다. 건물의 층을 누르거나 아래 엘리베이터를 쓰세요.</p>'+
+      '<span class="chip">로비 + 27층 모두 열림</span><br>'+
+      '<a class="go" href="math_behind_ai/">로비부터 시작</a> <a class="go ghost" href="floors/?f=1">1층으로 바로</a>';
+  }else if(sel===0){
     card.style.setProperty('--c','#6fb1ff');
     card.innerHTML='<div class="grp">로비 · 모든 층의 공통 기초</div><h2>AI 뒤에 있는 수학</h2>'+
       '<p class="en">Mathematics Behind AI</p>'+
@@ -147,14 +116,14 @@ function renderCard(){
     card.innerHTML='<div class="grp">'+sel+'층 · '+band(sel)+' · '+g.n+'</div><h2>'+f[0]+' · '+f[2]+'</h2>'+
       '<p class="en">'+f[1]+'</p><p>'+f[4]+'</p>'+
       '<p style="font-size:13px;color:var(--muted)">이 묶음: '+g.d+'</p>'+
-      (f[6]?'<span class="chip">열림</span>':'<span class="chip">준비 중</span>')+(f[5]?'<span class="chip">엄밀히는 신경망이 아님</span>':'')+'<br>'+
-      (f[6]?'<a class="go" href="'+f[6]+'">'+sel+'층으로 들어가기</a>':'<a class="go ghost" href="'+ATLAS+'1_neural_network_atlas_chart.html">도감에서 그림 먼저 보기</a>')+
+      '<span class="chip">열림</span>'+(f[5]?'<span class="chip">엄밀히는 신경망이 아님</span>':'')+'<br>'+
+      '<a class="go" href="'+f[6]+'">'+sel+'층으로 들어가기</a> <a class="go ghost" href="'+ATLAS+'1_neural_network_atlas_chart.html">도감 그림</a>'+
       (REL[f[0]]||[]).map(r=>'<br><a class="go ghost" href="'+r[1]+'">진짜 뇌와 견주기 · '+r[0]+'</a>').join('');
   }
   document.querySelectorAll('#lift button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.f===sel));
 }
 (function buildLift(){
-  let h='<div class="grpname" style="--c:#6fb1ff"><i></i>로비</div><div class="el" style="--c:#6fb1ff"><button data-f="0" style="grid-column:span 4"><b>L</b>AI 뒤에 있는 수학</button></div>';
+  let h='<div class="el" style="--c:#9aa7c7;margin-bottom:4px"><button data-f="-1" style="grid-column:span 4">건물 전체 보기</button></div><div class="grpname" style="--c:#6fb1ff"><i></i>로비</div><div class="el" style="--c:#6fb1ff"><button data-f="0" style="grid-column:span 4"><b>L</b>AI 뒤에 있는 수학</button></div>';
   BANDS.forEach(bd=>{ h+='<div class="grpname" style="--c:#9aa7c7"><i></i>'+bd[0]+' ('+bd[1]+'~'+bd[2]+'층)</div><div class="el">';
     for(let n=bd[1];n<=bd[2];n++){ const f=FLOORS[n-1]; h+='<button data-f="'+n+'" style="--c:'+GROUPS[f[3]].c+'"><b>'+n+'F</b>'+f[0]+'</button>'; } h+='</div>'; });
   h+='<h3>층 색 = 구조 묶음</h3>'+GROUPS.map(g=>'<div class="grpname" style="--c:'+g.c+';margin:4px 0"><i></i>'+g.n+'</div>').join('');
@@ -235,16 +204,15 @@ if(lab){ ['sia','haru','doctor','jupanbot','fruitfly','moa'].forEach((k,i)=>{
 
 // 카메라
 const cur={x:0,y:20,z:0,r:140,th:0.9,ph:1.2}, goal={x:0,y:20,z:0,r:100,th:0.55,ph:1.25};
-let aspect=1.5, first=true;
+let aspect=1.5;
 function aim(){
-  if(first){ goal.y=TOP/2+1; goal.r=(TOP+10)/(2*Math.tan(19*Math.PI/180))*1.08*Math.max(1,0.62/aspect*1.0); return; }
+  if(sel<0){ goal.th=0.55; goal.ph=1.25; goal.y=TOP/2+1; goal.r=(TOP+10)/(2*Math.tan(19*Math.PI/180))*1.08*Math.max(1,0.62/aspect*1.0); return; }
   goal.y=sel===0?2.2:fy(sel)+0.6; goal.r=(sel===0?30:26)*Math.max(1,1.25/aspect);
   goal.ph=sel===0?1.38:1.3;
 }
-onSelect=()=>{ first=false; aim();
+onSelect=()=>{ aim();
   meshes.forEach((m,i)=>{ m.material.opacity=i===sel?0.95:0.5; m.material.emissiveIntensity=i===sel?0.55:0.12; });
   fl.forEach((o,i)=>o.el.classList.toggle('sel',i===sel)); };
-fl[0].el.classList.add('sel'); meshes[0].material.opacity=0.95; meshes[0].material.emissiveIntensity=0.55;
 
 const ptrs=new Map(); let moved=0, pinch=0;
 canvas.addEventListener('pointerdown',e=>{ canvas.setPointerCapture(e.pointerId); ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY}); moved=0;
