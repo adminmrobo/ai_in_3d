@@ -638,10 +638,10 @@ const VIEWS = {
     const dens = [], dc = []; for (let i = 0; i <= 160; i++) { const v = -4 + i * .05; dens.push(Math.exp(-((v - 1.5) ** 2) / .5) / (.5 * Math.sqrt(TAU)) * 1.05); dc.push(this.D(s, v)); }
     return [PLOT({ series: [{ v: hist.map(c => c / 400 * 5 * 1.05), c: C.b, bar: 1, n: '가짜' }, { v: dens, c: C.a, n: '진짜' }, { v: dc, c: C.fg, dash: 1, n: '판별자가 "진짜"라고 보는 정도' }], ymin: 0, ymax: 1, title: '값 −4 → 4' })]; } },
   NTM: { t: '공책에 쓰고, 돌아가서 읽기', f(s) {
-    const wr = Math.min(s.tick, s.n), rd = clamp(s.tick - s.n - 1, 0, s.n), cs = .42, head = s.tick <= s.n ? Math.min(wr, s.n - 1) : (rd > 0 ? rd - 1 : 0);
+    const wr = Math.min(s.tick, s.n), rd = clamp(s.tick - s.n - 1, 0, s.n), cs = .5, head = s.tick <= s.n ? Math.min(wr, s.n - 1) : (rd > 0 ? rd - 1 : 0);
     const tr = (rows, cols, fn) => { const v = []; for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) v.push(fn(r, c)); return v; };
-    return [{ id: 'i', type: 'tiles', x: -1.2, z: -1.6, y0: 4.7, w: s.n * cs, rows: 4, cols: s.n, v: tr(4, s.n, (r, c) => s.seq[c][r] ? (c < wr ? 1 : .4) : 0), title: '들어온 순서' },
-      { id: 'm', type: 'tiles', x: -1.2, z: -1.6, y0: 2.45, w: 8 * cs, rows: 4, cols: 8, v: tr(4, 8, (r, c) => c < wr && s.seq[c] ? s.seq[c][r] : 0), color: C.a, hl: [0, head, 4, 1], title: '공책 8칸 · 분홍 테: ' + (s.tick <= s.n ? '쓰는' : '읽는') + ' 자리' },
-      { id: 'o', type: 'tiles', x: -1.2, z: -1.6, y0: .2, w: s.n * cs, rows: 4, cols: s.n, v: tr(4, s.n, (r, c) => c < rd ? s.seq[c][r] : 0), color: C.g, title: '나간 순서' }]; } },
+    return [{ id: 'i', type: 'tiles', x: -4.1, z: -1.6, y0: .5, w: s.n * cs, rows: 4, cols: s.n, v: tr(4, s.n, (r, c) => s.seq[c][r] ? (c < wr ? 1 : .4) : 0), title: '들어온 순서' },
+      { id: 'm', type: 'tiles', x: 0, z: -1.6, y0: .5, w: 8 * cs, rows: 4, cols: 8, v: tr(4, 8, (r, c) => c < wr && s.seq[c] ? s.seq[c][r] : 0), color: C.a, hl: [0, head, 4, 1], title: '공책 8칸 · 분홍 테: ' + (s.tick <= s.n ? '쓰는' : '읽는') + ' 자리' },
+      { id: 'o', type: 'tiles', x: 4.1, z: -1.6, y0: .5, w: s.n * cs, rows: 4, cols: s.n, v: tr(4, s.n, (r, c) => c < rd ? s.seq[c][r] : 0), color: C.g, title: '나간 순서' }]; } },
 };
 for (const k in VIEWS) { DEMOS[k].vt = VIEWS[k].t; DEMOS[k].view = VIEWS[k].f; }
