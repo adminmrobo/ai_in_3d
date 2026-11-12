@@ -76,7 +76,7 @@ aside p{margin:0 0 10px}
     <h3>엘리베이터</h3>
     <div id="lift"></div>
     <div class="foot">
-      <p>층 구성은 <a href="https://adminmrobo.github.io/neural_network_atlas/0_neural_network_essence.html">신경망 구조 도감</a>의 27종과 순서를 따릅니다. 원본 차트: Stefan Leijnen &amp; Fjodor van Veen, "The Neural Network Zoo" (CC BY).</p>
+      <p>27종은 <a href="https://adminmrobo.github.io/neural_network_atlas/0_neural_network_essence.html">신경망 구조 도감</a>을 따르고, 층은 쉬운 것부터 어려운 것 순으로 다시 놓았습니다. 원본 차트: Stefan Leijnen &amp; Fjodor van Veen, "The Neural Network Zoo" (CC BY).</p>
       <p>캐릭터 이름·설정 © 안상선. 그림·모델은 저작권자의 허락 없이 쓸 수 없습니다.</p>
     </div>
   </aside>
@@ -96,32 +96,35 @@ const GROUPS=[
 const FLOORS=[
   ['P','Perceptron','퍼셉트론',0,'입력에 가중치를 곱해 더하고, 문턱을 넘으면 켜지는 가장 단순한 뉴런 하나입니다.'],
   ['FF','Feed Forward','순방향 신경망',0,'뉴런을 층으로 쌓아 신호를 앞으로만 보냅니다.'],
-  ['RBF','Radial Basis Function Network','방사 기저 함수 신경망',0,'기준점에서 얼마나 가까운지로 반응하는 뉴런을 씁니다.'],
   ['DFF','Deep Feed Forward','심층 순방향 신경망',0,'은닉층을 여러 겹 쌓은 순방향 신경망입니다. 다층 퍼셉트론(MLP)이라고도 합니다.'],
-  ['RNN','Recurrent Neural Network','순환 신경망',1,'방금 낸 출력을 다시 받아, 순서가 있는 데이터를 다룹니다.'],
-  ['LSTM','Long Short-Term Memory','장단기 기억',1,'문(게이트) 세 개로 기억할 것과 잊을 것을 고릅니다.'],
-  ['GRU','Gated Recurrent Unit','게이트 순환 유닛',1,'LSTM을 문 두 개로 줄인 가벼운 구조입니다.'],
+  ['RBF','Radial Basis Function Network','방사 기저 함수 신경망',0,'기준점에서 얼마나 가까운지로 반응하는 뉴런을 씁니다.'],
+  ['ELM','Extreme Learning Machine','극한 학습 머신',5,'은닉층 가중치는 무작위로 두고, 출력층만 한 번에 계산합니다.'],
+  ['MC','Markov Chain','마르코프 연쇄',3,'지금 상태만 보고 다음 상태로 넘어갈 확률을 정합니다.',1],
+  ['SVM','Support Vector Machine','서포트 벡터 머신',5,'두 무리 사이를 가장 넓게 가르는 경계를 찾습니다.',1],
+  ['KN','Kohonen Network','코호넨 네트워크',5,'비슷한 데이터가 가까이 모이도록 스스로 지도를 만듭니다(자기조직화 지도).'],
   ['AE','Auto Encoder','오토인코더',2,'입력을 좁게 압축했다가 다시 복원하며 핵심만 남깁니다.'],
-  ['VAE','Variational Auto Encoder','변분 오토인코더',2,'압축한 자리를 확률 분포로 두어 새 데이터를 만들 수 있습니다.'],
   ['DAE','Denoising Auto Encoder','잡음 제거 오토인코더',2,'일부러 망가뜨린 입력에서 원본을 되살리도록 배웁니다.'],
   ['SAE','Sparse Auto Encoder','희소 오토인코더',2,'한 번에 적은 수의 뉴런만 켜지도록 제한합니다.'],
-  ['MC','Markov Chain','마르코프 연쇄',3,'지금 상태만 보고 다음 상태로 넘어갈 확률을 정합니다.',1],
+  ['DCN','Deep Convolutional Network','심층 합성곱 신경망',4,'작은 창을 이미지 위로 옮겨 가며 무늬를 찾습니다. 흔히 CNN이라고 부릅니다.'],
+  ['RNN','Recurrent Neural Network','순환 신경망',1,'방금 낸 출력을 다시 받아, 순서가 있는 데이터를 다룹니다.'],
+  ['ESN','Echo State Network','에코 상태 신경망',5,'무작위 순환 연결은 그대로 두고, 출력 쪽만 학습합니다.'],
+  ['GRU','Gated Recurrent Unit','게이트 순환 유닛',1,'LSTM을 문 두 개로 줄인 가벼운 구조입니다.'],
+  ['LSTM','Long Short-Term Memory','장단기 기억',1,'문(게이트) 세 개로 기억할 것과 잊을 것을 고릅니다.'],
+  ['LSM','Liquid State Machine','액체 상태 머신',5,'무작위로 연결된 스파이크 뉴런에 신호를 흘리고, 출력 쪽만 학습합니다.'],
   ['HN','Hopfield Network','홉필드 네트워크',3,'모든 뉴런이 서로 연결되어, 저장해 둔 패턴을 떠올립니다.'],
   ['BM','Boltzmann Machine','볼츠만 머신',3,'뉴런이 확률적으로 켜지고 꺼지며 데이터의 분포를 배웁니다.'],
   ['RBM','Restricted Boltzmann Machine','제한 볼츠만 머신',3,'같은 층끼리의 연결을 없애 학습을 쉽게 한 볼츠만 머신입니다.'],
   ['DBN','Deep Belief Network','심층 신뢰 신경망',3,'제한 볼츠만 머신을 여러 층 쌓아 한 층씩 학습합니다.'],
-  ['DCN','Deep Convolutional Network','심층 합성곱 신경망',4,'작은 창을 이미지 위로 옮겨 가며 무늬를 찾습니다. 흔히 CNN이라고 부릅니다.'],
   ['DN','Deconvolutional Network','역합성곱 신경망',4,'합성곱을 거꾸로 돌려, 작은 특징에서 큰 이미지를 만듭니다.'],
+  ['DRN','Deep Residual Network','심층 잔차 신경망',5,'층을 건너뛰는 지름길을 두어 아주 깊게 쌓습니다. ResNet이 대표입니다.'],
+  ['VAE','Variational Auto Encoder','변분 오토인코더',2,'압축한 자리를 확률 분포로 두어 새 데이터를 만들 수 있습니다.'],
   ['DCIGN','Deep Convolutional Inverse Graphics Network','심층 합성곱 역그래픽스 신경망',4,'합성곱으로 압축하고 역합성곱으로 다시 그립니다.'],
   ['GAN','Generative Adversarial Network','생성적 적대 신경망',5,'만드는 쪽과 가려내는 쪽이 겨루며 함께 실력이 늡니다.'],
-  ['LSM','Liquid State Machine','액체 상태 머신',5,'무작위로 연결된 스파이크 뉴런에 신호를 흘리고, 출력 쪽만 학습합니다.'],
-  ['ELM','Extreme Learning Machine','극한 학습 머신',5,'은닉층 가중치는 무작위로 두고, 출력층만 한 번에 계산합니다.'],
-  ['ESN','Echo State Network','에코 상태 신경망',5,'무작위 순환 연결은 그대로 두고, 출력 쪽만 학습합니다.'],
-  ['DRN','Deep Residual Network','심층 잔차 신경망',5,'층을 건너뛰는 지름길을 두어 아주 깊게 쌓습니다. ResNet이 대표입니다.'],
-  ['KN','Kohonen Network','코호넨 네트워크',5,'비슷한 데이터가 가까이 모이도록 스스로 지도를 만듭니다(자기조직화 지도).'],
-  ['SVM','Support Vector Machine','서포트 벡터 머신',5,'두 무리 사이를 가장 넓게 가르는 경계를 찾습니다.',1],
   ['NTM','Neural Turing Machine','뉴럴 튜링 머신',5,'신경망에 읽고 쓰는 외부 기억 장치를 붙였습니다.']
 ];
+const BANDS=[['저층부 · 쉬움',1,9],['중층부 · 보통',10,18],['고층부 · 어려움',19,27]];
+const band=n=>BANDS.find(b=>n>=b[1]&&n<=b[2])[0];
+const FISH='https://adminmrobo.github.io/fish_market_learning_epoch_etc/';
 const $=s=>document.querySelector(s);
 const ATLAS='https://adminmrobo.github.io/neural_network_atlas/';
 let sel=0; // 0 = 로비, 1~27 = 층
@@ -139,7 +142,7 @@ function renderCard(){
   }else{
     const f=FLOORS[sel-1], g=GROUPS[f[3]];
     card.style.setProperty('--c',g.c);
-    card.innerHTML='<div class="grp">'+sel+'층 · '+g.n+'</div><h2>'+f[0]+' · '+f[2]+'</h2>'+
+    card.innerHTML='<div class="grp">'+sel+'층 · '+band(sel)+' · '+g.n+'</div><h2>'+f[0]+' · '+f[2]+'</h2>'+
       '<p class="en">'+f[1]+'</p><p>'+f[4]+'</p>'+
       '<p style="font-size:13px;color:var(--muted)">이 묶음: '+g.d+'</p>'+
       (f[6]?'<span class="chip">열림</span>':'<span class="chip">준비 중</span>')+(f[5]?'<span class="chip">엄밀히는 신경망이 아님</span>':'')+'<br>'+
@@ -149,8 +152,13 @@ function renderCard(){
 }
 (function buildLift(){
   let h='<div class="grpname" style="--c:#6fb1ff"><i></i>로비</div><div class="el" style="--c:#6fb1ff"><button data-f="0" style="grid-column:span 4"><b>L</b>AI 뒤에 있는 수학</button></div>';
-  GROUPS.forEach((g,gi)=>{ h+='<div class="grpname" style="--c:'+g.c+'"><i></i>'+g.n+'</div><div class="el" style="--c:'+g.c+'">';
-    FLOORS.forEach((f,i)=>{ if(f[3]===gi) h+='<button data-f="'+(i+1)+'"><b>'+(i+1)+'F</b>'+f[0]+'</button>'; }); h+='</div>'; });
+  BANDS.forEach(bd=>{ h+='<div class="grpname" style="--c:#9aa7c7"><i></i>'+bd[0]+' ('+bd[1]+'~'+bd[2]+'층)</div><div class="el">';
+    for(let n=bd[1];n<=bd[2];n++){ const f=FLOORS[n-1]; h+='<button data-f="'+n+'" style="--c:'+GROUPS[f[3]].c+'"><b>'+n+'F</b>'+f[0]+'</button>'; } h+='</div>'; });
+  h+='<h3>층 색 = 구조 묶음</h3>'+GROUPS.map(g=>'<div class="grpname" style="--c:'+g.c+';margin:4px 0"><i></i>'+g.n+'</div>').join('');
+  h+='<h3>학습 방법이 궁금하면</h3><p style="font-size:13.5px">어느 층에서든 "어떻게 배우는가"가 막히면 아래로 가면 됩니다.</p>'+
+     '<a class="go ghost" style="margin:0 0 6px;display:block" href="math_behind_ai/#loss">공 굴리기로 보는 경사하강법 (로비 ①)</a>'+
+     '<a class="go ghost" style="margin:0 0 6px;display:block" href="'+FISH+'02_loss_and_gradient.html">손실 함수와 경사하강법 (Fish Market 연구실 2장)</a>'+
+     '<a class="go ghost" style="margin:0;display:block" href="'+FISH+'03_rate_batch_epoch.html">학습률·배치·에포크 (Fish Market 연구실 3장)</a>';
   $('#lift').innerHTML=h;
   $('#lift').addEventListener('click',e=>{ const b=e.target.closest('button'); if(b) select(+b.dataset.f); });
 })();
