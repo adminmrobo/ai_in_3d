@@ -39,6 +39,9 @@ main{flex:1;display:grid;grid-template-columns:minmax(0,1fr) 390px;min-height:0}
 .lb.num{font-size:12.5px;font-weight:500;background:#0a0f1ecc;border:1px solid var(--line);border-radius:6px;padding:0 6px;text-shadow:none}
 .lb.big{font-size:14.5px;font-weight:700;background:#0a0f1ee6;border:1px solid var(--c,var(--line));border-radius:8px;padding:1px 8px;text-shadow:none}
 .lb.note{color:var(--muted)}
+.lb.ctr{text-align:center;line-height:1.3}
+.lb.sym{font-size:17px;font-weight:700}
+.lb.sig{font-size:26px;font-weight:900}
 .lb.say{background:#fff;color:#141a2e;text-shadow:none;font-size:13px;font-weight:500;line-height:1.45;padding:6px 11px;border-radius:12px;white-space:normal;width:max-content;max-width:230px;box-shadow:0 4px 14px #0008}
 .lb.say::after{content:"";position:absolute;left:50%;bottom:-6px;width:12px;height:12px;background:#fff;transform:translateX(-50%) rotate(45deg);border-radius:2px}
 .lb.say b{color:#b0307a}
@@ -118,11 +121,12 @@ input[type=range]{width:100%;accent-color:var(--acc);height:22px}
   </div>
   <nav id="tabs" aria-label="구역 이동">
     <button data-s="0" aria-pressed="true">전체 보기</button>
+    <button data-s="6" style="--c:#ff7ab8">위층 · 뉴런 설계도</button>
     <button data-s="1" style="--c:var(--pink)">① 손실 지형</button>
     <button data-s="2" style="--c:var(--blue)">② 신경망</button>
     <button data-s="3" style="--c:var(--yellow)">③ 뉴런 하나</button>
     <button data-s="4" style="--c:var(--green)">④ 활성화 함수</button>
-    <button data-s="5" style="--c:var(--purple)">⑤ 학습 한 바퀴</button>
+    <button data-s="5" style="--c:var(--purple)">⑤ 순전파·역전파</button>
   </nav>
 </header>
 <main>
@@ -139,30 +143,59 @@ input[type=range]{width:100%;accent-color:var(--acc);height:22px}
       <div class="three">
         <p>AI가 "배운다"는 것은 <b>틀린 정도(손실)를 줄이는 숫자를 찾는 일</b>입니다.</p>
         <p>그 숫자는 뉴런마다 달린 <b>가중치와 편향</b>입니다.</p>
-        <p>아래 다섯 구역을 차례로 돌면 이 과정이 한 바퀴 이어집니다.</p>
+        <p>상공에 뜬 것은 <b>뉴런 하나의 설계도</b>이고, 아래층 다섯 구역이 그 부품을 하나씩 살펴봅니다.</p>
       </div>
+      <h3>처음으로 3D가 된 소감</h3>
+      <div class="talk"><div><img src="../assets/doctor_E01.webp" alt=""><p><b>박사</b>평면에서는 늘 정면만 보여 드렸지요. 이제 뒤 꽁지머리까지 보입니다. 설명할 때 팔이 실제로 올라가니 좋군요.</p></div><div><img src="../assets/haru_E01.webp" alt=""><p><b>조수(하루)</b>빙 돌려 봐도 저예요! 뒷머리 남색 줄, 드디어 보여 드려요.</p></div><div><img src="../assets/fruitfly_E13.webp" alt=""><p><b>초파리 연구원</b>날개와 다리 여섯 개가 정말 다 붙어 있는지, 돌려서 직접 검증해 보십시오.</p></div><div><img src="../assets/jupanbot_E01.webp" alt=""><p><b>주판봇</b>무한궤도로 판 위에 설 수 있게 됐습니다. 뒤쪽 통풍구도 이제 보입니다.</p></div><div><img src="../assets/sia_E13.webp" alt=""><p><b>시아</b>등 뒤 리본 매듭도 흐트러지지 않게 묶어 두었습니다.</p></div><div><img src="../assets/moa_E04.webp" alt=""><p><b>모아</b>나란히 서니까 제 키가 제일 작은 게 들켰어요… 그래도 같이 서 있으니 좋아요!</p></div></div>
       <h3>오늘 안내하는 연구실 식구</h3>
       <div class="crew">
         <div><img src="../assets/haru_E01.webp" alt=""><span><b>조수(하루)</b>① 공 굴리기</span></div>
         <div><img src="../assets/doctor_E13.webp" alt=""><span><b>박사</b>② 해설</span></div>
         <div><img src="../assets/jupanbot_E13.webp" alt=""><span><b>주판봇</b>③ 계산</span></div>
         <div><img src="../assets/fruitfly_E13.webp" alt=""><span><b>초파리 연구원</b>④ 검증</span></div>
-        <div><img src="../assets/sia_E13.webp" alt=""><span><b>시아</b>⑤ 판정</span></div>
+        <div><img src="../assets/sia_E13.webp" alt=""><span><b>시아</b>⑤ 오차 판정</span></div>
         <div><img src="../assets/moa_E01.webp" alt=""><span><b>모아</b>⑤ 응원</span></div>
       </div>
       <h3>구역 고르기</h3>
       <div class="cards">
+        <button class="card" data-s="6" style="--c:#ff7ab8"><i>↑</i><div><b>위층 · 뉴런 하나의 설계도</b><span>아래층이 살펴볼 그림을 먼저 보기</span></div></button>
         <button class="card" data-s="1" style="--c:var(--pink)"><i>1</i><div><b>손실 지형</b><span>공을 굴려 가장 낮은 곳을 찾기</span></div></button>
         <button class="card" data-s="2" style="--c:var(--blue)"><i>2</i><div><b>신경망 (멀리서 보기)</b><span>입력층 → 은닉층 → 출력층</span></div></button>
         <button class="card" data-s="3" style="--c:var(--yellow)"><i>3</i><div><b>뉴런 하나가 하는 일</b><span>곱하고, 더하고, 구부리기</span></div></button>
         <button class="card" data-s="4" style="--c:var(--green)"><i>4</i><div><b>활성화 함수</b><span>ReLU와 시그모이드</span></div></button>
-        <button class="card" data-s="5" style="--c:var(--purple)"><i>5</i><div><b>학습 한 바퀴</b><span>작은 신경망이 실제로 배우는 모습</span></div></button>
+        <button class="card" data-s="5" style="--c:var(--purple)"><i>5</i><div><b>순전파와 역전파</b><span>작은 신경망이 실제로 배우는 한 바퀴</span></div></button>
       </div>
       <div class="foot">
         <p>글 · 안상선 ((주)M-Robo 대표)</p>
         <p>구성 참고: 인포그래픽 「Mathematics Behind AI」(ML Tut). 3D 장면과 설명문은 새로 만들었습니다.</p>
         <p>화면의 수치는 개념 설명용 예시입니다.</p>
         <p>캐릭터 이름·설정 © 안상선</p>
+      </div>
+    </section>
+
+    <section data-p="6" style="--acc:#ff7ab8">
+      <h2>위층 · 뉴런 하나의 설계도</h2>
+      <div class="three">
+        <p>신경망의 공 하나, 곧 <b>뉴런 한 개</b>를 크게 띄운 그림입니다.</p>
+        <p>입력 x에 가중치 w를 곱해 <b>Σ에서 모두 더하고</b>, 활성화 함수를 지나 밖으로 나갑니다.</p>
+        <p><b>분홍 점선 안</b>이 뉴런 한 개입니다.</p>
+      </div>
+      <div class="talk"><div><img src="../assets/doctor_E13.webp" alt=""><p><b>박사</b>위층은 설계도, 아래층은 실험대입니다. 설계도의 부품마다 아래에 살펴보는 자리가 있습니다.</p></div><div><img src="../assets/haru_E01.webp" alt=""><p><b>조수(하루)</b>분홍 빛줄기를 따라 내려가면 되는군요!</p></div></div>
+      <h3>기호 읽기</h3>
+      <div class="sumbox">
+        <span>x₁ … xₙ</span><b>입력</b>
+        <span>w₁ⱼ … wₙⱼ</span><b>j번째 뉴런으로 들어가는 가중치</b>
+        <span>Σ</span><b>곱한 값을 모두 더하기</b>
+        <span>Sⱼ</span><b>더한 값</b>
+        <span>활성화 함수</span><b>더한 값을 구부리기</b>
+        <span>Oⱼ</span><b>이 뉴런의 출력</b>
+      </div>
+      <h3>아래층에서 살펴보기</h3>
+      <div class="btns">
+        <button class="btn" data-s="3">③ 가중치와 Σ 계산</button>
+        <button class="btn" data-s="4">④ 활성화 함수</button>
+        <button class="btn" data-s="2">② 뉴런이 모인 신경망</button>
+        <button class="btn" data-s="5">⑤ 가중치를 고치는 법</button>
       </div>
     </section>
 
@@ -250,22 +283,26 @@ input[type=range]{width:100%;accent-color:var(--acc);height:22px}
       <div class="three">
         <p>더한 값을 그대로 넘기면 층을 아무리 쌓아도 <b>직선</b>밖에 못 그립니다.</p>
         <p>활성화 함수가 값을 <b>구부려</b> 곡선 패턴을 배울 수 있게 합니다.</p>
-        <p>가장 자주 쓰는 두 가지가 ReLU와 시그모이드입니다.</p>
+        <p>자주 쓰는 다섯 가지를 골라 비교할 수 있습니다.</p>
       </div>
       <div class="talk"><div><img src="../assets/fruitfly_E13.webp" alt=""><p><b>초파리 연구원</b>굳이 구부려야 합니까? 더하기만 해도 되지 않습니까?</p></div><div><img src="../assets/doctor_E13.webp" alt=""><p><b>박사</b>직선은 아무리 겹쳐도 직선입니다. 구부려야 곡선 모양의 패턴을 배웁니다.</p></div></div>
       <div class="row"><label for="acZ">넣는 값 x</label><input id="acZ" type="range" min="-6" max="6" step="0.01" value="0.439"><output id="acZO"></output></div>
       <div class="btns"><button class="btn" id="acFromN">③번 뉴런의 합계 넣기</button></div>
+      <h3>왼쪽 함수</h3>
+      <div class="btns"><button class="btn" data-af="relu" data-slot="0">ReLU</button><button class="btn" data-af="lrelu" data-slot="0">Leaky ReLU</button><button class="btn" data-af="elu" data-slot="0">ELU</button></div>
+      <h3>오른쪽 함수</h3>
+      <div class="btns"><button class="btn" data-af="sig" data-slot="1">시그모이드</button><button class="btn" data-af="tanh" data-slot="1">tanh</button></div>
       <div class="kv">
-        <div><span>ReLU · max(0, x)</span><b id="acR">0</b></div>
-        <div><span>시그모이드 · 1/(1+e<sup>−x</sup>)</span><b id="acS">0</b></div>
+        <div><span id="acN0"></span><b id="acR">0</b></div>
+        <div><span id="acN1"></span><b id="acS">0</b></div>
       </div>
-      <h3>차이</h3>
-      <p><b>ReLU</b>는 음수를 0으로 막고 양수는 그대로 통과시킵니다. 계산이 가벼워 은닉층에 많이 씁니다.</p>
-      <p><b>시그모이드</b>는 어떤 값이든 0과 1 사이로 눌러 줍니다. "맞다/아니다"의 확률처럼 읽을 때 출력층에 씁니다.</p>
+      <h3>고른 함수의 성격</h3>
+      <p id="acD0"></p>
+      <p id="acD1"></p>
     </section>
 
     <section data-p="5" style="--acc:var(--purple)">
-      <h2>⑤ 학습 한 바퀴</h2>
+      <h2>⑤ 순전파와 역전파</h2>
       <div class="three">
         <p>이 작은 신경망은 지금 <b>실제로 학습</b>하고 있습니다.</p>
         <p>예측하고, 틀린 정도를 재고, 거꾸로 돌아가며 가중치를 고칩니다.</p>
@@ -278,6 +315,9 @@ input[type=range]{width:100%;accent-color:var(--acc);height:22px}
         <li><b>3 역전파</b> · 어느 가중치 탓인지 거꾸로 따집니다</li>
         <li><b>4 가중치 갱신</b> · 손실이 줄어드는 쪽으로 조금 고칩니다</li>
       </ol>
+      <h3>가중치를 고치는 식</h3>
+      <div class="formula">새 w = w − α · ∂E/∂w</div>
+      <p style="margin-top:8px;font-size:14px"><b>E</b>는 오차(예측과 정답의 차이), <b>∂E/∂w</b>는 "이 가중치를 조금 바꾸면 오차가 얼마나 변하나", <b>α</b>는 학습률입니다. ①번 구역에서 공이 내딛던 한 걸음이 바로 이 식입니다.</p>
       <div class="btns">
         <button class="btn pri" id="flPlay">⏸ 멈춤</button>
         <button class="btn" id="flFast" aria-pressed="false">빠르게</button>
@@ -315,7 +355,7 @@ const fill=new T.DirectionalLight(0x88aaff,0.9); fill.position.set(-12,8,-10); s
 let G=scene; const groups=[null];
 function beginStation(){ G=new T.Group(); scene.add(G); groups.push(G); }
 const COL={pink:0xff8fc7,blue:0x6fb1ff,yellow:0xffd76a,green:0x7fe0a8,purple:0xb79cff,red:0xff6b5e};
-const CSS={1:'var(--pink)',2:'var(--blue)',3:'var(--yellow)',4:'var(--green)',5:'var(--purple)'};
+const CSS={1:'var(--pink)',2:'var(--blue)',3:'var(--yellow)',4:'var(--green)',5:'var(--purple)',6:'#ff7ab8'};
 const V=(x,y,z)=>new T.Vector3(x,y,z);
 let active=0;
 
@@ -325,12 +365,12 @@ function label(html,pos,cls,st,anchor){
   const el=document.createElement('div'); el.className='lb '+(cls||''); el.innerHTML=html;
   if(st) el.style.setProperty('--c',CSS[st]);
   labelsEl.appendChild(el);
-  const o={el,pos,st:st||0,always:(cls||'').includes('title'),anchor:anchor||'c'}; labels.push(o); return o;
+  const o={el,pos,key:/sym|sig/.test(cls||''),st:st||0,always:(cls||'').includes('title'),anchor:anchor||'c'}; labels.push(o); return o;
 }
 const tmp=new T.Vector3();
 function updateLabels(w,h){
   for(const o of labels){
-    const show=o.always?active===0:o.st===active;
+    const show=o.always?active===0:(o.st===active||(o.st===6&&active===0&&W0>700&&o.key));
     if(!show){ if(o.vis!==false){o.el.style.display='none';o.vis=false;} continue; }
     tmp.copy(o.pos).project(camera);
     if(tmp.z>1||tmp.z<-1){ if(o.vis!==false){o.el.style.display='none';o.vis=false;} continue; }
@@ -490,14 +530,20 @@ function buildNet(cx,cz,sizes,dx,dy,cy,colors,st){
   nodes.forEach((arr,l)=>arr.forEach((p,j)=>ball(p,0.3,typeof colors[l]==='number'?colors[l]:colors[l][j],0.3)));
   const edges=[];
   for(let l=0;l<sizes.length-1;l++)for(let i=0;i<sizes[l];i++)for(let j=0;j<sizes[l+1];j++)edges.push({l,i,j,a:nodes[l][i],b:nodes[l+1][j]});
-  return {nodes,edges,sizes};
+  const Ls=sizes.length, hm=Math.max(...sizes.slice(1,Ls-1));
+  const bx0=nodes[1][0].x-0.85, bx1=nodes[Ls-2][0].x+0.85, bh=(hm-1)*dy+1.5;
+  const bg=new T.BoxGeometry(bx1-bx0,bh,2.7);
+  const bm=new T.Mesh(bg,new T.MeshBasicMaterial({color:0x4f8dff,transparent:true,opacity:0.13,depthWrite:false}));
+  bm.position.set((bx0+bx1)/2,cy,cz); G.add(bm);
+  const be=new T.LineSegments(new T.EdgesGeometry(bg),new T.LineBasicMaterial({color:0x9cc2ff})); be.position.copy(bm.position); G.add(be);
+  return {nodes,edges,sizes,top:cy+bh/2};
 }
 const net2=buildNet(S2.cx,S2.cz,[4,5,4,5,2],2.1,1.05,3.5,[COL.green,0x3f7bff,0x3f7bff,0x3f7bff,[0xff4d4d,COL.pink]],2);
 (function(){
   const pts=[]; net2.edges.forEach(e=>pts.push(e.a,e.b));
-  G.add(new T.LineSegments(new T.BufferGeometry().setFromPoints(pts),new T.LineBasicMaterial({color:0x9db8ff,transparent:true,opacity:0.22})));
+  G.add(new T.LineSegments(new T.BufferGeometry().setFromPoints(pts),new T.LineBasicMaterial({color:0x9db8ff,transparent:true,opacity:0.3})));
   const x0=net2.nodes[0][0].x, x4=net2.nodes[4][0].x;
-  label('입력층 (특징)',V(x0,6.2,S2.cz),'stage',2); label('은닉층 (복잡한 패턴 학습)',V(S2.cx,6.9,S2.cz),'stage',2); label('출력층 (예측)',V(x4,5.0,S2.cz),'stage',2);
+  label('입력층 Input Layer<br>특징',V(x0,6.3,S2.cz),'stage ctr',2); label('은닉층 Hidden Layer · 복잡한 패턴 학습',V(S2.cx,net2.top+0.55,S2.cz),'stage',2); label('출력층 Output Layer<br>예측',V(x4,5.3,S2.cz),'stage ctr',2);
   net2.nodes[0].forEach((p,j)=>label('입력 '+(j+1),V(p.x-0.55,p.y,p.z),'note',2,'r'));
   net2.nodes[4].forEach((p,j)=>label('출력 '+(j+1),V(p.x+0.55,p.y,p.z),'note',2,'l'));
   $('#nnN').textContent=net2.sizes.reduce((a,b)=>a+b,0); $('#nnE').textContent=net2.edges.length;
@@ -604,44 +650,62 @@ beginStation();
 const S4={cx:-9,cz:13,y0:0.9,sx:0.42,d:1.6};
 slab(4,S4.cx,S4.cz,12,11,COL.green);
 label('④ 활성화 함수',V(S4.cx,0.5,S4.cz+5.5),'title',4);
-function ribbon(cx,f,sy,color){
-  const n=80, pos=[], idx=[];
-  for(let i=0;i<=n;i++){ const x=-6+12*i/n, y=S4.y0+f(x)*sy;
-    pos.push(cx+x*S4.sx,y,S4.cz-S4.d/2, cx+x*S4.sx,y,S4.cz+S4.d/2);
-    if(i<n){ const k=i*2; idx.push(k,k+1,k+2,k+1,k+3,k+2); } }
-  const g=new T.BufferGeometry(); g.setAttribute('position',new T.Float32BufferAttribute(pos,3)); g.setIndex(idx); g.computeVertexNormals();
-  G.add(new T.Mesh(g,new T.MeshStandardMaterial({color,side:T.DoubleSide,roughness:0.4,emissive:color,emissiveIntensity:0.15})));
-  const front=[]; for(let i=0;i<=n;i++){ const x=-6+12*i/n; front.push(V(cx+x*S4.sx,S4.y0+f(x)*sy,S4.cz+S4.d/2+0.01)); }
-  line(front,0xffffff,1);
-  line([V(cx-6*S4.sx-0.3,S4.y0,S4.cz+S4.d/2),V(cx+6*S4.sx+0.3,S4.y0,S4.cz+S4.d/2)],0xffffff,0.5);
-  line([V(cx,S4.y0-0.3,S4.cz+S4.d/2),V(cx,S4.y0+4.2,S4.cz+S4.d/2)],0xffffff,0.5);
+const AF={
+  relu:{n:'ReLU',fm:'max(0, x)',f:x=>Math.max(0,x),sy:0.62,off:0,color:0x2563eb,d:'<b>ReLU</b>는 음수를 0으로 막고 양수는 그대로 통과시킵니다. 계산이 가벼워 은닉층에 가장 많이 씁니다.'},
+  lrelu:{n:'Leaky ReLU',fm:'max(0.1x, x)',f:x=>x>0?x:0.1*x,sy:0.62,off:0,color:0x2563eb,d:'<b>Leaky ReLU</b>는 음수도 완전히 막지 않고 조금(0.1배) 흘려보냅니다. 음수 쪽 뉴런이 아예 꺼져 버리는 일을 줄입니다.'},
+  elu:{n:'ELU',fm:'x (x≥0) · eˣ−1 (x&lt;0)',f:x=>x>=0?x:Math.exp(x)-1,sy:0.62,off:0,color:0x2563eb,d:'<b>ELU</b>는 음수 쪽을 부드러운 곡선으로 −1까지 내립니다. 꺾이는 곳이 매끄럽습니다.'},
+  sig:{n:'시그모이드',fm:'1/(1+e<sup>−x</sup>)',f:sigmoid,sy:3.6,off:0,lo:'0',color:0xe0457b,d:'<b>시그모이드</b>는 어떤 값이든 0과 1 사이로 눌러 줍니다. "맞다/아니다"의 확률처럼 읽을 때 출력층에 씁니다.'},
+  tanh:{n:'tanh',fm:'tanh(x)',f:Math.tanh,sy:1.8,off:1.8,lo:'−1',color:0xe0457b,d:'<b>tanh</b>는 −1과 1 사이로 눌러 줍니다. 0을 중심으로 대칭이라 시그모이드보다 은닉층에 쓰기 좋습니다.'}
+};
+const NR=80, zf=S4.cz+S4.d/2;
+function mkSlot(cx,key,idx){
+  const g=new T.BufferGeometry(), ix=[];
+  g.setAttribute('position',new T.BufferAttribute(new Float32Array((NR+1)*6),3));
+  for(let i=0;i<NR;i++){ const k=i*2; ix.push(k,k+1,k+2,k+1,k+3,k+2); } g.setIndex(ix);
+  const mat=new T.MeshStandardMaterial({color:0xffffff,side:T.DoubleSide,roughness:0.4,emissiveIntensity:0.15});
+  G.add(new T.Mesh(g,mat));
+  const s={cx,key,idx,g,mat};
+  s.front=line(new Array(NR+1).fill(0).map(()=>V(0,0,0)),0xffffff,1);
+  s.hax=line([V(0,0,0),V(0,0,0)],0xffffff,0.5);
+  line([V(cx,S4.y0-0.5,zf),V(cx,S4.y0+4.2,zf)],0xffffff,0.5);
+  s.head=label('',V(cx,5.6,S4.cz),'stage',4);
+  s.dot=ball(V(0,0,0),0.17,0xffd76a,0.9); s.lab=label('',V(0,0,0),'big',4); s.drop=line([V(0,0,0),V(0,0,0)],0xffd76a,0.8);
+  return s;
 }
-const A4={relu:{cx:S4.cx-2.75,f:x=>Math.max(0,x),sy:0.62},sig:{cx:S4.cx+2.75,f:sigmoid,sy:3.6}};
-ribbon(A4.relu.cx,A4.relu.f,A4.relu.sy,0x2563eb); ribbon(A4.sig.cx,A4.sig.f,A4.sig.sy,0xe0457b);
-label('ReLU · max(0, x)',V(A4.relu.cx,5.6,S4.cz),'stage',4); label('시그모이드 · 1/(1+e<sup>−x</sup>)',V(A4.sig.cx,5.6,S4.cz),'stage',4);
-line([V(A4.sig.cx-2.6,S4.y0+3.6,S4.cz+S4.d/2),V(A4.sig.cx+2.6,S4.y0+3.6,S4.cz+S4.d/2)],0xffffff,0.3);
-label('1',V(A4.sig.cx-2.9,S4.y0+3.6,S4.cz+S4.d/2),'note',4); label('0',V(A4.sig.cx-2.9,S4.y0,S4.cz+S4.d/2),'note',4);
-const acDotR=ball(V(0,0,0),0.17,0xffd76a,0.9), acDotS=ball(V(0,0,0),0.17,0xffd76a,0.9);
-const acLabR=label('',V(0,0,0),'big',4), acLabS=label('',V(0,0,0),'big',4);
-const acDropR=line([V(0,0,0),V(0,0,0)],0xffd76a,0.8), acDropS=line([V(0,0,0),V(0,0,0)],0xffd76a,0.8);
+function fillSlot(s){
+  const d=AF[s.key], p=s.g.attributes.position, pts=[];
+  for(let i=0;i<=NR;i++){ const x=-6+12*i/NR, y=S4.y0+d.off+d.f(x)*d.sy, X0=s.cx+x*S4.sx;
+    p.setXYZ(i*2,X0,y,S4.cz-S4.d/2); p.setXYZ(i*2+1,X0,y,zf); pts.push(V(X0,y,zf+0.01)); }
+  p.needsUpdate=true; s.g.computeVertexNormals(); s.g.computeBoundingSphere();
+  s.front.geometry.setFromPoints(pts);
+  s.hax.geometry.setFromPoints([V(s.cx-6*S4.sx-0.3,S4.y0+d.off,zf),V(s.cx+6*S4.sx+0.3,S4.y0+d.off,zf)]);
+  s.mat.color.setHex(d.color); s.mat.emissive.setHex(d.color);
+  s.head.el.innerHTML=d.n+' · '+d.fm;
+  $('#acN'+s.idx).innerHTML=d.n+' · '+d.fm; $('#acD'+s.idx).innerHTML=d.d;
+  $$('[data-slot="'+s.idx+'"]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.af===s.key));
+}
+const slots=[mkSlot(S4.cx-2.75,'relu',0),mkSlot(S4.cx+2.75,'sig',1)];
+line([V(slots[1].cx-2.6,S4.y0+3.6,zf),V(slots[1].cx+2.6,S4.y0+3.6,zf)],0xffffff,0.3);
+label('1',V(slots[1].cx-2.9,S4.y0+3.6,zf),'note',4); const loLab=label('0',V(slots[1].cx-2.9,S4.y0,zf),'note',4);
 let acZ=0.439;
 putChar('fly','fruitfly',4,V(S4.cx,0,S4.cz+4.2),0,'think','');
 function acRender(){
   $('#acZ').value=acZ; $('#acZO').textContent=fmt(acZ,2);
-  const r=Math.max(0,acZ), s=sigmoid(acZ), zf=S4.cz+S4.d/2+0.05;
-  $('#acR').textContent=fmt(r); $('#acS').textContent=fmt(s);
-  if(acZ<0){ act('fly','think','E04'); say('fly','음수를 넣으니 ReLU는 <b>0</b>으로 막습니다. 시그모이드는 '+fmt(s,2)+'.'); }
-  else if(acZ>4){ act('fly','explain'); say('fly','큰 값도 시그모이드는 <b>1 근처</b>에서 멈춥니다. ReLU는 '+fmt(r,2)+' 그대로.'); }
-  else { act('fly','think'); say('fly','ReLU는 '+fmt(r,2)+' 그대로, 시그모이드는 <b>'+fmt(s,2)+'</b>로 눌립니다.'); }
-  [[A4.relu,r,acDotR,acLabR,acDropR],[A4.sig,s,acDotS,acLabS,acDropS]].forEach(a=>{
-    const x=a[0].cx+acZ*S4.sx, y=S4.y0+a[1]*a[0].sy;
-    a[2].position.set(x,y,zf); a[3].pos.set(x,y+0.75,zf); a[3].el.textContent='f('+fmt(acZ,2)+') = '+fmt(a[1]);
-    a[4].geometry.setFromPoints([V(x,S4.y0,zf),V(x,y,zf)]);
-  });
+  const v=slots.map(s=>{ const d=AF[s.key], val=d.f(acZ), x=s.cx+acZ*S4.sx, y=S4.y0+d.off+val*d.sy;
+    s.dot.position.set(x,y,zf+0.05); s.lab.pos.set(x,y+0.75,zf); s.lab.el.textContent='f('+fmt(acZ,2)+') = '+fmt(val);
+    s.drop.geometry.setFromPoints([V(x,S4.y0+d.off,zf+0.05),V(x,y,zf+0.05)]); return val; });
+  $('#acR').textContent=fmt(v[0]); $('#acS').textContent=fmt(v[1]);
+  loLab.el.textContent=AF[slots[1].key].lo;
+  const n0=AF[slots[0].key].n, n1=AF[slots[1].key].n;
+  const t='x = '+fmt(acZ,2)+'일 때 '+n0+'는 <b>'+fmt(v[0],2)+'</b>, '+n1+'는 <b>'+fmt(v[1],2)+'</b>입니다.';
+  if(acZ<0){ act('fly','think','E04'); say('fly','음수를 넣었습니다. '+t); }
+  else if(acZ>4){ act('fly','explain'); say('fly','큰 값을 넣었습니다. '+t); }
+  else { act('fly','think'); say('fly',t); }
 }
+$$('[data-af]').forEach(b=>b.onclick=()=>{ const s=slots[+b.dataset.slot]; s.key=b.dataset.af; fillSlot(s); acRender(); });
 $('#acZ').oninput=e=>{ acZ=+e.target.value; acRender(); };
 $('#acFromN').onclick=()=>{ acZ=Math.max(-6,Math.min(6,nCalc().z)); acRender(); };
-acRender();
+slots.forEach(fillSlot); acRender();
 
 /* ================= ⑤ 학습 한 바퀴 ================= */
 beginStation();
@@ -657,8 +721,17 @@ const e5Geo=new T.BufferGeometry();
 const fl5In=net5.nodes[0].map(p=>label('',V(p.x-0.6,p.y,p.z),'num',5,'r'));
 const fl5Out=label('',V(net5.nodes[3][0].x,net5.nodes[3][0].y+1.0,S5.cz),'big',5); fl5Out.el.style.setProperty('--c','var(--pink)');
 const fl5Y=label('',V(net5.nodes[3][0].x,net5.nodes[3][0].y-1.0,S5.cz),'num',5);
-const fl5Ph=label('',V(S5.cx,6.2,S5.cz),'stage',5);
-label('특징 (x)',V(net5.nodes[0][0].x,0.9,S5.cz),'note',5); label('예측 (ŷ)',V(net5.nodes[3][0].x,0.9,S5.cz),'note',5);
+const fl5Ph=label('',V(S5.cx,net5.top+1.5,S5.cz),'big',5); fl5Ph.el.style.setProperty('--c','var(--purple)');
+label('은닉층 Hidden Layer',V(S5.cx,net5.top+0.5,S5.cz),'stage',5);
+label('입력층',V(net5.nodes[0][0].x,5.5,S5.cz),'stage',5); label('출력층',V(net5.nodes[3][0].x,5.5,S5.cz),'stage',5);
+const bpMat=new T.PointsMaterial({color:0xffa94d,size:6,sizeAttenuation:false,transparent:true,opacity:0.3});
+(function(){ const a=V(net5.nodes[3][0].x,net5.nodes[3][0].y-0.5,S5.cz+1.6), c=V(S5.cx,-0.9,S5.cz+1.6), b=V(net5.nodes[0][0].x+1.2,1.0,S5.cz+1.6);
+  const pts=new T.QuadraticBezierCurve3(a,c,b).getPoints(34); G.add(new T.Points(new T.BufferGeometry().setFromPoints(pts),bpMat));
+  const hd=new T.Mesh(new T.ConeGeometry(0.2,0.5,10),new T.MeshBasicMaterial({color:0xffa94d})); hd.position.copy(b);
+  hd.quaternion.setFromUnitVectors(UP,new T.Vector3().subVectors(b,pts[32]).normalize()); G.add(hd);
+  label('← 역전파 Backpropagation',V(S5.cx,0.75,S5.cz+1.6),'note',5); label('순전파 Forward →',V(S5.cx,net5.top-0.35,S5.cz+1.4),'note',5);
+})();
+
 const p5=net5.edges.map(()=>pulse(0xffffff)); p5.forEach(m=>m.visible=false);
 putChar('sia','sia',5,V(S5.cx-4.3,0,S5.cz+4.6),0.4,'idle','예측과 정답의 차이를 판정합니다.');
 putChar('moa','moa',5,V(S5.cx+4.3,0,S5.cz+4.6),-0.4,'idle','');
@@ -696,7 +769,7 @@ function flSample(){ const d=DATA[fl.k%DATA.length], p=fwd(d.x)[3][0]; fl.cur={d
 function flCrew(){ if(fl.acc>=0.9){ act('moa','cheer','E01'); say('moa','맞힌 비율 <b>'+Math.round(fl.acc*100)+'%</b>! 잘 배우고 있어요.'); } else { act('moa','idle'); say('moa','아직 '+Math.round(fl.acc*100)+'%예요. 조금만 더!'); } }
 function flStats(){ flCrew(); $('#flN').textContent=fl.n; $('#flL').textContent=fmt(fl.loss); $('#flA').textContent=Math.round(fl.acc*100)+'%'; }
 const PH=['1 순전파','2 손실 계산','3 역전파','4 가중치 갱신'];
-function flPhase(){ fl5Ph.el.textContent=PH[fl.ph]; $$('#flSteps li').forEach((li,i)=>li.classList.toggle('now',i===fl.ph)); }
+function flPhase(){ bpMat.opacity=fl.ph===2?1:0.3; fl5Ph.el.textContent=PH[fl.ph]; $$('#flSteps li').forEach((li,i)=>li.classList.toggle('now',i===fl.ph)); }
 function flPlot(){
   const cv=$('#lossplot'), c=cv.getContext('2d'), w=cv.width, h=cv.height, H=fl.hist;
   c.clearRect(0,0,w,h); c.strokeStyle='#27345a'; c.lineWidth=1;
@@ -734,23 +807,67 @@ $('#flFast').onclick=e=>{ fl.fast=!fl.fast; e.target.setAttribute('aria-pressed'
 $('#flReset').onclick=()=>{ flInit(); $('#flPlay').textContent='⏸ 멈춤'; $('#flFast').setAttribute('aria-pressed','false'); };
 flInit();
 
+/* ================= 위층: 뉴런 하나의 설계도 ================= */
+beginStation();
+const sky=new T.Group(); sky.position.set(0,19,-9); sky.rotation.x=-0.5; G.add(sky); sky.updateMatrixWorld(true);
+const sp=(x,y,z)=>sky.localToWorld(V(x,y,z||0));
+const NAVY=0x3b55a5, PINKD=0xff3d8f;
+function arrow(a,b,r,color){ const d=new T.Vector3().subVectors(b,a).normalize(), e=b.clone().addScaledVector(d,-0.5);
+  tube(a,e,r,color,sky); const c=new T.Mesh(new T.ConeGeometry(r*3.2,0.6,12),new T.MeshStandardMaterial({color}));
+  c.position.copy(b).addScaledVector(d,-0.3); c.quaternion.setFromUnitVectors(UP,d); sky.add(c); }
+const skySeg=[];
+(function(){
+  const SG=V(-0.6,0,0), ys=[3.7,1.5,-0.7,-3.7], nm=['1','2','3','n'];
+  ball(SG,1.7,NAVY,0.25,sky); label('Σ',sp(-0.6,0,1.8),'sig',6);
+  ys.forEach((y,k)=>{
+    const a=V(-10.2,y,0), w=V(-6.8,y*0.82,0);
+    tube(a,w,0.05,0x5b7bd6,sky); ball(w,0.78,NAVY,0.25,sky);
+    const d=new T.Vector3().subVectors(SG,w).normalize();
+    arrow(w.clone().addScaledVector(d,0.78),SG.clone().addScaledVector(d,-1.75),0.05,0x5b7bd6);
+    label('x<sub>'+nm[k]+'</sub>',sp(-11,y,0),'sym',6); label('w<sub>'+nm[k]+'j</sub>',sp(-6.8,y*0.82,0.9),'sym',6);
+    skySeg.push([sp(a.x,a.y),sp(-2.2,d.y/d.x*(-2.2+0.6))]);
+  });
+  label('⋮',sp(-11,-2.3,0),'sym',6);
+  label('입력 inputs',sp(-11,5.2,0),'stage',6); label('가중치 weights',sp(-6.8,4.6,0),'stage',6);
+  arrow(V(1.1,0,0),V(3.1,0,0),0.06,0x5b7bd6); label('S<sub>j</sub>',sp(2.1,0.8,0),'sym',6);
+  const bg=new T.BoxGeometry(2.8,2.4,0.5);
+  const bm=new T.Mesh(bg,new T.MeshStandardMaterial({color:0xf4f7ff,transparent:true,opacity:0.92})); bm.position.set(4.5,0,0); sky.add(bm);
+  const be=new T.LineSegments(new T.EdgesGeometry(bg),new T.LineBasicMaterial({color:NAVY})); be.position.copy(bm.position); sky.add(be);
+  const cv=[]; for(let i=0;i<=40;i++){ const x=-6+i*0.3; cv.push(V(4.5+x/6*1.25,-0.85+sigmoid(x)*1.7,0.27)); }
+  for(let i=0;i<40;i++) tube(cv[i],cv[i+1],0.035,NAVY,sky);
+  for(let i=0;i<7;i++){ const t0=-1.3+i*0.4; tube(V(4.5+t0,0,0.27),V(4.5+t0+0.2,0,0.27),0.02,PINKD,sky); if(i<6) tube(V(4.5,-1.1+i*0.4,0.27),V(4.5,-0.9+i*0.4,0.27),0.02,PINKD,sky); }
+  label('활성화 함수 Activation function',sp(4.5,2.1,0),'stage',6);
+  arrow(V(5.9,0,0),V(10,0,0),0.06,0x5b7bd6); label('O<sub>j</sub>',sp(7.0,0.8,0),'sym',6);
+  const N=34, rg=new T.TorusGeometry(5.7,0.1,6,8,Math.PI*2/N*0.55), rm=new T.MeshBasicMaterial({color:PINKD});
+  for(let i=0;i<N;i++){ const m=new T.Mesh(rg,rm); m.position.set(2.5,0,0); m.rotation.z=i*Math.PI*2/N; sky.add(m); }
+  label('분홍 점선 안 = 뉴런 한 개',sp(2.5,-6.4,0),'note',6);
+  label('위층 · 뉴런 하나의 설계도',sp(0,7.4,0),'title',6);
+  skySeg.push([sp(1.1,0),sp(10,0)]);
+  // 아래층으로 내려가는 빛줄기
+  const bmat=new T.MeshBasicMaterial({color:PINKD,transparent:true,opacity:0.38,depthWrite:false});
+  [[sp(-0.6,-1.7),V(X.box,5.1,S3.cz)],[sp(4.5,-1.2),V(S4.cx,5.4,S4.cz)],[sp(9.2,-0.3),V(S2.cx,net2.top+0.3,S2.cz)]].forEach(q=>{
+    const m=new T.Mesh(cylGeo,bmat); place(m,q[0],q[1],0.07); G.add(m); });
+})();
+const skyP=skySeg.map((q,k)=>({m:pulse(k===4?0xffd76a:0xffffff),q}));
+
 /* ================= 카메라 ================= */
 const VIEW=[
-  {t:[0,0.5,3.2],r:43,th:0,ph:0.78},
+  {t:[0,6.5,1],r:66,th:0,ph:0.9},
   {t:[S1.cx+0.6,1.8,S1.cz+0.6],r:22,th:-0.5,ph:1.02},
   {t:[S2.cx-0.6,3.0,S2.cz+1.2],r:20.5,th:0.25,ph:1.26},
   {t:[0.6,3.3,S3.cz],r:25,th:0,ph:1.32},
   {t:[S4.cx,2.5,S4.cz+1.4],r:18.5,th:-0.2,ph:1.22},
-  {t:[S5.cx,2.9,S5.cz+1.4],r:21,th:0.2,ph:1.26}
+  {t:[S5.cx,2.9,S5.cz+1.4],r:21,th:0.2,ph:1.26},
+  {t:[0,12.5,-5],r:40,th:0,ph:1.2}
 ];
-const need=[2.1,1.3,1.3,2.25,1.3,1.3]; // 구역별로 필요한 가로/세로 비
+const need=[1.75,1.3,1.3,2.25,1.3,1.3,2.0]; // 구역별로 필요한 가로/세로 비
 const cur={x:0,y:1.5,z:3.6,r:60,th:0.5,ph:0.6}, goal={x:0,y:1.5,z:3.6,r:47,th:0,ph:0.8};
 let aspect=1.5;
 function goView(i){ const v=VIEW[i]; goal.x=v.t[0];goal.y=v.t[1];goal.z=v.t[2]; goal.th=v.th; goal.ph=v.ph; goal.r=v.r*Math.max(1,need[i]/aspect); }
-const names=['overview','loss','network','neuron','activation','training'];
+const names=['overview','loss','network','neuron','activation','training','blueprint'];
 function setActive(i,noHash){
   active=i; goView(i);
-  groups.forEach((g,k)=>{ if(g) g.visible=(i===0||k===i); });
+  groups.forEach((g,k)=>{ if(g) g.visible=(i===0||i===6||k===i); });
   $$('#tabs button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.s===i));
   $$('#panel section').forEach(s=>s.classList.toggle('on',+s.dataset.p===i));
   $('#panel').scrollTop=0;
@@ -806,6 +923,7 @@ function frame(now){
   for(const p of p2){ p.t+=dt*p.sp; if(p.t>=1){ p.t=0; p2Next(p); }
     p.m.position.lerpVectors(net2.nodes[p.l][p.i],net2.nodes[p.l+1][p.j],p.t); }
   // ③ 뉴런 신호
+  skyP.forEach((p,k)=>{ p.m.position.lerpVectors(p.q[0],p.q[1],(time*0.4+k*0.17)%1); });
   for(const p of nPulses){ const s=nSeg[p.seg], t=(time*0.55+p.off)%1; p.m.position.lerpVectors(s[0],s[1],t); }
   // ⑤ 학습
   flTick(dt);
