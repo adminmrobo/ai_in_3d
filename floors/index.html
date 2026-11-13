@@ -212,7 +212,7 @@ $('#panel').innerHTML =
       '<button class="card" data-s="4" style="--c:var(--green)"><i>4</i><div><b>그래프 판</b><span>' + CV.title + '</span></div></button>' +
       '<button class="card" data-s="5" style="--c:var(--purple)"><i>5</i><div><b>실험</b><span>값을 바꿔 가며 직접 돌려 보기</span></div></button></div>' +
     '<h3>확인 문제</h3>' + F.quiz.map((q, i) => '<div class="quiz" data-q="' + i + '"><b>Q' + (i + 1) + '. ' + q[0] + '</b>' + q[1].map((o, j) => '<button type="button" data-o="' + j + '">' + 'ㄱㄴㄷ'[j] + '. ' + o + '</button>').join('') + '<p hidden></p></div>').join('') +
-    (fnum < 27 ? '<a class="nextbtn" href="?f=' + (fnum + 1) + '">↑ ' + (fnum + 1) + '층 ' + FLOORS[fnum].ab + ' · ' + FLOORS[fnum].ko + '로 올라가기</a>' : '<a class="nextbtn" href="../">꼭대기 층까지 왔습니다 · 건물 전체로 돌아가기</a>') +
+    (fnum < 27 ? '<a class="nextbtn" href="?f=' + (fnum + 1) + '">↑ ' + (fnum + 1) + '층 ' + FLOORS[fnum].ab + ' · ' + FLOORS[fnum].ko + '로 올라가기</a>' : '<a class="nextbtn" href="../annex/">꼭대기 층까지 왔습니다 · 별관(잇기와 솎아 내기 · 복권 가설)으로</a>') +
     '<h3>더 알아보기</h3><div class="more">' +
       (F.rel || []).map(r => '<a class="btn" href="' + r[1] + '">진짜 뇌와 견주기 · ' + r[0] + '</a>').join('') +
       '<a class="btn" href="' + LINKS.ATLAS + '1_neural_network_atlas_chart.html">도감에서 ' + F.ab + ' 그림 보기</a>' +

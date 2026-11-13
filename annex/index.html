@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>신경망 연구소 별관 — 잇기와 솎아 내기 · 복권 가설</title>
+<meta name="description" content="신경망을 이어 붙이면 생기는 일, 가지치기, 복권 가설(Lottery Ticket Hypothesis)을 3D와 실제 작은 실험으로">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0f1e; --panel:#111a30; --panel2:#18233f; --line:#27345a;
+  --text:#e9edf9; --muted:#9aa7c7;
+  --pink:#ff8fc7; --blue:#6fb1ff; --yellow:#ffd76a; --green:#7fe0a8; --purple:#b79cff;
+  --acc:var(--blue); --grp:var(--blue);
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--text);font-family:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;font-size:15px;line-height:1.65;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;display:flex;flex-direction:column;overflow:hidden}
+button,input,select{font:inherit;color:inherit}
+header{display:flex;align-items:center;gap:14px;padding:9px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.brand{display:flex;flex-direction:column;line-height:1.2;margin-right:auto}
+.brand small{font-size:12px;font-weight:700;color:var(--yellow);margin-bottom:2px}
+.brand small a{color:inherit;text-decoration:none}
+.brand h1{font-size:21px;margin:0;font-weight:900;letter-spacing:-.02em}
+nav{display:flex;gap:6px;flex-wrap:wrap}
+nav button,nav a{background:transparent;border:1px solid var(--line);border-radius:999px;padding:5px 12px;cursor:pointer;font-size:13.5px;color:var(--muted);white-space:nowrap;text-decoration:none}
+nav button:hover,nav a:hover{color:var(--text);border-color:var(--muted)}
+nav button[aria-pressed="true"]{background:var(--c,var(--blue));border-color:var(--c,var(--blue));color:#0a0f1e;font-weight:700}
+nav a{border-style:dashed}
+nav button:focus-visible,nav a:focus-visible,.btn:focus-visible,.card:focus-visible{outline:2px solid #fff;outline-offset:2px}
+main{flex:1;display:grid;grid-template-columns:minmax(0,1fr) 390px;min-height:0}
+#stage{position:relative;min-height:0;overflow:hidden;background:radial-gradient(120% 90% at 50% 0%,#17224a 0%,#0a0f1e 62%)}
+#stage canvas.gl{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+#stage canvas.gl:active{cursor:grabbing}
+#stage canvas.flat{display:block;width:100%;height:auto}
+#labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.lb{position:absolute;left:0;top:0;white-space:nowrap;font-size:12.5px;color:var(--text);text-shadow:0 1px 3px #000,0 0 8px #0a0f1e;will-change:transform}
+.lb.title{font-size:14.5px;font-weight:700;padding:3px 13px;border-radius:999px;color:#0a0f1e;background:var(--c);text-shadow:none}
+.lb.stage{font-size:13.5px;font-weight:700;color:var(--yellow)}
+.lb.num{font-size:12.5px;font-weight:500;background:#0a0f1ecc;border:1px solid var(--line);border-radius:6px;padding:0 6px;text-shadow:none}
+.lb.big{font-size:14.5px;font-weight:700;background:#0a0f1ee6;border:1px solid var(--c,var(--line));border-radius:8px;padding:1px 8px;text-shadow:none}
+.lb.huge{font-size:24px;font-weight:900}
+.lb.note{color:var(--muted)}
+.lb.wrap{white-space:normal;text-align:center;width:max-content;max-width:150px;line-height:1.35}
+.lb.say{background:#fff;color:#141a2e;text-shadow:none;font-size:13px;font-weight:500;line-height:1.45;padding:6px 11px;border-radius:12px;white-space:normal;width:max-content;max-width:240px;box-shadow:0 4px 14px #0008}
+.lb.say::after{content:"";position:absolute;left:50%;bottom:-6px;width:12px;height:12px;background:#fff;transform:translateX(-50%) rotate(45deg);border-radius:2px}
+.lb.say b{color:#b0307a}
+#hint{position:absolute;left:14px;bottom:12px;font-size:12px;color:var(--muted);background:#0a0f1ecc;border:1px solid var(--line);border-radius:8px;padding:4px 10px}
+aside{border-left:1px solid var(--line);background:var(--panel);overflow-y:auto;padding:18px 18px 26px}
+aside section{display:none}
+aside section.on{display:block}
+aside h2{font-size:21px;font-weight:900;letter-spacing:-.02em;margin:0 0 8px;color:var(--acc);line-height:1.3}
+aside h3{font-size:13px;margin:18px 0 8px;color:var(--muted);font-weight:700;letter-spacing:.04em}
+aside p{margin:0 0 10px}
+aside a{color:var(--acc)}
+.grp{font-size:12.5px;font-weight:700;color:var(--grp)}
+.en{color:var(--muted);font-size:13px;margin:-4px 0 8px}
+.chip{display:inline-block;font-size:12px;border:1px solid var(--line);border-radius:999px;padding:1px 9px;color:var(--muted);margin:0 4px 6px 0}
+.three{background:var(--panel2);border-left:3px solid var(--acc);border-radius:0 10px 10px 0;padding:10px 12px;margin:10px 0 4px}
+.three p{margin:0 0 4px}.three p:last-child{margin:0}
+.kv{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px}
+.kv div{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:7px 10px}
+.kv span{display:block;font-size:11.5px;color:var(--muted)}
+.kv b{font-size:15px;font-weight:700}
+.row{display:grid;grid-template-columns:108px 1fr 52px;align-items:center;gap:8px;margin:5px 0}
+.row label{font-size:13px;color:var(--muted);line-height:1.3}
+.row output{font-size:13px;font-weight:500;text-align:right}
+.row.sel{grid-template-columns:108px 1fr}
+input[type=range]{width:100%;accent-color:var(--acc);height:22px}
+select{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 10px}
+.btns{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.btn{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:13.5px;text-decoration:none;color:var(--text)!important;display:inline-block}
+.btn:hover{border-color:var(--acc)}
+.more{display:grid;gap:6px}
+.note{font-size:12.5px;color:var(--muted);margin-top:8px}
+.leg{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:13px}
+.leg span{display:inline-flex;align-items:center;gap:6px}
+.leg i{width:12px;height:12px;border-radius:50%;background:var(--c)}
+.sumbox{background:#0a0f1e;border:1px solid var(--line);border-radius:10px;padding:10px 14px;display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:14px}
+.sumbox span{color:var(--muted);font-size:12.5px}
+.cards{display:grid;gap:8px;margin-top:6px}
+.card{display:grid;grid-template-columns:34px 1fr;gap:10px;align-items:center;text-align:left;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:9px 12px;cursor:pointer}
+.card:hover{border-color:var(--c)}
+.card i{font-style:normal;font-weight:900;font-size:16px;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--c);color:#0a0f1e}
+.card b{display:block;font-size:14.5px}.card span{font-size:12.5px;color:var(--muted)}
+.talk{display:grid;gap:8px;margin:12px 0 4px}
+.talk div{display:grid;grid-template-columns:46px 1fr;gap:10px;align-items:start}
+.talk img,.crew img{width:46px;height:46px;border-radius:50%;background:#22305a;border:2px solid var(--line);object-fit:cover}
+.talk p{margin:0;background:var(--panel2);border:1px solid var(--line);border-radius:4px 12px 12px 12px;padding:7px 11px;font-size:14px}
+.talk p b.nm{display:block;font-size:12px;color:var(--acc)}
+.crew{display:grid;grid-template-columns:repeat(2,1fr);gap:8px 10px}
+.crew div{display:grid;grid-template-columns:46px 1fr;gap:8px;align-items:center;font-size:12px;color:var(--muted);line-height:1.35}
+.crew b{display:block;color:var(--text);font-size:13px}
+.eqbox{background:#0a0f1e;border:1px solid var(--line);border-radius:10px;margin:12px 0 4px;padding:0}
+.eqbox summary{cursor:pointer;padding:8px 12px;font-size:13px;font-weight:700;color:var(--acc)}
+.eqbox .eqs{padding:0 14px 10px}
+.eqbox code{display:block;font-family:"Noto Sans KR",sans-serif;font-size:14.5px;font-weight:500;color:var(--text);margin:2px 0;white-space:normal}
+.eqbox p{font-size:12.5px;color:var(--muted);margin:6px 0 0}
+.why{font-size:13.5px;background:var(--panel2);border:1px dashed var(--line);border-radius:10px;padding:8px 12px;margin:6px 0 4px}
+.quiz{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:0 0 8px}
+.quiz b{display:block;font-size:14px;margin-bottom:6px}
+.quiz button{display:block;width:100%;text-align:left;background:#0a0f1e;border:1px solid var(--line);border-radius:8px;padding:6px 10px;margin:4px 0;cursor:pointer;font-size:13.5px}
+.quiz button:hover{border-color:var(--acc)}
+.quiz button.ok{border-color:var(--green);background:#123526}.quiz button.no{border-color:#ff7a7a;background:#3a1720}
+.quiz p{font-size:13px;margin:6px 0 0;color:var(--muted)}
+.refs{font-size:12px;color:var(--muted);padding-left:18px;margin:0}
+.refs li{margin-bottom:4px}
+.nextbtn{display:block;text-align:center;margin-top:14px;padding:10px;border-radius:10px;background:var(--acc);color:#0a0f1e!important;font-weight:700;text-decoration:none}
+#pbar{display:none;position:fixed;top:10px;right:12px;z-index:20;gap:6px;align-items:center;background:#0a0f1ee6;border:1px solid var(--line);border-radius:999px;padding:4px 6px 4px 14px;font-size:13.5px}
+#pbar button{background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:3px 11px;cursor:pointer}
+body.present header,body.present aside{display:none}
+body.present main{grid-template-columns:1fr}
+body.present #pbar{display:flex}
+body.present #stage{height:100vh}
+.foot{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+.foot p{margin:0 0 4px}
+@media (max-width:860px){
+  body{overflow:auto;height:auto}
+  main{display:block}
+  #stage{height:56vh;min-height:330px}
+  aside{border-left:0;border-top:1px solid var(--line);overflow:visible}
+  .brand h1{font-size:19px}
+  .lb{font-size:10.5px}
+  .lb.title{font-size:12px;padding:2px 9px}
+  .lb.big{font-size:12px;padding:0 5px}
+  .lb.num{font-size:10.5px;padding:0 4px}
+  .lb.say{font-size:11px;max-width:150px}
+  .lb.stage,.lb.wl{display:none!important}
+  header{padding:8px 12px}
+  nav{flex-wrap:nowrap;overflow-x:auto;width:100%;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+  body.present{overflow:hidden;height:100%}
+}
+.tbl{overflow-x:auto;margin-top:6px}
+.tbl table{border-collapse:collapse;width:100%;font-size:13px;line-height:1.45}
+.tbl th,.tbl td{border:1px solid var(--line);padding:6px 8px;vertical-align:top;text-align:left}
+.tbl thead th{background:var(--panel2);color:var(--acc)}
+.tbl tbody th{color:var(--muted);font-weight:500;white-space:nowrap}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><small><a href="../">신경망 연구소</a> · 별관</small><h1>잇기와 솎아 내기 · 복권 가설</h1></div>
+  <nav id="tabs" aria-label="구역 이동">
+    <button data-s="0" aria-pressed="true">전체 보기</button>
+    <button data-s="6" style="--c:#ff7ab8">위층 · 큰 그물</button>
+    <button data-s="1" style="--c:var(--pink)">① 잇기</button>
+    <button data-s="2" style="--c:var(--blue)">② 깊이 쌓기</button>
+    <button data-s="3" style="--c:var(--yellow)">③ 연결 수</button>
+    <button data-s="4" style="--c:var(--green)">④ 가지치기</button>
+    <button data-s="5" style="--c:var(--purple)">⑤ 복권 가설</button>
+    <button id="pOn" type="button" style="border-style:dashed">발표 보기</button>
+    <a href="../">연구소 건물</a><a href="../floors/?f=27">27층 NTM</a>
+  </nav>
+</header>
+<div id="pbar" role="toolbar" aria-label="발표 보기"><span id="pName"></span><button id="pL" aria-label="앞 구역">←</button><button id="pR" aria-label="다음 구역">→</button><button id="pX">나가기</button></div>
+<main>
+  <div id="stage">
+    <canvas class="gl" id="gl"></canvas>
+    <div id="labels"></div>
+    <div id="hint">끌기: 돌려 보기 · 휠/두 손가락: 확대 · 구역 누르기: 들어가기</div>
+  </div>
+  <aside id="panel"></aside>
+</main>
+
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js"}}</script>
+<script type="module">
+import { LT } from './lt_data.js';
+import { predict, spiral } from './lt.js';
+const $ = s => document.querySelector(s), $$ = s => Array.from(document.querySelectorAll(s));
+const NAME = { doctor: '박사', haru: '조수(하루)', fruitfly: '초파리 연구원', jupanbot: '주판봇', sia: '시아', moa: '모아' };
+const talk = lines => '<div class="talk">' + lines.map(t => '<div><img src="../assets/' + t[0] + '_' + (t[1] || 'E13') + '.webp" alt=""><p><b class="nm">' + NAME[t[0]] + '</b>' + t[2] + '</p></div>').join('') + '</div>';
+const three = lines => '<div class="three">' + lines.map(t => '<p>' + t + '</p>').join('') + '</div>';
+const fmt = v => v.toLocaleString('ko-KR');
+
+/* ================= 실험 그물 (미리 계산한 값) ================= */
+const SZ = [2, 16, 16, 1], CONN = LT.conn;
+const unpack = s => s.split('|').map(r => Uint8Array.from(r, c => +c));
+const RUNS = LT.runs.map(r => ({ seed: r.seed, dense: r.dense, net: { W: r.W.map(w => Float64Array.from(w)), B: r.B.map(b => Float64Array.from(b)), sizes: SZ }, cut: r.cut.map(c => [Math.round(c[0]), c[1]]), rounds: r.rounds.map(q => ({ ...q, M: unpack(q.mask) })) }));
+function cutMask(net, keep) { const all = []; net.W.forEach((w, l) => w.forEach((v, k) => all.push([Math.abs(v), l, k]))); all.sort((a, b) => b[0] - a[0]);
+  const M = net.W.map(w => new Uint8Array(w.length)), K = Math.round(all.length * keep); for (let i = 0; i < K; i++) M[all[i][1]][all[i][2]] = 1; return M; }
+
+/* ================= 잇기 사례 ================= */
+const CHAINS = [
+  { k: 'cap', name: '사진에 설명 달기', blocks: [['사진', 0x9aa7c7], ['CNN · 12층', 0x7fe0a8], ['LSTM · 16층', 0x6fb1ff], ['"a cat on a mat"', 0x9aa7c7]], loop: false,
+    how: 'CNN이 사진에서 뽑은 숫자 묶음을 LSTM의 첫 입력으로 넣습니다. LSTM은 그 뒤로 한 단어씩 씁니다.', train: '두 신경망을 이어 붙인 채 한꺼번에 학습할 수 있습니다(끝에서 끝까지 학습).' },
+  { k: 'tr', name: '번역 (인코더 → 디코더)', blocks: [['영어 문장', 0x9aa7c7], ['인코더', 0x6fb1ff], ['디코더', 0xffd76a], ['한국어 문장', 0x9aa7c7]], loop: false,
+    how: '인코더가 읽은 결과를 디코더가 받아 다른 언어로 씁니다. 처음에는 LSTM 두 개로, 지금은 트랜스포머로 만듭니다.', train: '역시 한꺼번에 학습합니다. 이 구조는 「3D로 설명하는 AI 2편」에서 자세히 다룹니다.' },
+  { k: 'gan', name: '만들고 가려내기 (GAN)', blocks: [['무작위 씨앗', 0x9aa7c7], ['생성자', 0xff9f6b], ['판별자', 0xb79cff], ['진짜? 가짜?', 0x9aa7c7]], loop: true,
+    how: '생성자가 만든 가짜를 판별자가 가려냅니다. 판별자의 판정이 거꾸로 생성자를 고치는 신호가 됩니다(26층).', train: '두 신경망이 번갈아 학습합니다. 한쪽만 너무 강해지면 학습이 무너질 수 있습니다.' },
+  { k: 'dbn', name: '차례로 쌓기 (DBN)', blocks: [['그림', 0x9aa7c7], ['RBM 1', 0x6fb1ff], ['RBM 2', 0x6fb1ff], ['RBM 3', 0x6fb1ff]], loop: false,
+    how: '아래 RBM이 배운 결과를 위 RBM의 입력으로 씁니다(21층).', train: '한 층씩 차례로 학습하고, 다 쌓은 뒤 전체를 한 번 더 다듬기도 합니다.' }];
+
+/* ================= 상태 ================= */
+const st = { ch: 0, depth: 20, fac: .9, L: 4, w: 8, seed: 0, keep: 50, round: 8 };
+const H = {}, sayFn = {};
+const pctS = v => (Math.round(v * 10) / 10) + '%';
+
+/* ================= 오른쪽 설명 ================= */
+const QUIZ = [['신경망 두 개를 이을 때 가장 흔한 방식은?', ['앞 신경망의 출력을 뒤 신경망의 입력으로 넣는다', '두 신경망의 가중치를 더한다', '두 신경망을 따로 학습만 한다'], 0, '그래서 이은 전체를 한 신경망처럼 한꺼번에 학습하기도 합니다.'],
+  ['학습을 마친 신경망에서 작은 연결을 많이 잘라 내고 다시 학습하지 않으면?', ['정답률이 그대로다', '정답률이 크게 떨어질 수 있다', '정답률이 늘 오른다'], 1, '④에서 절반만 남겨도 정답률이 80~90%대로 떨어집니다.'],
+  ['복권 가설에서 "당첨 복권"이 되려면 남긴 연결을 어떤 값에서 다시 학습하나?', ['새로 뽑은 무작위 값', '처음 학습을 시작했던 바로 그 값', '모두 0'], 1, '같은 구조라도 처음 값을 새로 뽑으면 정답률이 떨어지는 경우가 많습니다(⑤).']];
+const REFS = ['Frankle, J., & Carbin, M. (2019). The lottery ticket hypothesis: Finding sparse, trainable neural networks. ICLR (arXiv 2018).', 'Frankle, J., Dziugaite, G. K., Roy, D. M., & Carbin, M. (2020). Linear mode connectivity and the lottery ticket hypothesis. ICML.', 'LeCun, Y., Denker, J. S., & Solla, S. A. (1990). Optimal brain damage. NIPS 2.', 'Han, S., Pool, J., Tran, J., & Dally, W. J. (2015). Learning both weights and connections for efficient neural networks. NIPS 28.', 'Vinyals, O., Toshev, A., Bengio, S., & Erhan, D. (2015). Show and tell: A neural image caption generator. CVPR.', 'Sutskever, I., Vinyals, O., & Le, Q. V. (2014). Sequence to sequence learning with neural networks. NIPS 27.', 'He, K., Zhang, X., Ren, S., & Sun, J. (2016). Deep residual learning for image recognition. CVPR.'];
+const kv = id => '<div class="kv" id="' + id + '"></div>';
+const sel = (id, lab, opts) => '<div class="row sel"><label for="' + id + '">' + lab + '</label><select id="' + id + '">' + opts.map((o, i) => '<option value="' + i + '">' + o + '</option>').join('') + '</select></div>';
+const rng = (id, lab, mn, mx, step) => '<div class="row"><label for="' + id + '">' + lab + '</label><input type="range" id="' + id + '" min="' + mn + '" max="' + mx + '" step="' + step + '"><output id="o_' + id + '"></output></div>';
+const r0 = RUNS[0];
+$('#panel').innerHTML =
+  '<section data-p="0" class="on" style="--acc:#ff7ab8"><div class="grp">신경망 연구소 · 별관</div><h2>잇기와 솎아 내기 · 복권 가설</h2><p class="en">Composing networks · Pruning · The Lottery Ticket Hypothesis</p>' +
+    three(['신경망은 <b>여러 개를 이어</b> 더 큰 일을 맡깁니다. 이을수록 연결 수가 크게 늘어납니다.', '그런데 다 배운 뒤 보면 <b>작은 연결은 잘라 내도</b> 되는 경우가 많습니다.', '<b>복권 가설</b>: 큰 그물 안에는 처음부터 혼자서도 잘 배우는 작은 그물(당첨 복권)이 숨어 있다.']) +
+    talk([['doctor', 'E13', '27개 층에서 본 신경망들은 혼자 쓰이기도 하지만 서로 이어 붙여 쓰이는 일이 많습니다. 이 별관에서는 이을 때 생기는 일과, 커진 그물을 다시 솎아 내는 법을 봅니다.'], ['haru', 'E01', '⑤의 숫자는 이 페이지에 실은 작은 그물(연결 ' + CONN + '개)을 실제로 학습시켜 얻은 값이에요!']]) +
+    '<details class="eqbox" open><summary>핵심 식과 절차 (접기·펼치기)</summary><div class="eqs"><code>남긴 그물:  f(x; m ⊙ θ)      m은 남길 연결 1, 자를 연결 0인 가림판</code><code>① 처음 값 θ₀를 저장한다</code><code>② 학습해 θ를 얻는다</code><code>③ |θ|가 작은 연결부터 일부(예: 25%)를 잘라 m을 만든다</code><code>④ 남은 연결을 θ₀로 되돌려 다시 학습한다 → ②~④ 되풀이</code><p>④에서 θ₀ 대신 새 무작위 값으로 시작하면 "같은 구조, 다른 출발"이 됩니다. 둘을 견주는 것이 ⑤ 실험입니다.</p></div></details>' +
+    '<h3>미리 알아 둘 한계</h3><p class="note">원 논문(2018)은 MNIST·CIFAR-10 같은 작은 데이터와 신경망에서 처음 값으로 되돌리는 방법이 잘 됨을 보였습니다. 더 큰 신경망에서는 맨 처음이 아니라 <b>학습 초반의 값으로 되돌려야</b> 당첨 복권이 나온다는 후속 연구(2020)가 있습니다. "늘 90%가 필요 없다"는 뜻은 아닙니다. 얼마나 잘라도 되는지는 문제와 신경망에 따라 다릅니다.</p>' +
+    '<h3>오늘 안내하는 연구실 식구</h3><div class="crew">' + [['haru', 'E01', '① 잇기'], ['sia', 'E13', '② 깊이 쌓기'], ['jupanbot', 'E13', '③ 연결 수'], ['fruitfly', 'E13', '④ 가지치기'], ['doctor', 'E13', '⑤ 복권 가설'], ['moa', 'E01', '⑤ 복권 가설']].map(c => '<div><img src="../assets/' + c[0] + '_' + c[1] + '.webp" alt=""><span><b>' + NAME[c[0]] + '</b>' + c[2] + '</span></div>').join('') + '</div>' +
+    '<h3>구역 고르기</h3><div class="cards">' +
+      '<button class="card" data-s="6" style="--c:#ff7ab8"><i>↑</i><div><b>위층 · 큰 그물</b><span>여러 겹이 촘촘히 이어진 신경망</span></div></button>' +
+      '<button class="card" data-s="1" style="--c:var(--pink)"><i>1</i><div><b>잇기</b><span>층에서 꺼낸 신경망을 이어 붙인 네 가지 사례</span></div></button>' +
+      '<button class="card" data-s="2" style="--c:var(--blue)"><i>2</i><div><b>깊이 쌓기</b><span>쌓을수록 약해지는 신호와 지름길</span></div></button>' +
+      '<button class="card" data-s="3" style="--c:var(--yellow)"><i>3</i><div><b>연결 수</b><span>겹과 폭을 늘리면 연결이 얼마나 늘까</span></div></button>' +
+      '<button class="card" data-s="4" style="--c:var(--green)"><i>4</i><div><b>가지치기</b><span>작은 연결을 잘라만 내면 생기는 일</span></div></button>' +
+      '<button class="card" data-s="5" style="--c:var(--purple)"><i>5</i><div><b>복권 가설</b><span>같은 구조, 처음 값 vs 새 무작위 값</span></div></button></div>' +
+    '<h3>확인 문제</h3>' + QUIZ.map((q, i) => '<div class="quiz" data-q="' + i + '"><b>Q' + (i + 1) + '. ' + q[0] + '</b>' + q[1].map((o, j) => '<button type="button" data-o="' + j + '">' + 'ㄱㄴㄷ'[j] + '. ' + o + '</button>').join('') + '<p hidden></p></div>').join('') +
+    '<h3>더 알아보기</h3><div class="more"><a class="btn" href="../floors/?f=23">23층 · DRN (지름길)</a><a class="btn" href="../floors/?f=21">21층 · DBN (차례로 쌓기)</a><a class="btn" href="../floors/?f=26">26층 · GAN (두 신경망의 겨루기)</a><a class="btn" href="../math_behind_ai/">로비 · AI 뒤에 있는 수학</a></div>' +
+    '<h3>참고 문헌</h3><ol class="refs">' + REFS.map(r => '<li>' + r + '</li>').join('') + '</ol>' +
+    '<div class="foot"><p>글 · 안상선 ((주)M-Robo 대표)</p><p>④·⑤의 숫자는 두 갈래 나선 데이터(학습 240점, 시험 400점)와 2-16-16-1 그물(연결 ' + CONN + '개)을 이 페이지의 코드(annex/lt.js)로 학습시켜 얻은 값입니다. 씨앗이 같으면 같은 값이 나옵니다. 큰 실제 모델의 결과가 아닙니다.</p><p>캐릭터 이름·설정 © 안상선</p></div></section>' +
+  '<section data-p="6" style="--acc:#ff7ab8"><h2>위층 · 큰 그물</h2>' +
+    three(['여러 겹의 뉴런이 앞뒤 겹과 <b>모두</b> 이어져 있습니다.', '실제 모델은 이런 연결이 수백만~수천억 개입니다. 여기서는 줄여 그렸습니다.', '아래 ④·⑤에서 이 중 상당수를 잘라 냅니다.']) +
+    talk([['doctor', 'E13', '선 하나가 가중치 하나입니다. 학습은 이 선들의 값을 고치는 일이고, 가지치기는 선 자체를 지우는 일입니다.']]) + '</section>' +
+  '<section data-p="1" style="--acc:var(--pink)"><h2>① 잇기: 신경망을 이어 붙이기</h2>' +
+    three(['앞 신경망의 <b>출력</b>을 뒤 신경망의 <b>입력</b>으로 넣습니다.', '각자 잘하는 일을 나눠 맡깁니다. 보는 일은 CNN, 쓰는 일은 LSTM처럼.', '분홍 공이 신호가 흘러가는 길입니다.']) +
+    talk([['haru', 'E01', '사례를 바꿔 보세요. 층 번호가 붙은 블록은 그 층에서 꺼내 온 신경망이에요.']]) +
+    '<h3>조절</h3>' + sel('c_ch', '사례', CHAINS.map(c => c.name)) + kv('kv1') + '</section>' +
+  '<section data-p="2" style="--acc:var(--blue)"><h2>② 깊이 쌓기: 신호가 약해진다</h2>' +
+    three(['한 겹을 지날 때마다 신호가 <b>일정 비율로 줄어든다</b>고 해 봅시다.', '분홍 막대(지름길 없음)는 겹이 깊어질수록 빠르게 작아집니다.', '초록 막대(지름길 있음)는 입력을 그대로 더해 주므로 크게 줄지 않습니다.']) +
+    talk([['sia', 'E13', '여러 개를 이어 깊어지면 학습 신호가 앞쪽까지 잘 닿지 않아요. 그래서 23층의 지름길(잔차 연결)을 끼워 넣어요.']]) +
+    '<h3>조절</h3>' + rng('c_depth', '겹 수', 2, 40, 1) + rng('c_fac', '한 겹 통과 비율', .5, .99, .01) + kv('kv2') +
+    '<p class="note">신호 크기를 비율 하나로 줄여 그린 단순화입니다. 실제로는 활성화 함수와 가중치에 따라 커지기도 작아지기도 합니다.</p></section>' +
+  '<section data-p="3" style="--acc:var(--yellow)"><h2>③ 연결 수 세기</h2>' +
+    three(['이웃한 두 겹의 뉴런이 모두 이어지면 연결 수 = 앞 겹 × 뒤 겹입니다.', '<b>폭을 2배로</b> 늘리면 연결은 약 <b>4배</b>가 됩니다.', '겹을 늘리면 그만큼 더해집니다. 이어 붙일수록 커지는 이유입니다.']) +
+    talk([['jupanbot', 'E13', '연결 하나가 숫자 하나, 곧 저장하고 계산할 값 하나입니다. 제가 세어 드리겠습니다.']]) +
+    '<h3>조절</h3>' + rng('c_L', '겹 수', 2, 8, 1) + rng('c_w', '한 겹의 뉴런 수', 2, 14, 1) + kv('kv3') +
+    '<p class="note">비교: 이 별관 실험 그물 ' + CONN + '개 · LeNet-5(1998) 약 6만 개 · GPT-3(2020) 1,750억 개. 편향(뉴런마다 하나씩 더하는 값)은 빼고 셉니다.</p></section>' +
+  '<section data-p="4" style="--acc:var(--green)"><h2>④ 가지치기: 잘라만 내면</h2>' +
+    three(['학습을 마친 그물에서 <b>크기(|가중치|)가 작은 연결부터</b> 지웁니다.', '오른쪽 바닥은 그물이 그린 경계입니다. 파랑·주황 점이 두 무리입니다.', '<b>다시 학습하지 않으면</b> 많이 자를수록 경계가 무너집니다.']) +
+    talk([['fruitfly', 'E13', '진짜 뇌도 자라면서 잘 쓰지 않는 시냅스를 솎아 냅니다. 다만 신경망에서는 그냥 자르기만 하면 성능이 떨어집니다. 남길 비율을 줄여 확인하십시오.']]) +
+    '<h3>조절</h3>' + rng('c_keep', '남길 연결', 5, 100, 5) + sel('c_seed', '실험 씨앗', RUNS.map(r => '씨앗 ' + r.seed + ' (처음 정답률 ' + r.dense + '%)')) + kv('kv4') + '</section>' +
+  '<section data-p="5" style="--acc:var(--purple)"><h2>⑤ 복권 가설: 같은 구조, 다른 출발</h2>' +
+    three(['라운드마다 남은 연결의 25%를 자르고 <b>다시 학습</b>합니다. 금색 선이 남은 연결입니다.', '<b>금색 막대</b>: 남은 연결을 처음 값 θ₀로 되돌려 학습 (당첨 복권).', '<b>회색 막대</b>: 같은 구조를 새 무작위 값으로 학습 (세 번 평균).']) +
+    talk([['doctor', 'E13', '24%쯤까지는 둘이 비슷합니다. 13%와 10% 근처에서 차이가 벌어집니다. 처음 값이 이 작은 구조와 짝이 맞았다는 뜻입니다.'], ['moa', 'E01', '5.6%까지 자르면 둘 다 떨어져요. 무한히 자를 수는 없어요!']]) +
+    '<h3>조절</h3>' + rng('c_round', '가지치기 라운드', 0, 10, 1) + sel('c_seed5', '실험 씨앗', RUNS.map(r => '씨앗 ' + r.seed)) + kv('kv5') +
+    '<p class="note">회색 막대의 세 번 값은 아래 표에 함께 적습니다. 결과는 씨앗마다 조금씩 다릅니다.</p><div class="tbl" id="tbl5"></div></section>';
+
+/* ---------- 읽기 값 ---------- */
+const putKV = (id, rows) => { $('#' + id).innerHTML = rows.map(r => '<div><span>' + r[0] + '</span><b>' + r[1] + '</b></div>').join(''); };
+const R = RUNS;
+function read1() { const c = CHAINS[st.ch]; return { c, rows: [['이은 방식', c.how], ['학습', c.train]] }; }
+function read2() { const no = Math.pow(st.fac, st.depth); return { no, rows: [['지름길 없음 · 끝에 남는 신호', pctS(no * 100)], ['지름길 있음', '거의 그대로 (단순화)']] }; }
+function read3() { const n = (st.L - 1) * st.w * st.w; return { n, rows: [['연결 수', fmt(n) + '개'], ['식', (st.L - 1) + ' × ' + st.w + ' × ' + st.w]] }; }
+function cutAcc() { const r = R[st.seed], c = r.cut.find(q => q[0] === st.keep); return c ? c[1] : r.dense; }
+function read4() { const k = Math.round(CONN * st.keep / 100); return { acc: cutAcc(), rows: [['남은 연결', fmt(k) + ' / ' + CONN + '개 (' + st.keep + '%)'], ['다시 학습 없이 시험 정답률', cutAcc() + '%'], ['처음(다 남겼을 때)', R[st.seed].dense + '%']] }; }
+function read5() { const r = R[st.seed5 || 0]; if (!st.round) return { tk: r.dense, rd: r.dense, rows: [['남은 연결', CONN + ' / ' + CONN + ' (100%)'], ['처음 그물 정답률', r.dense + '%']] };
+  const q = r.rounds[st.round - 1]; return { tk: q.ticket, rd: q.rand, q, rows: [['남은 연결', q.left + ' / ' + CONN + ' (' + q.keep + '%)'], ['처음 값으로 되돌려 학습', q.ticket + '%'], ['새 무작위 값으로 학습 (평균)', q.rand + '%']] }; }
+const SAY = { 1: () => CHAINS[st.ch].name + ': 앞의 출력이 뒤의 입력이에요.', 2: () => st.depth + '겹이면 지름길 없이 <b>' + pctS(read2().no * 100) + '</b>만 남아요.', 3: () => '연결 <b>' + fmt(read3().n) + '개</b>입니다.', 4: () => st.keep + '%만 남기면 정답률 <b>' + cutAcc() + '%</b>입니다.', 5: () => { const r = read5(); return st.round ? '당첨 복권 <b>' + r.tk + '%</b>, 새 출발 <b>' + r.rd + '%</b>.' : '먼저 다 남긴 그물을 학습했습니다.'; } };
+function refresh(k) { const RR = { 1: read1, 2: read2, 3: read3, 4: read4, 5: read5 }[k](); putKV('kv' + k, RR.rows); if (sayFn[k]) sayFn[k](SAY[k]()); if (H[k]) H[k](); }
+function bindR(id, key, k, f) { const el = $('#' + id), o = $('#o_' + id); el.value = st[key]; const show = () => o.textContent = f ? f(st[key]) : st[key]; show(); el.addEventListener('input', () => { st[key] = +el.value; show(); refresh(k); }); }
+$('#c_ch').addEventListener('change', e => { st.ch = +e.target.value; refresh(1); });
+bindR('c_depth', 'depth', 2); bindR('c_fac', 'fac', 2, v => v.toFixed(2)); bindR('c_L', 'L', 3); bindR('c_w', 'w', 3); bindR('c_keep', 'keep', 4, v => v + '%'); bindR('c_round', 'round', 5, v => v ? v + '라운드 · ' + R[st.seed5 || 0].rounds[v - 1].keep + '%' : '0 (자르기 전)');
+$('#c_seed').addEventListener('change', e => { st.seed = +e.target.value; refresh(4); });
+st.seed5 = 0; $('#c_seed5').addEventListener('change', e => { st.seed5 = +e.target.value; $('#c_round').dispatchEvent(new Event('input')); tbl5(); });
+function tbl5() { const r = R[st.seed5]; $('#tbl5').innerHTML = '<table><thead><tr><th>남은 연결</th><th>처음 값</th><th>새 무작위 (3번)</th></tr></thead><tbody>' + r.rounds.map(q => '<tr><th>' + q.keep + '%</th><td>' + q.ticket + '%</td><td>' + q.rand + '% (' + q.randAll.join(' · ') + ')</td></tr>').join('') + '</tbody></table>'; }
+tbl5(); [1, 2, 3, 4, 5].forEach(refresh);
+$$('#panel .quiz').forEach(box => { const q = QUIZ[+box.dataset.q], out = box.querySelector('p');
+  box.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { const j = +b.dataset.o, ok = j === q[2];
+    box.querySelectorAll('button').forEach(x => x.classList.remove('ok', 'no')); b.classList.add(ok ? 'ok' : 'no'); if (!ok) box.querySelector('[data-o="' + q[2] + '"]').classList.add('ok');
+    out.hidden = false; out.innerHTML = (ok ? '<b style="display:inline;color:var(--green)">맞았습니다.</b> ' : '<b style="display:inline;color:#ff9a9a">정답은 ' + 'ㄱㄴㄷ'[q[2]] + '입니다.</b> ') + q[3]; })); });
+
+/* ---------- 발표 보기 ---------- */
+const PORD = [0, 6, 1, 2, 3, 4, 5];
+const curS = () => { const b = $('#tabs button[aria-pressed="true"]'); return b ? +b.dataset.s : 0; };
+const goS = i => { const b = $('#tabs button[data-s="' + i + '"]'); if (b) { b.click(); $('#pName').textContent = '별관 · ' + b.textContent; } };
+const pStep = d => { const k = PORD.indexOf(curS()); goS(PORD[(k + d + PORD.length) % PORD.length]); };
+function present(on) { document.body.classList.toggle('present', on); if (on) { goS(curS()); try { document.documentElement.requestFullscreen && document.documentElement.requestFullscreen().catch(() => {}); } catch (e) { } }
+  else { try { document.fullscreenElement && document.exitFullscreen(); } catch (e) { } } window.dispatchEvent(new Event('resize')); }
+$('#pOn').addEventListener('click', () => present(true)); $('#pX').addEventListener('click', () => present(false));
+$('#pL').addEventListener('click', () => pStep(-1)); $('#pR').addEventListener('click', () => pStep(1));
+document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && document.body.classList.contains('present')) present(false); });
+document.addEventListener('keydown', e => { if (!document.body.classList.contains('present') || /INPUT|SELECT/.test(e.target.tagName)) return;
+  if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); pStep(1); } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); pStep(-1); } else if (e.key === 'Escape') present(false); });
+if (new URLSearchParams(location.search).get('present') === '1') present(true);
+
+/* ================= 3D ================= */
+(async function () {
+  const stage = $('#stage'), canvas = $('#gl'), labelsEl = $('#labels');
+  function flat() { canvas.remove(); $('#hint').textContent = '3D를 불러오지 못했습니다. 설명과 조절은 오른쪽 탭에서 그대로 쓸 수 있습니다.';
+    $$('[data-s]').forEach(b => b.addEventListener('click', () => { const i = +b.dataset.s; $$('#tabs button').forEach(q => q.setAttribute('aria-pressed', +q.dataset.s === i)); $$('#panel section').forEach(q => q.classList.toggle('on', +q.dataset.p === i)); })); }
+  let T; try { T = await import('three'); } catch (e) { return flat(); }
+  let renderer; try { renderer = new T.WebGLRenderer({ canvas, antialias: true, alpha: true }); } catch (e) { return flat(); }
+  let lab = null; try { const m = await import('../chars3d/lab3d.js'); lab = m.createLab3D(T, { outline: true, shadow: false }); } catch (e) { console.warn('lab3d', e); }
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  const scene = new T.Scene(), camera = new T.PerspectiveCamera(38, 1, 0.1, 400);
+  scene.add(new T.AmbientLight(0xffffff, 2.2)); const sun = new T.DirectionalLight(0xffffff, 2.4); sun.position.set(8, 20, 12); scene.add(sun);
+  const fill = new T.DirectionalLight(0x88aaff, .9); fill.position.set(-12, 8, -10); scene.add(fill);
+  const V = (x, y, z) => new T.Vector3(x, y, z), UP = V(0, 1, 0);
+  const COL = { pink: 0xff8fc7, blue: 0x6fb1ff, yellow: 0xffd76a, green: 0x7fe0a8, purple: 0xb79cff };
+  const CSS = { 1: 'var(--pink)', 2: 'var(--blue)', 3: 'var(--yellow)', 4: 'var(--green)', 5: 'var(--purple)', 6: '#ff7ab8' };
+  let active = 0, W0 = 0, H0 = 0, G = scene; const groups = [null];
+  function beginStation() { G = new T.Group(); scene.add(G); groups.push(G); }
+  /* 라벨 */
+  const labels = [], tmp = new T.Vector3();
+  function label(html, pos, cls, stn, anchor) { const el = document.createElement('div'); el.className = 'lb ' + (cls || ''); el.innerHTML = html; if (stn) el.style.setProperty('--c', CSS[stn]); labelsEl.appendChild(el);
+    const o = { el, pos, st: stn || 0, always: (cls || '').includes('title'), key: /huge|key/.test(cls || ''), anchor: anchor || 'c' }; labels.push(o); return o; }
+  function updateLabels() { for (const o of labels) { if (o.dead) continue; const show = !o.hide && (o.always ? active === 0 : (o.st === active || (o.st === 6 && active === 0 && W0 > 700 && o.key)));
+      if (!show) { if (o.vis !== false) { o.el.style.display = 'none'; o.vis = false; } continue; }
+      tmp.copy(o.pos).project(camera); if (tmp.z > 1 || tmp.z < -1) { if (o.vis !== false) { o.el.style.display = 'none'; o.vis = false; } continue; }
+      if (o.vis !== true) { o.el.style.display = ''; o.vis = true; }
+      const ax = o.anchor === 'l' ? '0' : (o.anchor === 'r' ? '-100%' : '-50%'), ay = o.anchor === 'b' ? '-100%' : (o.anchor === 't' ? '0' : '-50%');
+      o.el.style.transform = 'translate(' + ((tmp.x * .5 + .5) * W0).toFixed(1) + 'px,' + ((-tmp.y * .5 + .5) * H0).toFixed(1) + 'px) translate(' + ax + ',' + ay + ')'; } }
+
+  /* 도우미 */
+  const cylGeo = new T.CylinderGeometry(1, 1, 1, 12, 1, true);
+  function place(m, a, b, r) { const d = new T.Vector3().subVectors(b, a), len = d.length() || 1e-6; m.position.copy(a).addScaledVector(d, .5); m.scale.set(r, len, r); m.quaternion.setFromUnitVectors(UP, d.multiplyScalar(1 / len)); }
+  function tube(a, b, r, color, parent) { const m = new T.Mesh(cylGeo, new T.MeshStandardMaterial({ color, roughness: .5 })); place(m, a, b, r); (parent || G).add(m); return m; }
+  function arrow(a, b, r, color, parent) { const d = new T.Vector3().subVectors(b, a).normalize(); tube(a, b.clone().addScaledVector(d, -.45), r, color, parent);
+    const c = new T.Mesh(new T.ConeGeometry(r * 3.4, .55, 12), new T.MeshStandardMaterial({ color })); c.position.copy(b).addScaledVector(d, -.28); c.quaternion.setFromUnitVectors(UP, d); (parent || G).add(c); }
+  function ball(p, r, color, emis, parent) { const m = new T.Mesh(new T.SphereGeometry(r, 24, 18), new T.MeshStandardMaterial({ color, roughness: .35, emissive: color, emissiveIntensity: emis == null ? .25 : emis })); m.position.copy(p); (parent || G).add(m); return m; }
+  function boxm(p, w, h, d, color, op, parent) { const g = new T.BoxGeometry(w, h, d), m = new T.Mesh(g, new T.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: .15, transparent: op < 1, opacity: op, roughness: .4 })); m.position.copy(p); (parent || G).add(m);
+    const e = new T.LineSegments(new T.EdgesGeometry(g), new T.LineBasicMaterial({ color: 0xcfe0ff })); e.position.copy(p); (parent || G).add(e); return m; }
+  function line(pts, color, opacity, parent) { const l = new T.Line(new T.BufferGeometry().setFromPoints(pts), new T.LineBasicMaterial({ color, transparent: opacity < 1, opacity: opacity == null ? 1 : opacity })); (parent || G).add(l); return l; }
+  const pulseGeo = new T.SphereGeometry(.1, 10, 8);
+  const pulse = (color, parent) => { const m = new T.Mesh(pulseGeo, new T.MeshBasicMaterial({ color })); (parent || G).add(m); return m; };
+  const slabs = [];
+  function slab(stn, cx, cz, w, d, color) { const m = new T.Mesh(new T.BoxGeometry(w, .3, d), new T.MeshStandardMaterial({ color: 0x141d38, roughness: .9 })); m.position.set(cx, -.15, cz); m.userData.st = stn; G.add(m); slabs.push(m);
+    const e = new T.LineSegments(new T.EdgesGeometry(m.geometry), new T.LineBasicMaterial({ color })); e.position.copy(m.position); G.add(e); }
+
+  /* 식구 */
+  const UNIT = 2.7, cast = {};
+  function putChar(id, key, stn, pos, ry, pose, text) { const info = lab ? lab.ROSTER.find(r => r.key === key) : { h: .9 }; const c = cast[id] = { key, pos, ry, pose, expr: 'E13', obj: null, grp: groups[stn] };
+    c.bub = label(text || '', V(pos.x, info.h * UNIT + .45, pos.z), 'say', stn, 'b'); if (!lab || text === null) c.bub.el.style.visibility = 'hidden'; buildChar(id); }
+  function buildChar(id) { const c = cast[id]; if (!lab) return; if (c.obj) { c.grp.remove(c.obj); lab.dispose(c.obj); } const o = lab.build(c.key, { unit: UNIT, pose: c.pose, expr: c.expr }); o.position.copy(c.pos); o.rotation.y = c.ry; c.grp.add(o); c.obj = o; }
+  function say(id, html) { const c = cast[id]; if (c && c.said !== html) { c.said = html; c.bub.el.innerHTML = html; } }
+
+
+  const boxGeo = new T.BoxGeometry(1, 1, 1), sphGeo = new T.SphereGeometry(1, 14, 10);
+  function clearGroup(g) { while (g.children.length) { const c = g.children.pop(); if (c.geometry && c.geometry !== boxGeo && c.geometry !== cylGeo && c.geometry !== sphGeo) c.geometry.dispose(); if (c.material) c.material.dispose(); } }
+  /* 겹과 뉴런 자리 */
+  function layout(sizes, x0, dx, yc, z, dy) { return sizes.map((n, l) => Array.from({ length: n }, (_, i) => V(x0 + l * dx, yc + (i - (n - 1) / 2) * dy, z))); }
+  function nodes(P, r, col, parent) { const tot = P.reduce((a, p) => a + p.length, 0), m = new T.InstancedMesh(sphGeo, new T.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: .25 }), tot); let k = 0; const M = new T.Matrix4();
+    P.forEach(L => L.forEach(p => { M.makeScale(r, r, r); M.setPosition(p.x, p.y, p.z); m.setMatrixAt(k++, M); })); (parent || G).add(m); return m; }
+  /* 선 묶음: on(l,k) → 색(정수) 또는 null */
+  function lines(P, sizes, fn, parent, opacity) { const pos = [], col = [], C = new T.Color();
+    for (let l = 0; l < sizes.length - 1; l++) { const a = sizes[l], b = sizes[l + 1]; for (let i = 0; i < a; i++) for (let j = 0; j < b; j++) { const c = fn(l, i * b + j); if (c == null) continue; const p = P[l][i], q = P[l + 1][j]; pos.push(p.x, p.y, p.z, q.x, q.y, q.z); C.setHex(c); col.push(C.r, C.g, C.b, C.r, C.g, C.b); } }
+    const g = new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new T.Float32BufferAttribute(col, 3));
+    const m = new T.LineSegments(g, new T.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: opacity == null ? .9 : opacity, depthWrite: false })); (parent || G).add(m); return m; }
+  const mix = (a, b, t) => { const A = new T.Color(a), B = new T.Color(b); return A.lerp(B, t).getHex(); };
+  const maxW = RUNS.map(r => Math.max(...r.net.W.map(w => Math.max(...Array.from(w, Math.abs))))) ;
+
+  /* ================= ① 잇기 ================= */
+  beginStation(); const S1 = { cx: -9, cz: -8 }; slab(1, S1.cx, S1.cz, 12, 11, COL.pink);
+  label('① 잇기', V(S1.cx, .5, S1.cz + 5.5), 'title', 1);
+  const chG = new T.Group(); G.add(chG); const chL = [0, 1, 2, 3].map(() => label('', V(0, 0, 0), 'big', 1)); const chTitle = label('', V(S1.cx, 5.4, S1.cz - 2.4), 'stage', 1);
+  const pulse1 = ball(V(0, 0, 0), .28, 0xff8fc7, .8); let path1 = null;
+  putChar('haru', 'haru', 1, V(S1.cx + 4.9, 0, S1.cz + 4.4), -.5, 'explain', ' '); sayFn[1] = t => say('haru', t);
+  H[1] = () => { const c = CHAINS[st.ch]; clearGroup(chG); chTitle.el.textContent = c.name; const X = [-4.2, -1.4, 1.4, 4.2], y = 2.0, z = S1.cz - .8;
+    c.blocks.forEach((b, i) => { const io = i === 0 || i === 3, w = io ? 1.7 : 2.1, h = io ? .7 : 1.5; const m = new T.Mesh(boxGeo, new T.MeshStandardMaterial({ color: b[1], emissive: b[1], emissiveIntensity: io ? .1 : .3, transparent: io, opacity: io ? .6 : 1 })); m.scale.set(w * .9, h, 1.3); m.position.set(S1.cx + X[i], y, z); chG.add(m);
+      const o = chL[i]; o.el.textContent = b[0]; o.pos.set(S1.cx + X[i], y + h / 2 + .45, z); });
+    for (let i = 0; i < 3; i++) arrow(V(S1.cx + X[i] + 1.0, y, z), V(S1.cx + X[i + 1] - 1.0, y, z), .07, 0xcfe0ff, chG);
+    const pts = [V(S1.cx + X[0], y, z), V(S1.cx + X[3], y, z)];
+    if (c.loop) { const cv = new T.QuadraticBezierCurve3(V(S1.cx + X[2], y - .8, z + .2), V(S1.cx + 0, y - 2.0, z + 1.4), V(S1.cx + X[1], y - .8, z + .2)); chG.add(new T.Mesh(new T.TubeGeometry(cv, 24, .06, 6), new T.MeshBasicMaterial({ color: 0xff8fc7 }))); const hd = new T.Mesh(new T.ConeGeometry(.2, .45, 10), new T.MeshBasicMaterial({ color: 0xff8fc7 })); hd.position.copy(cv.getPoint(1)); hd.quaternion.setFromUnitVectors(UP, cv.getTangent(1)); chG.add(hd); }
+    path1 = new T.LineCurve3(pts[0], pts[1]); };
+
+  /* ================= ② 깊이 쌓기 ================= */
+  beginStation(); const S2 = { cx: 9, cz: -8 }; slab(2, S2.cx, S2.cz, 12, 11, COL.blue);
+  label('② 깊이 쌓기', V(S2.cx, .5, S2.cz + 5.5), 'title', 2);
+  const bar2 = new T.InstancedMesh(boxGeo, new T.MeshStandardMaterial({ color: 0xffffff, roughness: .5 }), 80); G.add(bar2);
+  const l2a = label('지름길 없음 (앞줄)', V(S2.cx - 4.6, .3, S2.cz + 1.6), 'stage', 2, 'l'), l2b = label('지름길 있음 (뒷줄)', V(S2.cx - 4.6, 3.9, S2.cz - 2.2), 'stage', 2, 'l');
+  const v2 = label('', V(S2.cx + 1, 4.9, S2.cz - 2.2), 'big', 2);
+  putChar('sia', 'sia', 2, V(S2.cx + 4.9, 0, S2.cz + 4.2), -.45, 'explain', ' '); sayFn[2] = t => say('sia', t);
+  H[2] = () => { const n = st.depth, w = Math.min(.5, 9 / n), M = new T.Matrix4(), C = new T.Color(); let k = 0;
+    for (let r = 0; r < 2; r++) for (let i = 0; i < 40; i++) { if (i >= n) { M.makeScale(0, 0, 0); bar2.setMatrixAt(k, M); k++; continue; }
+      const v = r === 0 ? Math.pow(st.fac, i + 1) : 1 - (1 - st.fac) * .04 * (i + 1) / n, h = Math.max(.04, v * 3.4), x = S2.cx - 4.4 + (i + .5) * (9 / n);
+      M.makeScale(w * .8, h, .9); M.setPosition(x, h / 2, S2.cz + .6 - r * 2.8); bar2.setMatrixAt(k, M); C.setHex(r ? 0x7fe0a8 : 0xff8fc7); bar2.setColorAt(k, C); k++; }
+    bar2.instanceMatrix.needsUpdate = true; bar2.instanceColor.needsUpdate = true; v2.el.textContent = n + '겹 · 지름길 없이 ' + pctS(Math.pow(st.fac, n) * 100) + ' 남음'; };
+
+  /* ================= ③ 연결 수 (넓은 판) ================= */
+  beginStation(); const S3 = { cx: 0, cz: 3 }; slab(3, S3.cx, S3.cz, 30, 7, COL.yellow);
+  label('③ 연결 수', V(0, .5, S3.cz + 3.5), 'title', 3);
+  const netG3 = new T.Group(); G.add(netG3); const v3 = label('', V(-2, 7.0, S3.cz - .5), 'big', 3); v3.el.style.setProperty('--c', 'var(--yellow)');
+  const cmp3 = new T.InstancedMesh(boxGeo, new T.MeshStandardMaterial({ color: 0xffd76a, emissive: 0x332200 }), 4); G.add(cmp3);
+  const cmpL = [0, 1, 2, 3].map(() => label('', V(0, 0, 0), 'num', 3, 't')), cmpV = [0, 1, 2, 3].map(() => label('', V(0, 0, 0), 'num', 3, 'b')); label('자릿수 막대 (10을 몇 번 곱했나)', V(10.4, 6.4, S3.cz - .5), 'stage', 3);
+  putChar('jupan', 'jupanbot', 3, V(-13.6, 0, S3.cz + 2.2), .5, 'hold', ' '); sayFn[3] = t => say('jupan', t);
+  H[3] = () => { clearGroup(netG3); const sz = Array(st.L).fill(st.w), P = layout(sz, -9.6 + (8 - st.L) * .6, Math.min(2.4, 14 / (st.L - 1)) * .9, 3.2, S3.cz - .5, Math.min(.5, 5.2 / st.w));
+    nodes(P, .13, 0xffd76a, netG3); lines(P, sz, () => 0x9fc4ff, netG3, .5);
+    const n = (st.L - 1) * st.w * st.w; v3.el.textContent = '연결 ' + fmt(n) + '개'; v3.pos.set(-2, 6.6, S3.cz - .5);
+    const items = [['지금', n], ['별관 실험', CONN], ['LeNet-5', 6e4], ['GPT-3', 1.75e11]], M = new T.Matrix4();
+    items.forEach((it, i) => { const h = Math.log10(it[1]) * .42, x = 6.6 + i * 2.5; M.makeScale(1.3, h, 1.1); M.setPosition(x, h / 2, S3.cz - .5); cmp3.setMatrixAt(i, M); const o = cmpL[i]; o.el.textContent = it[0]; o.pos.set(x, -.05, S3.cz + .6); cmpV[i].el.textContent = it[1] >= 1e8 ? '1,750억' : fmt(it[1]); cmpV[i].pos.set(x, h + .35, S3.cz - .5); });
+    cmp3.instanceMatrix.needsUpdate = true; };
+
+  /* ================= ④ 가지치기 ================= */
+  beginStation(); const S4 = { cx: -9, cz: 13 }; slab(4, S4.cx, S4.cz, 12, 11, COL.green);
+  label('④ 가지치기', V(S4.cx, .5, S4.cz + 5.5), 'title', 4);
+  const P4 = layout(SZ, S4.cx - 5.0, 1.55, 3.0, S4.cz - 2.6, .3); nodes(P4, .1, 0xcfe0ff); const net4 = new T.Group(); G.add(net4);
+  const GN = 26, mapM = new T.InstancedMesh(boxGeo, new T.MeshStandardMaterial({ color: 0xffffff, roughness: .8 }), GN * GN); G.add(mapM);
+  const MX = S4.cx + 2.4, MZ = S4.cz - .4, MS = 5.6;
+  (function () { const M = new T.Matrix4(), C = new T.Color(); const D = [];
+    const S = spiral(LT.cfg.ntr, LT.cfg.dseed, LT.cfg.noise, LT.cfg.turn); S.X.forEach((x, i) => D.push([x[0], x[1], S.Y[i]]));  // 실제 학습 데이터
+    const pm = new T.InstancedMesh(sphGeo, new T.MeshStandardMaterial({ color: 0xffffff }), D.length); D.forEach((d, i) => { M.makeScale(.07, .07, .07); M.setPosition(MX + d[0] / 1.3 * MS / 2, .32, MZ - d[1] / 1.3 * MS / 2); pm.setMatrixAt(i, M); C.setHex(d[2] ? 0xff9f6b : 0x2f6fd6); pm.setColorAt(i, C); }); G.add(pm); })();
+  const v4 = label('', V(MX, 4.4, MZ - 3.2), 'big', 4); label('그물이 그린 경계 (바닥)', V(MX, .4, MZ + 3.3), 'stage', 4);
+  putChar('fly', 'fruitfly', 4, V(S4.cx - 4.8, 0, S4.cz + 4.2), .45, 'explain', ' '); sayFn[4] = t => say('fly', t);
+  H[4] = () => { const run = RUNS[st.seed], Mk = cutMask(run.net, st.keep / 100), mw = maxW[st.seed]; clearGroup(net4);
+    lines(P4, SZ, (l, k) => Mk[l][k] ? mix(0x24405e, 0x7fe0a8, Math.min(1, Math.abs(run.net.W[l][k]) / mw * 1.6)) : null, net4, .95);
+    lines(P4, SZ, (l, k) => Mk[l][k] ? null : 0x3a4566, net4, .12);
+    const M = new T.Matrix4(), C = new T.Color(), cs = MS / GN; let k = 0;
+    for (let i = 0; i < GN; i++) for (let j = 0; j < GN; j++) { const x = (j + .5) / GN * 2.6 - 1.3, y = 1.3 - (i + .5) / GN * 2.6, p = predict(run.net, Mk, [x, y]);
+      M.makeScale(cs * .96, .12, cs * .96); M.setPosition(MX - MS / 2 + (j + .5) * cs, .1, MZ - MS / 2 + (i + .5) * cs); mapM.setMatrixAt(k, M); C.setHex(mix(0x1d3a70, 0x7a3b1c, p)); mapM.setColorAt(k, C); k++; }
+    mapM.instanceMatrix.needsUpdate = true; mapM.instanceColor.needsUpdate = true; v4.el.textContent = st.keep + '% 남김 · 정답률 ' + cutAcc() + '%'; };
+
+  /* ================= ⑤ 복권 가설 ================= */
+  beginStation(); const S5 = { cx: 9, cz: 13 }; slab(5, S5.cx, S5.cz, 12, 11, COL.purple);
+  label('⑤ 복권 가설', V(S5.cx, .5, S5.cz + 5.5), 'title', 5);
+  const P5 = layout(SZ, S5.cx - 5.0, 1.55, 3.0, S5.cz - 2.6, .3); nodes(P5, .1, 0xcfe0ff); const net5 = new T.Group(); G.add(net5);
+  const tk5 = new T.Group(); G.add(tk5);
+  const bars5 = new T.InstancedMesh(boxGeo, new T.MeshStandardMaterial({ color: 0xffffff, roughness: .45 }), 2); G.add(bars5);
+  const b5L = [label('', V(0, 0, 0), 'num', 5, 'b'), label('', V(0, 0, 0), 'num', 5, 'b')]; label('처음 값', V(S5.cx + 2.2, -.05, S5.cz + .2), 'num', 5, 't'); label('새 무작위', V(S5.cx + 4.0, -.05, S5.cz + .2), 'num', 5, 't');
+  label('막대 높이 = 시험 정답률 (50%부터)', V(S5.cx + 3.1, 5.2, S5.cz - .8), 'stage', 5);
+  const ticket = new T.Group(); G.add(ticket);
+  (function () { const g = new T.BoxGeometry(5.0, 5.3, .05), e = new T.LineSegments(new T.EdgesGeometry(g), new T.LineBasicMaterial({ color: 0xffd76a })); e.position.set(S5.cx - 2.7, 3.0, S5.cz - 2.6); ticket.add(e); })();
+  const tkL = label('당첨 복권', V(S5.cx - 2.7, .45, S5.cz - 2.6), 'stage', 5);
+  putChar('doctor', 'doctor', 5, V(S5.cx - 4.8, 0, S5.cz + 4.3), .45, 'explain', ' '); putChar('moa', 'moa', 5, V(S5.cx + 4.8, 0, S5.cz + 4.3), -.45, 'idle', null); sayFn[5] = t => say('doctor', t);
+  H[5] = () => { const run = RUNS[st.seed5], q = st.round ? run.rounds[st.round - 1] : null, M5 = q ? q.M : null, mw = maxW[st.seed5]; clearGroup(net5);
+    lines(P5, SZ, (l, k) => (!M5 || M5[l][k]) ? (q ? 0xffc94a : mix(0x24405e, 0x9fc4ff, Math.min(1, Math.abs(run.net.W[l][k]) / mw * 1.6))) : null, net5, .95);
+    if (q) lines(P5, SZ, (l, k) => M5[l][k] ? null : 0x3a4566, net5, .1);
+    ticket.visible = !!q; tkL.hide = !q;
+    const r = read5(), M = new T.Matrix4(), C = new T.Color(); [r.tk, r.rd].forEach((v, i) => { const h = (i && !q) ? 0 : Math.max(.05, (v - 50) / 50 * 4.2), x = S5.cx + 2.2 + i * 1.8; M.makeScale(1.2, h, 1.2); M.setPosition(x, h / 2, S5.cz - .8); bars5.setMatrixAt(i, M); C.setHex(i ? 0x8d96ad : 0xffc94a); bars5.setColorAt(i, C); b5L[i].el.textContent = (i && !q) ? '자르기 전' : v + '%'; b5L[i].pos.set(x, h + .3, S5.cz - .8); });
+    bars5.instanceMatrix.needsUpdate = true; bars5.instanceColor.needsUpdate = true; };
+
+  /* ================= 위층: 큰 그물 ================= */
+  beginStation();
+  const SK = new T.Group(); SK.position.set(0, 17.5, -9); G.add(SK);
+  (function () { const sz = [10, 14, 14, 14, 14, 14, 14, 10], P = sz.map((n, l) => Array.from({ length: n }, (_, i) => { const a = i / n * Math.PI * 2; return V((l - 3.5) * 2.1, Math.sin(a) * 3.4, Math.cos(a) * 3.4); }));
+    lines(P, sz, (l) => mix(0x3a7bd5, 0x9fd0ff, l / 7), SK, .28); nodes(P, .14, 0xcfe0ff, SK);
+    SK.updateMatrixWorld(true);
+    let n = 0; for (let l = 0; l < sz.length - 1; l++) n += sz[l] * sz[l + 1];
+    label('위층 · 큰 그물 (8겹, 연결 ' + fmt(n) + '개)', V(0, 22.4, -9), 'title', 6); label('실제 모델은 이런 연결이 수백만~수천억 개', V(0, 12.6, -9), 'stage key', 6);
+    const bm = new T.MeshBasicMaterial({ color: 0xff3d8f, transparent: true, opacity: .3, depthWrite: false });
+    [[V(-7, 14, -9), V(S4.cx, 5.5, S4.cz)], [V(7, 14, -9), V(S5.cx, 5.5, S5.cz)]].forEach(q => { const m = new T.Mesh(cylGeo, bm); place(m, q[0], q[1], .06); G.add(m); }); })();
+
+  [1, 2, 3, 4, 5].forEach(refresh);
+
+  /* ================= 카메라와 탭 ================= */
+  const VIEW = [{ t: [0, 6.5, 1], r: 66, th: 0, ph: .9 }, { t: [S1.cx + .4, 2.4, S1.cz + .6], r: 19, th: -.12, ph: 1.15 }, { t: [S2.cx - .2, 2.0, S2.cz + .4], r: 19.5, th: .1, ph: .95 }, { t: [.6, 2.8, S3.cz], r: 24, th: 0, ph: 1.2 },
+    { t: [S4.cx + .2, 2.3, S4.cz + .4], r: 19.5, th: -.1, ph: 1.0 }, { t: [S5.cx, 2.4, S5.cz + .2], r: 19.5, th: .1, ph: 1.08 }, { t: [0, 17.3, -9], r: 32, th: 0, ph: 1.35 }];
+  const need = [1.75, 1.3, 1.3, 2.3, 1.3, 1.3, 2.0], cur = { x: 0, y: 6.5, z: 1, r: 90, th: .5, ph: .6 }, goal = { x: 0, y: 6.5, z: 1, r: 66, th: 0, ph: .9 }; let aspect = 1.5;
+  function goView(i) { const v = VIEW[i]; goal.x = v.t[0]; goal.y = v.t[1]; goal.z = v.t[2]; goal.th = v.th; goal.ph = v.ph; goal.r = v.r * Math.max(1, need[i] / aspect); }
+  const names = ['overview', 'compose', 'depth', 'count', 'prune', 'ticket', 'blueprint'];
+  function setActive(i, noHash) { active = i; goView(i); groups.forEach((g, k) => { if (g) g.visible = (i === 0 || i === 6 || k === i); });
+    $$('#tabs button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.s === i)); $$('#panel section').forEach(s => s.classList.toggle('on', +s.dataset.p === i)); $('#panel').scrollTop = 0;
+    $('#hint').textContent = i === 0 ? '끌기: 돌려 보기 · 휠/두 손가락: 확대 · 구역 누르기: 들어가기' : '끌기: 돌려 보기 · 휠/두 손가락: 확대';
+    if (!noHash) { try { history.replaceState(null, '', location.search + '#' + names[i]); } catch (e) { } } }
+  $$('[data-s]').forEach(b => b.addEventListener('click', () => setActive(+b.dataset.s)));
+  window.addEventListener('hashchange', () => { const i = names.indexOf(location.hash.slice(1)); if (i >= 0 && i !== active) setActive(i, true); });
+  const ptrs = new Map(); let moved = 0, pinch = 0;
+  canvas.addEventListener('pointerdown', e => { canvas.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); moved = 0; if (ptrs.size === 2) { const a = [...ptrs.values()]; pinch = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y); } });
+  canvas.addEventListener('pointermove', e => { const p = ptrs.get(e.pointerId); if (!p) return; const dx = e.clientX - p.x, dy = e.clientY - p.y; p.x = e.clientX; p.y = e.clientY; moved += Math.abs(dx) + Math.abs(dy);
+    if (ptrs.size === 1) { goal.th -= dx * .006; goal.ph = Math.max(.2, Math.min(1.52, goal.ph - dy * .005)); } else if (ptrs.size === 2) { const a = [...ptrs.values()], d = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y); if (pinch) goal.r = Math.max(6, Math.min(130, goal.r * pinch / d)); pinch = d; } });
+  const ray = new T.Raycaster(), ndc = new T.Vector2();
+  function endPtr(e) { const had = ptrs.has(e.pointerId); ptrs.delete(e.pointerId); if (ptrs.size < 2) pinch = 0; if (!had || moved > 6 || e.type !== 'pointerup' || active !== 0) return;
+    const r = canvas.getBoundingClientRect(); ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(ndc, camera); const h = ray.intersectObjects(slabs)[0]; if (h) setActive(h.object.userData.st); }
+  canvas.addEventListener('pointerup', endPtr); canvas.addEventListener('pointercancel', endPtr);
+  canvas.addEventListener('wheel', e => { e.preventDefault(); goal.r = Math.max(6, Math.min(130, goal.r * Math.exp(e.deltaY * .001))); }, { passive: false });
+  function resize() { const w = stage.clientWidth, h = stage.clientHeight; if (!w || !h || (w === W0 && h === H0)) return; W0 = w; H0 = h; renderer.setSize(w, h, false); aspect = w / h; camera.aspect = aspect; camera.updateProjectionMatrix(); goView(active); }
+  if (window.ResizeObserver) new ResizeObserver(resize).observe(stage); window.addEventListener('resize', resize); resize();
+  const still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches; if (still) Object.assign(cur, goal);
+  let last = performance.now(), time = 0;
+  function frame(now) { const dt = Math.min(.05, (now - last) / 1000); last = now; time += dt;
+    const k = still ? 1 : 1 - Math.pow(.002, dt); for (const a in cur) cur[a] += (goal[a] - cur[a]) * k;
+    const sn = Math.sin(cur.ph); camera.position.set(cur.x + cur.r * sn * Math.sin(cur.th), cur.y + cur.r * Math.cos(cur.ph), cur.z + cur.r * sn * Math.cos(cur.th)); camera.lookAt(cur.x, cur.y, cur.z);
+    if (!still) SK.rotation.x = time * .12;
+    if (path1) { const t = (time * .35) % 1; pulse1.position.copy(path1.getPoint(t)).add(V(0, 1.0, 0)); }
+    for (const id in cast) { const o = cast[id].obj; if (o) o.userData.update(time); }
+    renderer.render(scene, camera); updateLabels(); requestAnimationFrame(frame); }
+  const h0 = names.indexOf(location.hash.slice(1)); setActive(h0 > 0 ? h0 : 0, true);
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

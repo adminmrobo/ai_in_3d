@@ -90,19 +90,27 @@ const REL={}; FD.forEach(f=>{ if(f.rel) REL[f.ab]=f.rel; });
 const FISH='https://adminmrobo.github.io/fish_market_learning_epoch_etc/', FLY='https://adminmrobo.github.io/AI_Model_Review_Fruit_fly_special/';
 const $=s=>document.querySelector(s);
 const ATLAS='https://adminmrobo.github.io/neural_network_atlas/';
-let sel=-1; // -1 = 건물 전체, 0 = 로비, 1~27 = 층
+let sel=-1; // -1 = 건물 전체, -2 = 별관, 0 = 로비, 1~27 = 층
 let onSelect=()=>{};
 
 function renderCard(){
   const card=$('#card');
-  if(sel<0){
+  if(sel===-1){
     card.style.setProperty('--c','#6fb1ff');
     card.innerHTML='<div class="grp">3D로 설명하는 AI</div><h2>신경망 연구소</h2>'+
       '<p class="en">27층 · 신경망 27종</p>'+
       '<p>신경망 구조 하나가 한 층을 씁니다. 아래층일수록 쉽고, 올라갈수록 어려워집니다. 층마다 구조 그림과 직접 바꿔 보는 실험이 있습니다.</p>'+
       '<p style="font-size:13.5px;color:var(--muted)">처음이라면 로비에서 뉴런 하나의 계산부터 보고 1층으로 올라가면 됩니다. 건물의 층을 누르거나 아래 엘리베이터를 쓰세요.</p>'+
       '<span class="chip">로비 + 27층 모두 열림</span><br>'+
-      '<a class="go" href="math_behind_ai/">로비부터 시작</a> <a class="go ghost" href="floors/?f=1">1층으로 바로</a>';
+      '<a class="go" href="math_behind_ai/">로비부터 시작</a> <a class="go ghost" href="floors/?f=1">1층으로 바로</a>'+
+      '<p style="font-size:13.5px;color:var(--muted);margin-top:12px">건물 오른쪽 <b>별관</b>에서는 여러 신경망을 이어 붙일 때 생기는 일과 가지치기·복권 가설을 다룹니다.</p><a class="go ghost" href="annex/">별관으로</a>';
+  }else if(sel===-2){
+    card.style.setProperty('--c','#ffc94a');
+    card.innerHTML='<div class="grp">별관 · 27개 층을 다 본 뒤에</div><h2>잇기와 솎아 내기 · 복권 가설</h2>'+
+      '<p class="en">Composing networks · Pruning · The Lottery Ticket Hypothesis</p>'+
+      '<p>층에서 꺼낸 신경망을 이어 붙이면 무엇이 좋아지고 무엇이 어려워지는지 봅니다. 커진 그물에서 작은 연결을 잘라 내면 어떻게 되는지, 큰 그물 안에 숨은 "당첨 복권"이 있는지 직접 학습시킨 작은 실험으로 확인합니다.</p>'+
+      '<span class="chip">열림</span><span class="chip">실제 학습 실험</span><br>'+
+      '<a class="go" href="annex/">별관으로 들어가기</a>';
   }else if(sel===0){
     card.style.setProperty('--c','#6fb1ff');
     card.innerHTML='<div class="grp">로비 · 모든 층의 공통 기초</div><h2>AI 뒤에 있는 수학</h2>'+
@@ -123,7 +131,7 @@ function renderCard(){
   document.querySelectorAll('#lift button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.f===sel));
 }
 (function buildLift(){
-  let h='<div class="el" style="--c:#9aa7c7;margin-bottom:4px"><button data-f="-1" style="grid-column:span 4">건물 전체 보기</button></div><div class="grpname" style="--c:#6fb1ff"><i></i>로비</div><div class="el" style="--c:#6fb1ff"><button data-f="0" style="grid-column:span 4"><b>L</b>AI 뒤에 있는 수학</button></div>';
+  let h='<div class="el" style="--c:#9aa7c7;margin-bottom:4px"><button data-f="-1" style="grid-column:span 4">건물 전체 보기</button></div><div class="grpname" style="--c:#6fb1ff"><i></i>로비</div><div class="el" style="--c:#6fb1ff"><button data-f="0" style="grid-column:span 4"><b>L</b>AI 뒤에 있는 수학</button></div><div class="grpname" style="--c:#ffc94a"><i></i>별관</div><div class="el" style="--c:#ffc94a"><button data-f="-2" style="grid-column:span 4"><b>A</b>잇기와 솎아 내기 · 복권 가설</button></div>';
   BANDS.forEach(bd=>{ h+='<div class="grpname" style="--c:#9aa7c7"><i></i>'+bd[0]+' ('+bd[1]+'~'+bd[2]+'층)</div><div class="el">';
     for(let n=bd[1];n<=bd[2];n++){ const f=FLOORS[n-1]; h+='<button data-f="'+n+'" style="--c:'+GROUPS[f[3]].c+'"><b>'+n+'F</b>'+f[0]+'</button>'; } h+='</div>'; });
   h+='<h3>층 색 = 구조 묶음</h3>'+GROUPS.map(g=>'<div class="grpname" style="--c:'+g.c+';margin:4px 0"><i></i>'+g.n+'</div>').join('');
@@ -182,6 +190,19 @@ const roof=new T.Mesh(new T.BoxGeometry(W+0.5,0.3,D+0.5),new T.MeshStandardMater
 const mast=new T.Mesh(new T.CylinderGeometry(0.08,0.08,4,8),new T.MeshStandardMaterial({color:0x9aa7c7})); mast.position.set(0,TOP+2.2,0); scene.add(mast);
 const beacon=new T.Mesh(new T.SphereGeometry(0.35,16,12),new T.MeshBasicMaterial({color:0xff3d8f})); beacon.position.set(0,TOP+4.3,0); scene.add(beacon);
 
+// 별관: 오른쪽 낮은 건물 + 3층 높이의 다리
+const AX=13.2, AW=5, AD=5, AH=4*FH+BASE;
+const annex=new T.Mesh(new T.BoxGeometry(AW,AH,AD),new T.MeshStandardMaterial({color:0xffc94a,emissive:0xffc94a,emissiveIntensity:0.12,transparent:true,opacity:0.5,roughness:0.3}));
+annex.position.set(AX,AH/2,0); annex.userData.f=-2; scene.add(annex); picks.push(annex);
+{ const e=new T.LineSegments(new T.EdgesGeometry(annex.geometry),new T.LineBasicMaterial({color:0xffc94a})); e.position.copy(annex.position); scene.add(e);
+  for(let k=1;k<4;k++){ const sl=new T.Mesh(new T.BoxGeometry(AW+0.3,0.12,AD+0.3),new T.MeshStandardMaterial({color:0x1a2444})); sl.position.set(AX,BASE+k*FH,0); scene.add(sl); }
+  const br=new T.Mesh(new T.BoxGeometry(AX-AW/2-W/2,0.9,1.6),new T.MeshStandardMaterial({color:0x9aa7c7,transparent:true,opacity:0.55})); br.position.set((W/2+AX-AW/2)/2,fy(3)+0.45,0); scene.add(br);
+  // 별관 안의 작은 그물 (점과 선)
+  const pts=[]; for(let l=0;l<4;l++) for(let i=0;i<4;i++) pts.push(V(AX-1.6+l*1.07,BASE+0.6+i*1.5,AD/2-0.4));
+  const pos=[]; for(let l=0;l<3;l++) for(let i=0;i<4;i++) for(let j=0;j<4;j++) if((i*3+j+l)%3){ const a=pts[l*4+i], b=pts[(l+1)*4+j]; pos.push(a.x,a.y,a.z,b.x,b.y,b.z); }
+  const lg=new T.BufferGeometry(); lg.setAttribute('position',new T.Float32BufferAttribute(pos,3)); scene.add(new T.LineSegments(lg,new T.LineBasicMaterial({color:0xffe6a0,transparent:true,opacity:0.7})));
+  pts.forEach(p=>{ const b=new T.Mesh(new T.SphereGeometry(0.15,10,8),new T.MeshBasicMaterial({color:0xffffff})); b.position.copy(p); scene.add(b); }); }
+
 // 라벨
 const labels=[];
 function label(html,pos,cls,color){ const el=document.createElement('div'); el.className='lb '+(cls||''); el.innerHTML=html; if(color)el.style.setProperty('--c',color);
@@ -189,11 +210,12 @@ function label(html,pos,cls,color){ const el=document.createElement('div'); el.c
 const fl=[label('<b>L</b>로비 · AI 뒤에 있는 수학',V(-(W+3)/2-0.4,BASE/2,(D+3)/2),'','#6fb1ff')];
 FLOORS.forEach((f,i)=>fl.push(label('<b>'+(i+1)+'</b>'+f[0],V(-W/2-0.4,fy(i+1)+0.6,D/2),'',GROUPS[f[3]].c)));
 label('신경망 연구소',V(0,TOP+5.6,0),'sign');
+const axL=label('<b>A</b>별관 · 잇기와 솎아 내기',V(AX,AH+1.0,0),'ctr','#ffc94a');
 const tmp=new T.Vector3(); let W0=0,H0=0;
 function updateLabels(){
   for(const o of labels){ tmp.copy(o.pos).project(camera);
     if(tmp.z>1||tmp.z<-1){ o.el.style.display='none'; continue; } o.el.style.display='';
-    const x=(tmp.x*0.5+0.5)*W0, y=(-tmp.y*0.5+0.5)*H0, right=o.el.classList.contains('sign')?'-50%':'-100%';
+    const x=(tmp.x*0.5+0.5)*W0, y=(-tmp.y*0.5+0.5)*H0, right=(o.el.classList.contains('sign')||o.el.classList.contains('ctr'))?'-50%':'-100%';
     o.el.style.transform='translate('+x.toFixed(1)+'px,'+y.toFixed(1)+'px) translate('+right+',-50%)'; }
 }
 
@@ -206,13 +228,16 @@ if(lab){ ['sia','haru','doctor','jupanbot','fruitfly','moa'].forEach((k,i)=>{
 const cur={x:0,y:20,z:0,r:140,th:0.9,ph:1.2}, goal={x:0,y:20,z:0,r:100,th:0.55,ph:1.25};
 let aspect=1.5;
 function aim(){
+  if(sel===-2){ goal.x=AX-1.5; goal.y=AH/2+0.5; goal.r=36*Math.max(1,1.25/aspect); goal.ph=1.3; goal.th=0.35; return; }
+  goal.x=0;
   if(sel<0){ goal.th=0.55; goal.ph=1.25; goal.y=TOP/2+1; goal.r=(TOP+10)/(2*Math.tan(19*Math.PI/180))*1.08*Math.max(1,0.62/aspect*1.0); return; }
   goal.y=sel===0?2.2:fy(sel)+0.6; goal.r=(sel===0?30:26)*Math.max(1,1.25/aspect);
   goal.ph=sel===0?1.38:1.3;
 }
 onSelect=()=>{ aim();
   meshes.forEach((m,i)=>{ m.material.opacity=i===sel?0.95:0.5; m.material.emissiveIntensity=i===sel?0.55:0.12; });
-  fl.forEach((o,i)=>o.el.classList.toggle('sel',i===sel)); };
+  fl.forEach((o,i)=>o.el.classList.toggle('sel',i===sel));
+  annex.material.opacity=sel===-2?0.95:0.5; annex.material.emissiveIntensity=sel===-2?0.55:0.12; axL.el.classList.toggle('sel',sel===-2); };
 
 const ptrs=new Map(); let moved=0, pinch=0;
 canvas.addEventListener('pointerdown',e=>{ canvas.setPointerCapture(e.pointerId); ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY}); moved=0;
