@@ -165,6 +165,7 @@ const $ = s => document.querySelector(s), $$ = s => Array.from(document.querySel
 const fnum = Math.max(1, Math.min(27, parseInt(new URLSearchParams(location.search).get('f') || '1', 10) || 1));
 const F = FLOORS[fnum - 1], GP = GROUPS[F.g], demo = DEMOS[F.ab], EX = EXTRA[F.ab], CV = EX.curve;
 const CMP = F.cmp == null ? fnum - 1 : F.cmp;
+const MECH = ['RNN', 'GRU', 'LSTM'].includes(F.ab);          // ⑥ 구조도(순환 계열 층만)
 const PREV = CMP > 0 ? FLOORS[CMP - 1] : { ab: '로비', ko: '뉴런 하나', topo: { layers: [[3, 'i'], [1, 'o']] } };
 const prevName = CMP > 0 ? CMP + '층 ' + PREV.ab : '로비의 뉴런 하나';
 const NAME = { doctor: '박사', haru: '조수(하루)', fruitfly: '초파리 연구원', jupanbot: '주판봇', sia: '시아', moa: '모아' };
@@ -247,6 +248,27 @@ $('#panel').innerHTML =
     '<div class="kv"><div><span>' + CV.xl + '</span><b id="cvA"></b></div><div><span>' + CV.yl + '</span><b id="cvB"></b></div></div></section>' +
   '<section data-p="5" style="--acc:var(--purple)"><h2>⑤ 실험: 직접 바꿔 보기</h2>' +
     three(['<b>' + (demo.vt || '') + '</b>', '조절 값을 바꾸면 3D 물체가 그 자리에서 다시 만들어집니다.', '말풍선과 아래 숫자 칸이 지금 결과를 읽어 줍니다.'].concat(hasPts ? ['데이터: <b style="color:#6fb1ff">파란 공</b>이 한 무리, <b style="color:#ff9f6b">주황 정육면체</b>가 다른 무리입니다.'] : [])) + '<h3>조절</h3>' + ctl + '<div class="kv" id="kv"></div>' + (demo.note ? '<p class="note">' + demo.note + '</p>' : '') + '</section>';
+/* ---------- ⑥ 구조도 (순환 계열: 13층 RNN · 15층 GRU · 16층 LSTM) ---------- */
+if (MECH) {
+  const MT = {
+    RNN: ['A는 셀 하나입니다. 이 셀을 시간마다 복사해 늘어놓으면 <b>펼친 RNN</b>이 됩니다.', '<b>RNN 셀</b> 속에는 tanh 하나뿐입니다. 방금 상태 hₜ₋₁과 새 입력 xₜ을 섞어 −1~1로 눌러 담습니다.', '아래 줄의 LSTM(16층)은 같은 자리에 문 세 개와 기억 세포 줄을 더 넣었습니다.'],
+    GRU: ['위 줄은 13층 RNN, 아래 줄은 16층 LSTM의 셀 속입니다.', '이 층의 GRU는 그 중간입니다. 기억 세포 줄을 따로 두지 않고 문을 둘로 줄였습니다.', '펼친 모양과 입출력 유형은 RNN·GRU·LSTM이 모두 같습니다.'],
+    LSTM: ['위 줄은 13층 RNN, 아래 줄이 이 층 <b>LSTM의 셀 속</b>입니다.', '맨 위를 가로지르는 줄이 <b>기억 세포 c</b>입니다. ×와 +만 거치며 거의 그대로 흘러가서 오래 기억합니다.', '노란 σ 세 개가 잊기·받기·내보내기 문이고, 가운데 tanh가 새 기억 후보를 만듭니다.'] }[F.ab];
+  const MSAY = { RNN: '왼쪽 고리 하나와 오른쪽 긴 사슬은 같은 그림입니다. 같은 A를 시간 순서대로 다시 쓰는 것입니다.', GRU: 'RNN과 LSTM을 위아래로 놓았습니다. GRU는 LSTM의 문 셋을 둘로 줄이고 기억 줄을 hₜ에 합쳤습니다.', LSTM: '위 줄 RNN의 tanh 하나가 아래 줄에서는 문 셋과 기억 줄로 바뀌었습니다. 아래 버튼으로 가까이 보십시오.' }[F.ab];
+  $('#panel').insertAdjacentHTML('beforeend',
+    '<section data-p="7" style="--acc:#ffb36b"><h2>⑥ 구조도 · 작동 원리</h2>' + three(MT) + talk([['doctor', 'E13', MSAY]]) +
+    '<h3>가까이 보기</h3><div class="btns" id="msub">' + ['전체', '펼친 RNN', 'RNN 셀 속', 'LSTM 셀 속', '입출력 유형 5가지'].map((t, i) => '<button class="btn" data-m="' + i + '">' + t + '</button>').join('') + '</div>' +
+    '<h3>1. 펼친 RNN</h3><p>왼쪽은 자기 출력을 다시 받는 <b>고리</b>로 그린 RNN, 오른쪽은 그 고리를 시간 순서대로 풀어 놓은 <b>사슬</b>입니다. 사슬의 A는 모두 같은 셀(같은 가중치)이라서, 문장이 길든 짧든 같은 셀 하나로 처리합니다.</p>' +
+    '<h3>2. RNN 셀 속</h3><div class="sumbox"><span>들어오는 것</span><b>왼쪽에서 hₜ₋₁, 아래에서 xₜ</b><span>안에서</span><b>둘을 섞어 tanh로 −1~1에 눌러 담음</b><span>나가는 것</span><b>hₜ — 위로(이번 출력), 오른쪽으로(다음 순간의 기억)</b></div>' +
+    '<p class="note">hₜ = tanh(W xₜ + U hₜ₋₁ + b). 기억이 hₜ 하나뿐이라 매 순간 tanh를 거치며 옛 정보가 빨리 흐려집니다.</p>' +
+    '<h3>3. LSTM 셀 속</h3><div class="sumbox"><span>위 가로줄</span><b>기억 세포 c — 컨베이어 벨트처럼 흘러감</b><span>σ f</span><b>잊기 문: 옛 기억에 곱해 0이면 지우고 1이면 둠</b><span>σ i × tanh</span><b>받기 문 × 새 후보 c̃ → +로 기억에 보탬</b><span>σ o</span><b>내보내기 문 × tanh(c) → hₜ</b></div>' +
+    '<p class="note">기호: σ는 0~1 사이 값(문이 열린 정도), tanh는 −1~1로 눌러 담기, ×는 곱하기(문 적용), +는 더하기. 노란 상자는 학습하는 층, 분홍 동그라미는 학습 없는 계산입니다.</p>' +
+    '<h3>4. 입출력 유형 5가지</h3><div class="leg"><span style="--c:#f4a3a8"><i></i>분홍: 입력 x</span><span style="--c:#9ed99e"><i></i>초록: RNN 셀(은닉 상태)</span><span style="--c:#a7c2f7"><i></i>파랑: 출력 y</span></div>' +
+    '<div class="sumbox" style="margin-top:8px"><span>기본 구조</span><b>x → RNN(↺) → y</b><span>일대일</span><b>보통 신경망 (순환 없음)</b><span>일대다</span><b>사진 설명 붙이기: 사진 → 단어들</b><span>다대일</span><b>감성 분석: 단어들 → 감성 점수</b><span>다대다</span><b>번역: 단어들을 다 읽고 → 단어들</b><span>다대다(동시)</span><b>영상 분류: 프레임마다 → 프레임마다</b></div>' +
+    '<h3>그림 출처</h3><ol class="refs"><li>Olah, C. (2015). Understanding LSTM Networks. colah.github.io — 셀 속 그림과 펼친 RNN</li><li>Karpathy, A. (2015). The Unreasonable Effectiveness of Recurrent Neural Networks — 입출력 유형</li><li>Li, F.-F., Johnson, J., &amp; Yeung, S. (2017). CS231n Lecture 10: Recurrent Neural Networks. Stanford.</li></ol><p class="note">위 그림들을 참고해 3D로 새로 그렸습니다.</p></section>');
+  $('#pOn').insertAdjacentHTML('beforebegin', '<button data-s="7" style="--c:#ffb36b">⑥ 구조도</button>');
+  $('#panel section[data-p="0"] .cards').insertAdjacentHTML('beforeend', '<button class="card" data-s="7" style="--c:#ffb36b"><i>6</i><div><b>구조도 · 작동 원리</b><span>펼친 RNN · RNN/LSTM 셀 속 · 입출력 유형</span></div></button>');
+}
 const inputs = $$('#panel [data-k]');
 function sync() { inputs.forEach(el => { const c = demo.controls.find(q => q.k === el.dataset.k); if (document.activeElement !== el) el.value = st[c.k]; if (el.type === 'range') el.nextElementSibling.textContent = c.f ? c.f(st[c.k]) : (c.step >= 1 ? st[c.k] : Number(st[c.k]).toFixed(2)); }); }
 inputs.forEach(el => el.addEventListener('input', () => { const k = el.dataset.k; st[k] = el.type === 'range' ? +el.value : el.value; if (demo.change) demo.change(st, k); sync(); }));
@@ -258,7 +280,7 @@ $$('#panel .quiz').forEach(box => { const q = F.quiz[+box.dataset.q], out = box.
     out.hidden = false; out.innerHTML = (ok ? '<b style="display:inline;color:var(--green)">맞았습니다.</b> ' : '<b style="display:inline;color:#ff9a9a">정답은 ' + 'ㄱㄴㄷ'[q[2]] + '입니다.</b> ') + q[3]; })); });
 
 /* ---------- 발표 보기 ---------- */
-const PORD = [0, 6, 1, 2, 3, 4, 5], PNAME = { 0: '전체 보기', 6: '위층 · 설계도', 1: '① 하는 일', 2: '② 아래층과 견주기', 3: '③ 핵심 부품', 4: '④ 그래프 판', 5: '⑤ 실험' };
+const PORD = MECH ? [0, 6, 1, 2, 3, 4, 5, 7] : [0, 6, 1, 2, 3, 4, 5], PNAME = { 7: '⑥ 구조도', 0: '전체 보기', 6: '위층 · 설계도', 1: '① 하는 일', 2: '② 아래층과 견주기', 3: '③ 핵심 부품', 4: '④ 그래프 판', 5: '⑤ 실험' };
 const curS = () => { const b = $('#tabs button[aria-pressed="true"]'); return b ? +b.dataset.s : 0; };
 const goS = i => { const b = $('#tabs button[data-s="' + i + '"]'); if (b) b.click(); $('#pName').textContent = fnum + '층 ' + F.ab + ' · ' + PNAME[i]; };
 const pStep = d => { const k = PORD.indexOf(curS()); goS(PORD[(k + d + PORD.length) % PORD.length]); };
@@ -457,12 +479,109 @@ function tickDemo(dt, draw) { if (demo.step) demo.step(st, dt); if (draw) demo.d
   (function () { const bm = new T.MeshBasicMaterial({ color: 0xff3d8f, transparent: true, opacity: .38, depthWrite: false });
     [[SKY.w(V(3.2, -3, 0)), V(S2.cx + 2.6, 6.2, S2.cz)], [SKY.w(V(0, -3.2, 0)), V(0, 5.6, S3.cz)], [SKY.w(V(4, -2.6, 0)), V(S5.cx, 5.6, S5.cz - 2.2)]].forEach(q => { const m = new T.Mesh(cylGeo, bm); place(m, q[0], q[1], .07); G.add(m); }); })();
 
+  /* ================= ⑥ 구조도 (순환 계열 층만) ================= */
+  const mechP = [], fine = [[], [], [], [], []]; let msub = 0; const S7 = { cx: 0, cz: 29 };
+  CSS[7] = '#ffb36b';
+  if (MECH) { beginStation(); slab(7, 0, S7.cz, 66, 10, 0xffb36b);
+    label('⑥ 구조도', V(0, .5, S7.cz + 5), 'title', 7);
+    const z = S7.cz, LC = 0xe9edf9, XC = 0x6fb1ff, HC = 0xd59cf0, CELLC = 0x7fe0a8, GATE = 0xffd76a, OPC = 0xff9fb8;
+    const L7 = (html, p, cls, sub, anchor) => { const o = label(html, p, cls || 'num', 7, anchor); if (sub != null) fine[sub].push(o); return o; };
+    const path = (pts, col, r, head) => { for (let i = 0; i < pts.length - 1; i++) (head && i === pts.length - 2 ? arrow : tube)(pts[i], pts[i + 1], r || .045, col); for (let i = 1; i < pts.length - 1; i++) ball(pts[i], r || .045, col, 0); };
+    const flow = (pts, col, sp, off) => { const Ls = []; let tot = 0; for (let i = 0; i < pts.length - 1; i++) { const d = pts[i].distanceTo(pts[i + 1]); Ls.push(d); tot += d; } const m = pulse(col); m.scale.setScalar(1.5); mechP.push({ m, pts, Ls, tot, sp: sp || .3, off: off || 0 }); };
+    const gate = (p, txt, w, sub) => { boxm(p, w || .5, .38, .3, GATE, .95); L7(txt, p.clone().add(V(0, 0, .3)), 'num', sub); };
+    const op = (p, txt, sub, oval) => { const m = ball(p, .2, OPC, .35); if (oval) m.scale.set(1.9, 1, 1); L7(txt, p.clone().add(V(0, 0, .3)), 'num', sub); };
+
+    /* --- 1. 펼친 RNN (고리 = 사슬) --- */
+    (function () { const y = 3.4, bx = V(-28.4, y, z);
+      boxm(bx, 1.6, 1.6, 1.0, CELLC, .6); L7('A', bx.clone().add(V(0, 0, .6)), 'big');
+      ball(V(bx.x, y - 2.3, z), .42, XC, .3); arrow(V(bx.x, y - 1.85, z), V(bx.x, y - .82, z), .05, LC); L7('x<sub>t</sub>', V(bx.x, y - 2.3, z + .6), 'num', 1);
+      ball(V(bx.x, y + 2.3, z), .42, HC, .3); arrow(V(bx.x, y + .82, z), V(bx.x, y + 1.85, z), .05, LC); L7('h<sub>t</sub>', V(bx.x, y + 2.3, z + .6), 'num', 1);
+      const loop = new T.CatmullRomCurve3([V(bx.x + .8, y, z), V(bx.x + 1.5, y, z - .3), V(bx.x + 1.5, y + 1.3, z - 1.1), V(bx.x - 1.5, y + 1.3, z - 1.1), V(bx.x - 1.5, y, z - .3), V(bx.x - .85, y, z)]);
+      G.add(new T.Mesh(new T.TubeGeometry(loop, 50, .05, 6), new T.MeshStandardMaterial({ color: 0xff8fc7 })));
+      const hd = new T.Mesh(new T.ConeGeometry(.17, .4, 12), new T.MeshBasicMaterial({ color: 0xff8fc7 })); hd.position.copy(loop.getPoint(.985)); hd.quaternion.setFromUnitVectors(UP, loop.getTangent(1)); G.add(hd);
+      flow(loop.getPoints(40), 0xff8fc7, .5);
+      L7('↺ 고리: 방금 상태를 다시 받음', V(bx.x, y + 3.4, z), 'note', 1);
+      L7('=', V(-25.5, y, z), 'huge');
+      const xs = [-23.4, -20.7, -18.0, -13.8], sub = ['0', '1', '2', 't'];
+      xs.forEach((x, k) => { boxm(V(x, y, z), 1.6, 1.6, 1.0, CELLC, .6); L7('A', V(x, y, z + .6), 'big');
+        ball(V(x, y - 2.3, z), .42, XC, .3); arrow(V(x, y - 1.85, z), V(x, y - .82, z), .05, LC); L7('x<sub>' + sub[k] + '</sub>', V(x, y - 2.3, z + .6), 'num', 1);
+        ball(V(x, y + 2.3, z), .42, HC, .3); arrow(V(x, y + .82, z), V(x, y + 1.85, z), .05, LC); L7('h<sub>' + sub[k] + '</sub>', V(x, y + 2.3, z + .6), 'num', 1);
+        if (k < 3) arrow(V(x + .82, y, z), V(xs[k + 1] - .82, y, z), .05, LC); });
+      L7('…', V(-16.0, y + .45, z), 'big');
+      flow([V(-24.3, y, z), V(-13.0, y, z)], 0xffffff, .22); flow([V(-24.3, y, z), V(-13.0, y, z)], 0xffffff, .22, .5);
+      L7('펼친 RNN · 같은 A를 시간마다 복사', V(-21, 7.2, z), 'stage'); L7('고리 하나', V(-28.4, 1.2 - 1.5, z), 'note', 1); L7('시간 순서로 풀어 놓은 사슬', V(-18.6, -.3, z), 'note', 1); })();
+
+    /* --- 2·3. 셀 속: RNN(위) · LSTM(아래) --- */
+    function cellRow(yc, kind) { const sub = kind === 'rnn' ? 2 : 3, Lp = (x, y) => V(x, yc + y, z), xs = [-5.2, 0, 5.2], tsub = ['t−1', 't', 't+1'];
+      const lev = kind === 'rnn' ? [.6] : [.95, -.95];
+      xs.forEach((cx, k) => { const mid = k === 1, xin = mid && kind === 'lstm' ? -1.8 : -1.1, hout = mid && kind === 'lstm' ? 1.85 : 1.2;
+        boxm(V(cx, yc, z), 4.4, 3.0, 1.0, CELLC, mid ? .13 : .55); if (!mid) L7('A', V(cx, yc, z + .6), 'huge');
+        ball(V(cx + xin, yc - 2.5, z), .42, XC, .3); L7('x<sub>' + tsub[k] + '</sub>', V(cx + xin, yc - 2.5, z + .6), 'num', sub);
+        ball(V(cx + hout, yc + 2.5, z), .42, HC, .3); L7('h<sub>' + tsub[k] + '</sub>', V(cx + hout, yc + 2.5, z + .6), 'num', sub);
+        if (!mid) { arrow(V(cx + xin, yc - 2.05, z), V(cx + xin, yc - 1.5, z), .045, LC); arrow(V(cx + hout, yc + 1.5, z), V(cx + hout, yc + 2.05, z), .045, LC); }
+        lev.forEach(ly => { if (k < 2) arrow(V(cx + 2.2, yc + ly, z), V(xs[k + 1] - 2.2, yc + ly, z), .05, LC); }); });
+      lev.forEach(ly => { arrow(V(-8.6, yc + ly, z), V(-7.4, yc + ly, z), .05, LC); arrow(V(7.4, yc + ly, z), V(8.6, yc + ly, z), .05, LC); });
+      if (kind === 'rnn') {
+        path([Lp(-2.2, .6), Lp(-.6, .6), Lp(-.6, -.75), Lp(.2, -.75)], LC); path([Lp(-1.1, -2.05), Lp(-1.1, -.75), Lp(-.6, -.75)], LC);
+        arrow(Lp(.2, -.75), Lp(.2, -.42), .045, LC); gate(Lp(.2, -.2), 'tanh', .9);
+        path([Lp(.2, .02), Lp(.2, .6), Lp(2.2, .6)], LC); arrow(Lp(1.2, .6), Lp(1.2, 2.05), .045, LC);
+        flow([Lp(-2.6, .6), Lp(-.6, .6), Lp(-.6, -.75), Lp(.2, -.75), Lp(.2, .6), Lp(1.2, .6), Lp(1.2, 2.05)], 0xffffff, .3);
+        flow([Lp(-1.1, -2.05), Lp(-1.1, -.75), Lp(.2, -.75), Lp(.2, .6), Lp(2.6, .6)], XC, .3, .5);
+        L7('h<sub>t−1</sub> + x<sub>t</sub> → tanh → h<sub>t</sub>', Lp(1.0, -1.85), 'num', 2);
+      } else {
+        tube(Lp(-2.2, .95), Lp(2.2, .95), .06, 0xffd76a);
+        op(Lp(-1.2, .95), '×', 3); op(Lp(0, .95), '+', 3);
+        path([Lp(-2.2, -.95), Lp(.75, -.95)], LC); path([Lp(-1.8, -2.05), Lp(-1.8, -.95)], LC);
+        path([Lp(-1.2, -.95), Lp(-1.2, -.64)], LC); gate(Lp(-1.2, -.45), 'σ', .5, 3); arrow(Lp(-1.2, -.26), Lp(-1.2, .75), .045, LC);
+        path([Lp(-.6, -.95), Lp(-.6, -.64)], LC); gate(Lp(-.6, -.45), 'σ', .5, 3); path([Lp(-.6, -.26), Lp(-.6, .35), Lp(-.2, .35)], LC, .045, true);
+        path([Lp(0, -.95), Lp(0, -.64)], LC); gate(Lp(0, -.45), 'tanh', .55, 3); arrow(Lp(0, -.26), Lp(0, .15), .045, LC);
+        op(Lp(0, .35), '×', 3); arrow(Lp(0, .55), Lp(0, .75), .045, LC);
+        path([Lp(.75, -.95), Lp(.75, -.64)], LC); gate(Lp(.75, -.45), 'σ', .5, 3); path([Lp(.75, -.26), Lp(.75, 0), Lp(1.15, 0)], LC, .045, true);
+        op(Lp(1.35, 0), '×', 3); arrow(Lp(1.35, .95), Lp(1.35, .66), .045, LC); op(Lp(1.35, .5), 'tanh', 3, true); arrow(Lp(1.35, .34), Lp(1.35, .2), .045, LC);
+        path([Lp(1.35, -.2), Lp(1.35, -.95), Lp(2.2, -.95)], LC); arrow(Lp(1.85, -.95), Lp(1.85, 2.05), .045, LC);
+        [['f 잊기 문', -1.2, -1.75], ['i 받기 문', -.6, -2.15], ['c̃ 새 후보', 0, -1.75], ['o 내보내기 문', .75, -2.15]].forEach(q => L7(q[0], Lp(q[1], q[2]), 'num', 3));
+        L7('기억 세포 c', Lp(-.6, 1.25), 'num', 3); L7('c<sub>t−1</sub>', Lp(-2.55, 1.22), 'num', 3); L7('c<sub>t</sub>', Lp(2.55, 1.22), 'num', 3);
+        L7('h<sub>t−1</sub>', Lp(-2.6, -.7), 'num', 3);
+        flow([Lp(-2.6, .95), Lp(2.6, .95)], 0xffd76a, .25); flow([Lp(-2.6, .95), Lp(2.6, .95)], 0xffd76a, .25, .5);
+        flow([Lp(-2.6, -.95), Lp(-.6, -.95), Lp(-.6, .35), Lp(0, .35), Lp(0, .95)], 0xffffff, .3);
+        flow([Lp(-1.8, -2.05), Lp(-1.8, -.95), Lp(.75, -.95), Lp(.75, 0), Lp(1.35, 0), Lp(1.35, -.95), Lp(1.85, -.95), Lp(1.85, 2.05)], XC, .3, .4);
+        flow([Lp(1.35, .95), Lp(1.35, 0), Lp(1.35, -.95), Lp(2.6, -.95)], 0xffffff, .3, .7);
+      }
+      const here = (kind === 'rnn' && F.ab === 'RNN') || (kind === 'lstm' && F.ab === 'LSTM');
+      L7((kind === 'rnn' ? '13층 RNN의 셀 속 · tanh 하나' : '16층 LSTM의 셀 속 · 문 셋 + 기억 줄') + (here ? '  ← 이 층' : ''), V(0, yc + 3.3, z), 'stage', sub); }
+    L7('셀 속 · 위 13층 RNN · 아래 16층 LSTM', V(0, 13.4, z), 'stage');
+    cellRow(9.1, 'rnn'); cellRow(2.9, 'lstm');
+
+    /* --- 4. 입출력 유형 5가지 --- */
+    (function () { const IN = 0xf4a3a8, HID = 0x9ed99e, OUT = 0xa7c2f7, yi = 1.0, yh = 2.6, yo = 4.2, dx = .85;
+      const bx = (x, y, c) => boxm(V(x, y, z), .55, .9, .4, c, .9), ar = (a, b, c) => arrow(a, b, .03, c);
+      bx(12.4, yi, IN); boxm(V(12.4, yh, z), .8, .9, .5, 0x3f8f4f, .95); bx(12.4, yo, OUT); ar(V(12.4, yi + .45, z), V(12.4, yh - .45, z), 0xff6b6b); ar(V(12.4, yh + .45, z), V(12.4, yo - .45, z), 0x5b8cff);
+      const lp = new T.Mesh(new T.TorusGeometry(.38, .03, 6, 24, Math.PI * 1.5), new T.MeshBasicMaterial({ color: LC })); lp.position.set(12.95, yh, z); G.add(lp);
+      L7('RNN', V(12.4, yh, z + .4), 'num', 4); L7('기본 구조', V(12.4, 5.3, z), 'big', 4); L7('x', V(12.4, yi, z + .4), 'num', 4); L7('y', V(12.4, yo, z + .4), 'num', 4);
+      const PT = [[1, [0], [0], '일대일', '보통 신경망 (순환 없음)'], [3, [0], [0, 1, 2], '일대다', '사진 설명 붙이기<br>사진 → 단어들'], [3, [0, 1, 2], [2], '다대일', '감성 분석<br>단어들 → 감성 점수'],
+        [5, [0, 1, 2], [2, 3, 4], '다대다', '번역<br>단어들 → 단어들'], [3, [0, 1, 2], [0, 1, 2], '다대다 (동시)', '영상 프레임별 분류']];
+      let x0 = 14.6; PT.forEach((p, k) => { const n = p[0], cxs = []; for (let i = 0; i < n; i++) cxs.push(x0 + i * dx); const mid = (cxs[0] + cxs[n - 1]) / 2;
+        cxs.forEach((x, i) => { bx(x, yh, HID); if (i < n - 1) { ar(V(x + .28, yh, z), V(x + dx - .28, yh, z), 0x4fc36b); flow([V(x + .28, yh, z), V(x + dx - .28, yh, z)], 0xffffff, .9, i * .2); } });
+        p[1].forEach(i => { bx(cxs[i], yi, IN); ar(V(cxs[i], yi + .45, z), V(cxs[i], yh - .45, z), 0xff6b6b); });
+        p[2].forEach(i => { bx(cxs[i], yo, OUT); ar(V(cxs[i], yh + .45, z), V(cxs[i], yo - .45, z), 0x5b8cff); });
+        L7(p[3], V(mid, 5.3, z), 'big', 4); L7(p[4], V(mid, k % 2 ? -.35 : .3, z + .3), 'num wrap', 4, 't');
+        x0 = cxs[n - 1] + 1.5; });
+      L7('입출력 유형 · 분홍 입력 → 초록 RNN 셀 → 파랑 출력', V(21.5, 7.2, z), 'stage'); })();
+    putChar('doc7', 'doctor', 7, V(-10.4, 0, z + 4.2), .3, 'explain', '고리 → 사슬 → 셀 속 순서로 보십시오.'); fine[0].push(cast.doc7.bub);
+  }
+  const MSUB = [{ t: [0, 6, S7.cz], W: 66, H: 14 }, { t: [-20.6, 3.4, S7.cz], W: 19, H: 8.5 }, { t: [0, 9.5, S7.cz], W: 15, H: 7.8, Wn: 5.6 }, { t: [0, 3.3, S7.cz], W: 15, H: 7.8, Wn: 5.6 }, { t: [21.4, 2.6, S7.cz], W: 20, H: 7.8 }];
+  function mechSub(k) { msub = k; fine.forEach((a, i) => a.forEach(o => { o.hide = i !== k; })); $$('#msub [data-m]').forEach(b => b.style.borderColor = +b.dataset.m === k ? '#ffb36b' : ''); if (active === 7) goView(7); }
+  mechSub(0);
+  $$('[data-m]').forEach(b => b.addEventListener('click', () => { if (active !== 7) setActive(7); mechSub(+b.dataset.m); if (window.innerWidth <= 860) stage.scrollIntoView({ behavior: 'smooth', block: 'start' }); }));
+  function mechTick(time) { for (const p of mechP) { let d = ((time * p.sp + p.off) % 1) * p.tot, i = 0; while (i < p.Ls.length - 1 && d > p.Ls[i]) { d -= p.Ls[i]; i++; } p.m.position.lerpVectors(p.pts[i], p.pts[i + 1], Math.min(1, d / (p.Ls[i] || 1))); } }
+
   /* ================= 카메라와 탭 ================= */
   const VIEW = [{ t: [0, 6.5, 1], r: 66, th: 0, ph: .9 }, { t: [S1.cx + .5, 3.2, S1.cz + .8], r: 20.5, th: -.2, ph: 1.26 }, { t: [S2.cx - .4, 3.3, S2.cz + 1.2], r: 20.5, th: .22, ph: 1.26 }, { t: [.6, 3.5, S3.cz], r: 24, th: 0, ph: 1.32 },
     { t: [S4.cx + .5, 3.1, S4.cz + 1.2], r: 20.5, th: -.12, ph: 1.3 }, { t: [S5.cx, 2.9, S5.cz - .4], r: 22, th: .08, ph: 1.12 }, { t: [0, 12.5, -5], r: 40, th: 0, ph: 1.2 }];
+  if (MECH) { VIEW[0] = { t: [0, 6, 9], r: 82, th: 0, ph: .95 }; }
   const need = [1.75, 1.3, 1.3, 2.3, 1.3, 1.3, 2.0], cur = { x: 0, y: 6.5, z: 1, r: 90, th: .5, ph: .6 }, goal = { x: 0, y: 6.5, z: 1, r: 66, th: 0, ph: .9 }; let aspect = 1.5;
-  function goView(i) { const v = VIEW[i]; goal.x = v.t[0]; goal.y = v.t[1]; goal.z = v.t[2]; goal.th = v.th; goal.ph = v.ph; goal.r = v.r * Math.max(1, need[i] / aspect); }
-  const names = ['overview', 'task', 'compare', 'part', 'graph', 'lab', 'blueprint'];
+  function goView(i) { if (i === 7) { const m = MSUB[msub]; goal.x = m.t[0]; goal.y = m.t[1]; goal.z = m.t[2]; goal.th = 0; goal.ph = 1.38; goal.r = Math.max(aspect < 1 && m.Wn ? 0 : m.H, (aspect < 1 && m.Wn ? m.Wn : m.W) / aspect) * 1.55; return; } const v = VIEW[i]; goal.x = v.t[0]; goal.y = v.t[1]; goal.z = v.t[2]; goal.th = v.th; goal.ph = v.ph; goal.r = v.r * Math.max(1, need[i] / aspect); }
+  const names = ['overview', 'task', 'compare', 'part', 'graph', 'lab', 'blueprint', 'mechanism'];
   function setActive(i, noHash) { active = i; goView(i); groups.forEach((g, k) => { if (g) g.visible = (i === 0 || i === 6 || k === i); });
     $$('#tabs button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.s === i)); $$('#panel section').forEach(s => s.classList.toggle('on', +s.dataset.p === i)); $('#panel').scrollTop = 0;
     $('#hint').textContent = i === 0 ? '끌기: 돌려 보기 · 휠/두 손가락: 확대 · 구역 누르기: 들어가기' : '끌기: 돌려 보기 · 휠/두 손가락: 확대';
@@ -488,7 +607,7 @@ function tickDemo(dt, draw) { if (demo.step) demo.step(st, dt); if (draw) demo.d
     for (const p of allPulses) { p.t += dt * p.sp; if (p.t >= 1) { p.t = 0; p.e = p.edges[Math.floor(Math.random() * p.edges.length)]; p.rev = p.ring && Math.random() < .5; } p.m.position.lerpVectors(p.rev ? p.e.b : p.e.a, p.rev ? p.e.a : p.e.b, p.t); }
     ioP.forEach((p, i) => p.m.position.lerpVectors(p.q[0], p.q[1], (time * .5 + i * .21) % 1));
     partP.forEach(p => { const t = (time * .45 + p.off) % 1; if (p.q.getPoint) p.m.position.copy(p.q.getPoint(t)); else p.m.position.lerpVectors(p.q[0], p.q[1], t); });
-    tickDemo(dt, false); if (active === 0 || active === 5) { vT += dt; if (vT > 1 / 30) { vT = 0; WG.update(demo.view(st)); } }
+    if (MECH) mechTick(time); tickDemo(dt, false); if (active === 0 || active === 5) { vT += dt; if (vT > 1 / 30) { vT = 0; WG.update(demo.view(st)); } }
     for (const id in cast) { const o = cast[id].obj; if (o) o.userData.update(time); }
     renderer.render(scene, camera); updateLabels(); requestAnimationFrame(frame); }
   const h0 = names.indexOf(location.hash.slice(1)); setActive(h0 > 0 ? h0 : 0, true);
