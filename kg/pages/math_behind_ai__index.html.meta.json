@@ -1,0 +1,33 @@
+{
+ "title": "신경망 연구소 로비 — AI 뒤에 있는 수학",
+ "number": "04",
+ "series": "신경망 연구소 — 3D로 설명하는 AI",
+ "date": "2026-11-24",
+ "version": "1.1",
+ "creator": [
+  {
+   "name": "안상선",
+   "role": "author"
+  }
+ ],
+ "contributor": [
+  {
+   "name": "AI 보조 제작",
+   "role": "assistant"
+  }
+ ],
+ "about": [
+  "lab:concept/loss",
+  "lab:concept/activation-function",
+  "lab:concept/single-neuron",
+  "lab:method/backpropagation",
+  "lab:concept/learning-rate"
+ ],
+ "basedOn": [],
+ "educationalLevel": "입문~중급",
+ "license": "",
+ "url": "https://adminmrobo.github.io/ai_in_3d/math_behind_ai/index.html",
+ "registry": "KG_00_registry 0.3",
+ "seeAlso": "",
+ "suggestedCitation": "안상선 (2026). 신경망 연구소 로비 — AI 뒤에 있는 수학. 신경망 연구소 — 3D로 설명하는 AI, v1.1."
+}

@@ -1,0 +1,636 @@
+{
+ "version": "1.0",
+ "page": "math_behind_ai__index",
+ "nodes": [
+  {
+   "id": "lab:concept/loss",
+   "type": "Concept",
+   "label": {
+    "ko": "손실",
+    "en": "loss"
+   },
+   "page": "math_behind_ai__index",
+   "anchor": "#panel",
+   "level": 2,
+   "status": "known",
+   "confidence": "medium",
+   "coverage": "explained",
+   "domain": [
+    "ai",
+    "dl",
+    "genai"
+   ],
+   "match": [],
+   "auto": "autokg-2026-11-24",
+   "definition": {
+    "ko": "그린 그림과 정답이 얼마나 다른지 나타내는 숫자. 이 페이지에서는 픽셀 차이의 제곱 평균."
+   }
+  },
+  {
+   "id": "lab:concept/activation-function",
+   "type": "Concept",
+   "label": {
+    "ko": "활성화 함수",
+    "en": "Activation function"
+   },
+   "page": "math_behind_ai__index",
+   "anchor": "#panel",
+   "level": 2,
+   "status": "known",
+   "confidence": "medium",
+   "coverage": "explained",
+   "domain": [
+    "fin",
+    "ai",
+    "dl"
+   ],
+   "match": [],
+   "auto": "autokg-2026-11-24",
+   "definition": {
+    "ko": "가중합을 비선형으로 바꾸는 함수. 시그모이드, tanh, ReLU 등이 있고, 없으면 층을 쌓아도 직선 하나와 같다."
+   }
+  },
+  {
+   "id": "lab:concept/single-neuron",
+   "type": "Concept",
+   "label": {
+    "ko": "뉴런 하나",
+    "en": "Single neuron"
+   },
+   "page": "math_behind_ai__index",
+   "anchor": "#panel",
+   "level": 2,
+   "status": "known",
+   "confidence": "medium",
+   "coverage": "explained",
+   "domain": [
+    "dl",
+    "ml"
+   ],
+   "match": [],
+   "auto": "autokg-2026-11-24",
+   "definition": {
+    "ko": "가중합 z = Σwx + b를 만들고 활성화 함수를 거쳐 내보내는 단위. 파라미터 3개(입력 2개일 때)."
+   }
+  },
+  {
+   "id": "lab:method/backpropagation",
+   "type": "Method",
+   "label": {
+    "ko": "역전파",
+    "en": "Backpropagation"
+   },
+   "page": "math_behind_ai__index",
+   "anchor": "#panel",
+   "level": 2,
+   "status": "known",
+   "confidence": "medium",
+   "coverage": "explained",
+   "domain": [
+    "math",
+    "ai",
+    "dl"
+   ],
+   "match": [],
+   "auto": "autokg-2026-11-24",
+   "definition": {
+    "ko": "출력의 오차를 누구 책임인가에 따라 거꾸로 나눠 주는 계산."
+   }
+  },
+  {
+   "id": "lab:concept/learning-rate",
+   "type": "Term",
+   "label": {
+    "ko": "학습률",
+    "en": "Learning rate"
+   },
+   "page": "math_behind_ai__index",
+   "anchor": "#panel",
+   "level": 2,
+   "status": "known",
+   "confidence": "medium",
+   "coverage": "explained",
+   "domain": [
+    "math",
+    "ai",
+    "dl"
+   ],
+   "match": [],
+   "auto": "autokg-2026-11-24",
+   "definition": {
+    "ko": "새 나무의 예측을 반영하는 배수."
+   }
+  },
+  {
+   "id": "lab:concept/bias",
+   "type": "Concept",
+   "label": {
+    "ko": "편향",
+    "en": "Bias"
+   },
+   "page": "math_behind_ai__index",
+   "anchor": "#panel",
+   "level": 2,
+   "status": "known",
+   "confidence": "medium",
+   "coverage": "explained",
+   "domain": [
+    "stats",
+    "ai",
+    "dl"
+   ],
+   "match": [],
+   "auto": "autokg-2026-11-24",
+   "definition": {
+    "ko": "가중합에 더하는 값. 얼마나 쉽게 반응할지를 정한다."
+   }
+  },
+  {
+   "id": "lab:concept/weight-and-bias",
+   "type": "Concept",
+   "label": {
+    "ko": "가중치와 편향",
+    "en": "Weights and bias"
+   },
+   "page": "math_behind_ai__index",
+   "anchor": "#panel",
+   "level": 2,
+   "status": "known",
+   "confidence": "medium",
+   "coverage": "explained",
+   "domain": [
+    "ai",
+    "dl"
+   ],
+   "match": [],
+   "auto": "autokg-2026-11-24",
+   "definition": {
+    "ko": "학습으로 바뀌는 숫자. 이 페이지의 별명은 손잡이."
+   }
+  },
+  {
+   "id": "lab:concept/gradient",
+   "type": "Concept",
+   "label": {
+    "ko": "기울기",
+    "en": "gradient"
+   },
+   "page": "math_behind_ai__index",
+   "anchor": "#panel",
+   "level": 2,
+   "status": "known",
+   "confidence": "medium",
+   "coverage": "explained",
+   "domain": [
+    "math",
+    "ai",
+    "dl"
+   ],
+   "match": [],
+   "auto": "autokg-2026-11-24",
+   "definition": {
+    "ko": "변수를 아주 조금 바꿨을 때 손실이 얼마나 변하는지. 손실을 줄이려면 기울기 반대쪽으로 고친다."
+   }
+  },
+  {
+   "id": "lab:term/hidden-layer",
+   "type": "Term",
+   "label": {
+    "ko": "은닉층",
+    "en": "hidden layer"
+   },
+   "page": "math_behind_ai__index",
+   "anchor": "#gdS",
+   "level": 2,
+   "status": "known",
+   "confidence": "medium",
+   "coverage": "explained",
+   "domain": [
+    "ai",
+    "dl",
+    "stats"
+   ],
+   "match": [],
+   "auto": "autokg-2026-11-24",
+   "definition": {
+    "ko": "입력과 출력 사이의 층. 입력을 새 좌표(특성)로 바꾼다."
+   }
+  },
+  {
+   "id": "lab:concept/local-minimum",
+   "type": "Concept",
+   "label": {
+    "ko": "작은 웅덩이(국소 최솟값)",
+    "en": "Local minimum"
+   },
+   "page": "math_behind_ai__index",
+   "anchor": "#gdS",
+   "level": 2,
+   "status": "known",
+   "confidence": "medium",
+   "coverage": "explained",
+   "domain": [
+    "dl",
+    "rl",
+    "genai"
+   ],
+   "match": [],
+   "auto": "autokg-2026-11-24",
+   "definition": {
+    "ko": "정답은 아닌데 한 자리만 바꿔서는 벌점이 줄지 않는 곳."
+   }
+  },
+  {
+   "id": "lab:method/relu",
+   "type": "Method",
+   "label": {
+    "ko": "ReLU",
+    "en": "Rectified linear unit"
+   },
+   "page": "math_behind_ai__index",
+   "anchor": "#panel",
+   "level": 2,
+   "status": "known",
+   "confidence": "medium",
+   "coverage": "mentioned",
+   "domain": [
+    "ai",
+    "dl",
+    "llm"
+   ],
+   "match": [],
+   "auto": "autokg-2026-11-24",
+   "definition": {
+    "ko": "0보다 작은 값을 0으로 바꾸는 규칙. f(x) = max(0, x)."
+   }
+  },
+  {
+   "id": "lab:method/energy-descent",
+   "type": "Method",
+   "label": {
+    "ko": "공 굴리기(에너지 내려가기)",
+    "en": "Energy descent inference"
+   },
+   "page": "math_behind_ai__index",
+   "anchor": "#panel",
+   "level": 2,
+   "status": "known",
+   "confidence": "medium",
+   "coverage": "mentioned",
+   "domain": [
+    "ai",
+    "dl",
+    "rl"
+   ],
+   "match": [],
+   "auto": "autokg-2026-11-24",
+   "definition": {
+    "ko": "힌트 고정 → 빈자리 아무 숫자 → 벌점이 큰 자리를 벌점이 줄어드는 숫자로 → 가끔 흔들기 → 멈춤선에서 멈춤."
+   }
+  },
+  {
+   "id": "lab:concept/multi-head",
+   "type": "Concept",
+   "label": {
+    "ko": "머리 (멀티헤드)",
+    "en": "Multi-head attention"
+   },
+   "page": "math_behind_ai__index",
+   "anchor": "#panel",
+   "level": 2,
+   "status": "known",
+   "confidence": "medium",
+   "coverage": "mentioned",
+   "domain": [
+    "ai",
+    "dl",
+    "llm"
+   ],
+   "match": [],
+   "auto": "autokg-2026-11-24",
+   "definition": {
+    "ko": "셀프 어텐션을 서로 다른 Q·K·V로 여러 번 하는 갈래. 이 편은 머리 4개를 쓴다."
+   }
+  },
+  {
+   "id": "lab:concept/sigmoid",
+   "type": "Concept",
+   "label": {
+    "ko": "시그모이드",
+    "en": "Sigmoid"
+   },
+   "page": "math_behind_ai__index",
+   "anchor": "#panel",
+   "level": 2,
+   "status": "known",
+   "confidence": "medium",
+   "coverage": "mentioned",
+   "domain": [
+    "stats",
+    "biz",
+    "fin"
+   ],
+   "match": [],
+   "auto": "autokg-2026-11-24",
+   "definition": {
+    "ko": "점수를 0~1 사이 확률로 바꾸는 함수."
+   }
+  },
+  {
+   "id": "lab:topic/loss-function",
+   "type": "Topic",
+   "label": {
+    "ko": "손실 함수",
+    "en": "Loss function"
+   },
+   "page": "math_behind_ai__index",
+   "anchor": "#kg",
+   "level": 2,
+   "status": "known",
+   "confidence": "high",
+   "coverage": "mentioned",
+   "domain": [
+    "ai"
+   ],
+   "match": []
+  },
+  {
+   "id": "lab:topic/activation-function",
+   "type": "Topic",
+   "label": {
+    "ko": "활성화 함수",
+    "en": "Activation function"
+   },
+   "page": "math_behind_ai__index",
+   "anchor": "#kg",
+   "level": 2,
+   "status": "known",
+   "confidence": "high",
+   "coverage": "mentioned",
+   "domain": [
+    "ai"
+   ],
+   "match": []
+  },
+  {
+   "id": "lab:topic/backpropagation",
+   "type": "Topic",
+   "label": {
+    "ko": "역전파",
+    "en": "Backpropagation"
+   },
+   "page": "math_behind_ai__index",
+   "anchor": "#kg",
+   "level": 2,
+   "status": "known",
+   "confidence": "high",
+   "coverage": "mentioned",
+   "domain": [
+    "ai"
+   ],
+   "match": []
+  },
+  {
+   "id": "lab:topic/gradient-descent",
+   "type": "Topic",
+   "label": {
+    "ko": "경사하강법",
+    "en": "Gradient descent"
+   },
+   "page": "math_behind_ai__index",
+   "anchor": "#kg",
+   "level": 2,
+   "status": "known",
+   "confidence": "high",
+   "coverage": "mentioned",
+   "domain": [
+    "ai"
+   ],
+   "match": []
+  },
+  {
+   "id": "lab:topic/unbiasedness",
+   "type": "Topic",
+   "label": {
+    "ko": "불편성",
+    "en": "Unbiasedness"
+   },
+   "page": "math_behind_ai__index",
+   "anchor": "#kg",
+   "level": 2,
+   "status": "known",
+   "confidence": "high",
+   "coverage": "mentioned",
+   "domain": [
+    "stats"
+   ],
+   "match": []
+  },
+  {
+   "id": "lab:topic/weights-and-biases",
+   "type": "Topic",
+   "label": {
+    "ko": "가중치와 편향",
+    "en": "Weights and biases"
+   },
+   "page": "math_behind_ai__index",
+   "anchor": "#kg",
+   "level": 2,
+   "status": "known",
+   "confidence": "high",
+   "coverage": "mentioned",
+   "domain": [
+    "ai"
+   ],
+   "match": []
+  },
+  {
+   "id": "lab:topic/calculus-optimization-math",
+   "type": "Topic",
+   "label": {
+    "ko": "미적분과 최적화 수학",
+    "en": "Calculus for optimization"
+   },
+   "page": "math_behind_ai__index",
+   "anchor": "#kg",
+   "level": 1,
+   "status": "known",
+   "confidence": "high",
+   "coverage": "mentioned",
+   "domain": [
+    "ai"
+   ],
+   "match": []
+  },
+  {
+   "id": "lab:topic/mlp",
+   "type": "Topic",
+   "label": {
+    "ko": "다층 퍼셉트론",
+    "en": "Multilayer perceptron"
+   },
+   "page": "math_behind_ai__index",
+   "anchor": "#kg",
+   "level": 2,
+   "status": "known",
+   "confidence": "high",
+   "coverage": "mentioned",
+   "domain": [
+    "ai"
+   ],
+   "match": []
+  },
+  {
+   "id": "lab:topic/multi-head-attention",
+   "type": "Topic",
+   "label": {
+    "ko": "멀티헤드 어텐션",
+    "en": "Multi-head attention"
+   },
+   "page": "math_behind_ai__index",
+   "anchor": "#kg",
+   "level": 4,
+   "status": "known",
+   "confidence": "high",
+   "coverage": "mentioned",
+   "domain": [
+    "ai"
+   ],
+   "match": []
+  }
+ ],
+ "edges": [
+  {
+   "s": "lab:concept/loss",
+   "p": "lab:broader",
+   "o": "lab:topic/loss-function",
+   "anchor": "#panel",
+   "confidence": "medium"
+  },
+  {
+   "s": "lab:concept/activation-function",
+   "p": "lab:broader",
+   "o": "lab:topic/activation-function",
+   "anchor": "#panel",
+   "confidence": "medium"
+  },
+  {
+   "s": "lab:method/backpropagation",
+   "p": "lab:broader",
+   "o": "lab:topic/backpropagation",
+   "anchor": "#panel",
+   "confidence": "medium"
+  },
+  {
+   "s": "lab:concept/learning-rate",
+   "p": "lab:broader",
+   "o": "lab:topic/gradient-descent",
+   "anchor": "#panel",
+   "confidence": "medium"
+  },
+  {
+   "s": "lab:concept/bias",
+   "p": "lab:broader",
+   "o": "lab:topic/unbiasedness",
+   "anchor": "#panel",
+   "confidence": "medium"
+  },
+  {
+   "s": "lab:concept/weight-and-bias",
+   "p": "lab:broader",
+   "o": "lab:topic/weights-and-biases",
+   "anchor": "#panel",
+   "confidence": "medium"
+  },
+  {
+   "s": "lab:concept/gradient",
+   "p": "lab:broader",
+   "o": "lab:topic/calculus-optimization-math",
+   "anchor": "#panel",
+   "confidence": "medium"
+  },
+  {
+   "s": "lab:term/hidden-layer",
+   "p": "lab:broader",
+   "o": "lab:topic/mlp",
+   "anchor": "#gdS",
+   "confidence": "medium"
+  },
+  {
+   "s": "lab:method/relu",
+   "p": "lab:broader",
+   "o": "lab:topic/activation-function",
+   "anchor": "#panel",
+   "confidence": "medium"
+  },
+  {
+   "s": "lab:method/energy-descent",
+   "p": "lab:broader",
+   "o": "lab:topic/gradient-descent",
+   "anchor": "#panel",
+   "confidence": "medium"
+  },
+  {
+   "s": "lab:concept/multi-head",
+   "p": "lab:broader",
+   "o": "lab:topic/multi-head-attention",
+   "anchor": "#panel",
+   "confidence": "medium"
+  },
+  {
+   "s": "lab:concept/sigmoid",
+   "p": "lab:broader",
+   "o": "lab:topic/activation-function",
+   "anchor": "#panel",
+   "confidence": "medium"
+  },
+  {
+   "s": "lab:method/energy-descent",
+   "p": "lab:hasLimitation",
+   "o": "lab:concept/local-minimum",
+   "anchor": "#panel",
+   "confidence": "medium",
+   "note": "다른 해설 페이지에서 확인된 관계"
+  },
+  {
+   "s": "lab:concept/loss",
+   "p": "lab:prerequisiteOf",
+   "o": "lab:concept/gradient",
+   "anchor": "#panel",
+   "confidence": "medium",
+   "note": "다른 해설 페이지에서 확인된 관계"
+  },
+  {
+   "s": "lab:concept/loss",
+   "p": "lab:prerequisiteOf",
+   "o": "lab:method/backpropagation",
+   "anchor": "#panel",
+   "confidence": "medium",
+   "note": "다른 해설 페이지에서 확인된 관계"
+  },
+  {
+   "s": "lab:concept/sigmoid",
+   "p": "lab:partOf",
+   "o": "lab:concept/single-neuron",
+   "anchor": "#panel",
+   "confidence": "medium",
+   "note": "다른 해설 페이지에서 확인된 관계"
+  },
+  {
+   "s": "lab:method/backpropagation",
+   "p": "lab:solves",
+   "o": "lab:concept/gradient",
+   "anchor": "#panel",
+   "confidence": "medium",
+   "note": "다른 해설 페이지에서 확인된 관계"
+  },
+  {
+   "s": "lab:method/relu",
+   "p": "lab:partOf",
+   "o": "lab:concept/activation-function",
+   "anchor": "#panel",
+   "confidence": "medium",
+   "note": "다른 해설 페이지에서 확인된 관계"
+  }
+ ]
+}
